@@ -27,11 +27,17 @@ dependencies = [
     # Procurement agent
     "ortools",
     "scikit-learn",
+    # Fusion model explainability (Week 2: train GBM)
+    "shap",
+    # Trajectory forecasting (Week 2: Chronos-2)
+    # "chronos-forecasting",  # uncomment when training data is ready
     # API gateway
     "fastapi",
     "uvicorn[standard]",
     # Bedrock
     "boto3",
+    # Redis queue (sensory → SAGE core)
+    "redis[asyncio]",
 ]
 
 [project.optional-dependencies]
