@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "sage"
+version = "0.1.0"
+description = "SAGE — AI-Driven Energy Supply Chain Resilience"
+requires-python = ">=3.11"
+
+dependencies = [
+    # Knowledge base
+    "graphiti-core[falkordb]",
+    "pydantic>=2.0",
+    # Orchestration
+    "langgraph",
+    "langchain-core",
+    # Sensory agent
+    "websockets",
+    "apscheduler",
+    "h3",
+    "yfinance",
+    # Scenario agent
+    "numpy",
+    "scipy",
+    # torch and torch-geometric installed separately (GPU build)
+    # Procurement agent
+    "ortools",
+    "scikit-learn",
+    # API gateway
+    "fastapi",
+    "uvicorn[standard]",
+    # Bedrock
+    "boto3",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-asyncio", "httpx", "ruff"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = [
+    "contracts*", "knowledge*", "orchestration*",
+    "sensory_agent*", "scenario_agent*",
+    "alt_procurement_agent*", "reserve_optim_agent*",
+    "visualizer_agent*",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

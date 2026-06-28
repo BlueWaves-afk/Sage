@@ -1,0 +1,151 @@
+version: "3.9"
+
+# 12-container SAGE deployment on EC2 g4dn.xlarge (ap-south-1)
+# Start order: falkordb + redis → graphiti → sage-core → everything else
+# Only api-gateway (8000) and frontend (80) are host-exposed.
+
+x-common-env: &common-env
+  env_file: .env
+
+services:
+
+  # ── Infrastructure ──────────────────────────────────────────────────────────
+
+  falkordb:
+    image: falkordb/falkordb:latest
+    restart: unless-stopped
+    volumes:
+      - falkordb_data:/data   # must point to separate EBS in production
+    ports:
+      - "6379:6379"
+      - "3000:3000"           # FalkorDB browser UI — inspect the graph visually
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    mem_limit: 512m
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ── Knowledge Base ───────────────────────────────────────────────────────────
+
+  graphiti:
+    build:
+      context: .
+      dockerfile: docker/graphiti.Dockerfile   # TODO: create
+    restart: unless-stopped
+    <<: *common-env
+    depends_on:
+      falkordb: { condition: service_healthy }
+    mem_limit: 512m
+
+  # ── SAGE Core (most critical container) ─────────────────────────────────────
+
+  sage-core:
+    build:
+      context: .
+      dockerfile: docker/sage_core.Dockerfile  # TODO: create
+    restart: unless-stopped
+    <<: *common-env
+    volumes:
+      - wiki_data:/app/wiki   # /wiki narrative pages persist across restarts
+    depends_on:
+      falkordb: { condition: service_healthy }
+      redis:    { condition: service_healthy }
+      graphiti: { condition: service_started }
+    mem_limit: 1g
+
+  # ── Sensory Agent (System 1 — 4 sub-agents) ─────────────────────────────────
+
+  sensory-ais:
+    build: { context: ., dockerfile: docker/sensory_ais.Dockerfile }
+    restart: unless-stopped
+    <<: *common-env
+    depends_on: [redis, sage-core]
+    mem_limit: 256m
+
+  sensory-news:
+    build: { context: ., dockerfile: docker/sensory_news.Dockerfile }
+    restart: unless-stopped
+    <<: *common-env
+    depends_on: [redis, sage-core]
+    mem_limit: 256m
+
+  sensory-sanctions:
+    build: { context: ., dockerfile: docker/sensory_sanctions.Dockerfile }
+    restart: unless-stopped
+    <<: *common-env
+    depends_on: [redis, sage-core]
+    mem_limit: 128m
+
+  sensory-prices:
+    build: { context: ., dockerfile: docker/sensory_prices.Dockerfile }
+    restart: unless-stopped
+    <<: *common-env
+    depends_on: [redis, sage-core]
+    mem_limit: 128m
+
+  # ── Scenario Agent (System 2 — GPU) ─────────────────────────────────────────
+
+  scenario-agent:
+    build: { context: ., dockerfile: docker/scenario_agent.Dockerfile }
+    restart: unless-stopped
+    <<: *common-env
+    depends_on: [sage-core]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    mem_limit: 2g
+
+  # ── Procurement + Reserve Agents (Systems 3 + 4) ────────────────────────────
+
+  alt-procurement-agent:
+    build: { context: ., dockerfile: docker/alt_procurement_agent.Dockerfile }
+    restart: unless-stopped
+    <<: *common-env
+    depends_on: [sage-core]
+    mem_limit: 512m
+
+  reserve-optim-agent:
+    build: { context: ., dockerfile: docker/reserve_optim_agent.Dockerfile }
+    restart: unless-stopped
+    <<: *common-env
+    depends_on: [sage-core]
+    mem_limit: 256m
+
+  # ── Visualizer Agent (System 5) ──────────────────────────────────────────────
+
+  api-gateway:
+    build: { context: ., dockerfile: docker/api_gateway.Dockerfile }
+    restart: unless-stopped
+    <<: *common-env
+    depends_on: [sage-core]
+    ports:
+      - "8000:8000"           # only exposed port besides frontend
+    mem_limit: 512m
+
+  frontend:
+    build: { context: ./visualizer_agent/frontend, dockerfile: Dockerfile }
+    restart: unless-stopped
+    depends_on: [api-gateway]
+    ports:
+      - "80:80"
+      - "443:443"
+    mem_limit: 128m
+
+volumes:
+  falkordb_data:   # mount to separate EBS in production: /var/lib/falkordb
+  wiki_data:       # /wiki narrative synthesis pages
