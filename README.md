@@ -140,6 +140,147 @@ Sandbox outputs are never written as `RISK_STATE` on live nodes. Speculative ris
 
 ---
 
+## Knowledge Base — Contracts & Schema
+
+The knowledge base is the only module that writes to Graphiti/FalkorDB. Everything else talks to it through a typed API. The schema and contracts are the **Week-1 lock-in artifact** — four people build in parallel against these, so stability matters more than perfection.
+
+Full normative spec: [`.claude/design/SAGE_Schema_and_Contracts_Spec.md`](.claude/design/SAGE_Schema_and_Contracts_Spec.md)
+
+---
+
+### The Three Stores
+
+| Store | What | Where | Owner |
+|---|---|---|---|
+| **Episodic subgraph** | Every synthesized episode node, non-lossy, with `MENTIONS` edges back to extracted entities. Ground-truth provenance. | FalkorDB (Graphiti-managed) | Graphiti |
+| **Semantic entity subgraph** | Typed entity nodes + typed edges + validity windows (bitemporal) + 1024-D embeddings for hybrid search. | FalkorDB (Graphiti-managed) | Graphiti |
+| **/wiki store** | One Markdown file per entity — the reconciled, human-readable intelligence page. Git-versioned history. | `knowledge/wiki/` (Docker volume) | SAGE (`knowledge/synthesis.py`) |
+
+All three are written in one sequence by `knowledge/api/write.py:ingest_signal()`. No other code path writes to any store.
+
+---
+
+### The 7 Contracts
+
+Every contract is a Python Pydantic v2 `BaseModel`. All carry `schema_version`. Consumers assert on the major version at startup.
+
+#### C0 — Connection
+```python
+from knowledge.connection import build_graphiti, bootstrap
+# FalkorDriver(database='sage') passed as graph_driver= to Graphiti()
+# database must never be None — silently falls back to default_db otherwise
+```
+
+#### C1 — Normalized Signal (`contracts/signal.py`)
+The common envelope all four `sensory_agent` sub-agents emit onto the Redis queue. Stable envelope + per-source `payload` pocket so sub-agents evolve independently.
+
+```python
+class NormalizedSignal(BaseModel):
+    signal_id: str           # ULID/UUID
+    source: Literal["ais", "gdelt", "news", "sanctions", "price"]
+    observed_at: datetime    # when true in the world → becomes Graphiti reference_time
+    priority_hint: Literal["HIGH", "MED", "LOW"]
+    force_synthesis: bool    # True bypasses triage gate (sanctions adds, BOCD breakpoints)
+    entity_refs: list[str]   # display names of affected entities
+    summary: str             # one-line description
+    payload: dict            # source-specific fields (AisPayload, EventPayload, etc.)
+```
+
+#### C2 — Entity Ontology (`knowledge/schema/entities.py`)
+11 node types passed to `graphiti.add_episode(entity_types=ENTITY_TYPES)`. Every field is `Optional` — required fields cause extraction failures. Docstrings and `Field(description=...)` are read verbatim by the extraction LLM; write them carefully.
+
+| Entity | What it represents |
+|---|---|
+| `Corridor` | Maritime chokepoint — Hormuz, Bab-el-Mandeb, Suez. `choke_severity` 0–1, H3 cells. |
+| `Supplier` | Crude exporting org — Saudi Aramco, NIOC. `daily_export_mbpd`, `sanctioned`. |
+| `Refinery` | Processing plant — Jamnagar, Mangaluru. `inventory_days`, lat/lon. |
+| `CrudeGrade` | Oil assay — Arab Medium, Bonny Light. `api_gravity`, `sulfur_pct`. |
+| `Port` | Physical terminal — Vadinar, Yanbu. `draft_m`, `congestion`. |
+| `SPRCavern` | Reserve site — Vizag (1.33 MMT), Mangaluru (1.5), Padur (2.5). |
+| `Vessel` | Individual tanker by MMSI. `sanctioned`, `operator` (beneficial owner). |
+| `GeoEvent` | Discrete event — IRGC exercise, Houthi strike. `event_time`, `severity`. |
+| `Authority` | Sanctioning body — OFAC, EU, UN. Referenced by `SANCTIONED_BY` edges. |
+| `PendingScenario` | Speculative sandbox fork. `confidence`, `status` (speculative→promoted→expired). |
+| `ScenarioOutput` | Confirmed cascade result anchored to an entity. |
+
+#### C3 — Edge Ontology (`knowledge/schema/edges.py`)
+9 edge types + `EDGE_TYPE_MAP`. The `("Entity","Entity")` wildcard covers `RISK_STATE` and `AFFECTS_SCENARIO` — valid between any node pair.
+
+```
+Supplier   ──EXPORTS_VIA──►  Corridor
+Corridor   ──FEEDS──────────►  Port
+Port       ──SUPPLIES───────►  Refinery
+Refinery   ──CONFIGURED_FOR─►  CrudeGrade   (carries yield_pct, compatibility 0–1)
+Vessel     ──SANCTIONED_BY──►  Authority    (carries list_name, effective_date)
+Supplier   ──SANCTIONED_BY──►  Authority
+Supplier   ──BYPASS_ROUTE───►  Port         (carries cost_premium USD/bbl, added_days)
+Refinery   ──FEEDS_RESERVE──►  SPRCavern
+(any)      ──RISK_STATE─────►  (any)        ⭐ see C4
+(any)      ──AFFECTS_SCENARIO► (any)        links entity to its PendingScenario/ScenarioOutput
+```
+
+#### C4 — RISK_STATE Edge ⭐ (`knowledge/schema/edges.py:RiskState`)
+The contract the autonomous loop runs on. **Field names are frozen after Week-1 sign-off.** Computed by `sensory_agent`, stored by SAGE, polled by the LangGraph monitor every 30s.
+
+```python
+class RiskState(BaseModel):
+    score: float          # fused risk 0–1
+    band: str             # computed by SAGE at write time — never re-derive downstream
+    factor_ais: float     # AIS / dark-vessel contribution
+    factor_gdelt: float   # news / GDELT tone contribution
+    factor_price: float   # price / war-risk-premium contribution
+    factor_sanctions: float
+    rationale: str        # one-line driver explanation
+    model_version: str    # which fusion model produced this
+```
+
+Risk bands (`contracts/bands.py`) — single source of truth:
+
+| Band | Score | What fires | UI colour |
+|---|---|---|---|
+| `calm` | < 0.25 | — | phosphor green |
+| `watch` | 0.25 – 0.45 | — | cyan |
+| `elevated` | 0.45 – 0.70 | sandbox fork if P(crossing in 24h) > 0.5 | amber |
+| `action` | 0.70 – 0.90 | promote sandbox / fire Systems 2–4 | red |
+| `critical` | ≥ 0.90 | immediate human escalation | pulsing red |
+
+#### C5 — Output Episodes (`contracts/outputs.py`)
+Systems 2/3/4 write results through typed data models. All outputs carry `scenario_id` so the full chain (signal → scenario → procurement → SPR) is retrievable in one graph hop.
+
+| Model | Written by | Key fields |
+|---|---|---|
+| `ScenarioOutputData` | `scenario_agent` | `gap_mbpd`, `feedstock_gap_timeline[]`, `price_impact_low/high`, `spr_depletion_days`, `assumptions{}` |
+| `ProcurementRecData` | `alt_procurement_agent` | `ranked: list[ProcurementOption]` — each with `topsis_score`, `grade_compatibility`, `rationale` |
+| `SPRScheduleData` | `reserve_optim_agent` | `daily_plan: list[SPRDay]`, `prob_above_buffer`, `policy_memo` |
+
+#### C6 — Sandbox / PendingScenario
+Lifecycle of a speculative fork: `speculative` → `promoted` (on threshold crossing, ≤30s) → `expired` (72h TTL with no crossing). Speculative outputs are **never** written as `RISK_STATE` on live nodes.
+
+#### C7 — Read/Write API (`knowledge/api/`)
+The only interface all other agents use. Returns typed `*View` Pydantic models — never raw Graphiti internals.
+
+```python
+# Write (knowledge/api/write.py)
+ingest_signal(signal: NormalizedSignal) -> IngestResult    # sensory_agent entry point
+write_scenario(data: ScenarioOutputData) -> EpisodeRef     # scenario_agent
+write_procurement(data: ProcurementRecData) -> EpisodeRef  # alt_procurement_agent
+write_spr_schedule(data: SPRScheduleData) -> EpisodeRef    # reserve_optim_agent
+write_pending(confidence, projected_crossing_hours, scenario_ref) -> EpisodeRef
+promote_pending(scenario_ref: str) -> EpisodeRef           # LangGraph monitor on crossing
+
+# Read (knowledge/api/read.py)
+get_risk_scores() -> list[RiskScoreView]          # monitor + visualizer — all RISK_STATE edges
+get_subgraph(entity, hops=2) -> SubgraphView      # scenario_agent — cascade initialisation
+get_available_suppliers(risk_max=0.4) -> list[SupplierView]   # procurement — risk < max, not sanctioned
+get_grade_specs(refinery) -> list[GradeSpecView]  # procurement — CONFIGURED_FOR edges
+get_routes(risk_max=0.5) -> list[CorridorView]    # procurement — open corridors
+get_spr_state() -> list[SPRCavernView]            # reserve — Vizag/Mangaluru/Padur fill levels
+copilot_query(q: str) -> CopilotAnswer            # visualizer — EA-GraphRAG routed, cited
+get_wiki_page(entity: str) -> WikiPage            # visualizer — narrative page on node click
+```
+
+---
+
 ## Team Ownership
 
 | Module | Owner |
