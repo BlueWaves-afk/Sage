@@ -281,6 +281,267 @@ get_wiki_page(entity: str) -> WikiPage            # visualizer — narrative pag
 
 ---
 
+## Wiring an Agent to the Knowledge Base
+
+The KB exposes one import surface: `knowledge/api/read.py` and `knowledge/api/write.py`. No agent ever imports `graphiti_core`, `falkordb`, or any other KB internals. This section is the complete integration guide for any agent — current or future.
+
+---
+
+### 0. One-time startup (container entrypoint)
+
+Every container that uses the KB must call `init()` once before any read or write. This connects to FalkorDB, builds indices, and seeds edge types.
+
+```python
+# In your container's startup / FastAPI lifespan / LangGraph entry
+from knowledge.connection import init as kb_init
+await kb_init()   # idempotent — safe to call on every boot
+```
+
+After `init()`, all KB functions are safe to call from any async context.
+
+---
+
+### 1. Writing signals (sensory_agent)
+
+System 1 sub-agents push `NormalizedSignal` onto the Redis queue. The KB consumer loop picks them up and runs the full triage → synthesis → graph pipeline automatically. Sub-agents never call `ingest_signal()` directly.
+
+```python
+# sensory_agent/ais.py  (or news.py / sanctions.py / prices.py)
+from contracts.signal import NormalizedSignal, AisPayload
+from knowledge.ingest_queue import push_signal
+
+signal = NormalizedSignal(
+    signal_id="ais-20260228-001",
+    source="ais",
+    observed_at=datetime.now(timezone.utc),
+    ingested_at=datetime.now(timezone.utc),
+    priority_hint="HIGH",
+    force_synthesis=True,           # dark vessel → bypass triage gate
+    entity_refs=["Strait of Hormuz", "MT Destiny"],
+    h3_cells=["8526800bfffffff"],
+    summary="MT Destiny went AIS-dark near Larak Island — 6h gap, SAR confirmed",
+    payload=AisPayload(
+        mmsi="123456789", dark_vessel=True, anomaly_score=0.92, gap_hours=6.0
+    ).model_dump(),
+)
+await push_signal(signal)   # pushes to Redis; consumer handles the rest
+```
+
+**Sanctions and price changepoints** set `force_synthesis=True` to bypass similarity triage — they are always written immediately.
+
+---
+
+### 2. Writing risk state (after fusion aggregation)
+
+After the fusion model aggregates signals for a 30-second window, call `write_risk_state()` directly. This is the only function that creates `RISK_STATE` edges on live nodes.
+
+```python
+from knowledge.api.write import write_risk_state
+
+await write_risk_state(
+    entity="Strait of Hormuz",
+    score=0.73,
+    factor_ais=0.41,
+    factor_gdelt=0.55,
+    factor_price=0.30,
+    factor_sanctions=0.00,
+    rationale="3 dark-vessel gaps + BOCD price breakpoint",
+    model_version="gbm-platt-v1.0",
+    observed_at=datetime.now(timezone.utc),
+)
+```
+
+> **Isolation rule:** never call `write_risk_state()` from the sandbox. Speculative risk uses `write_pending()` only.
+
+---
+
+### 3. Reading risk scores (LangGraph monitor)
+
+```python
+from knowledge.api.read import get_risk_scores
+from contracts.bands import ACTION_THRESHOLD, CRITICAL_THRESHOLD
+
+scores = await get_risk_scores()   # list[RiskScoreView]
+
+for view in scores:
+    print(view.entity, view.score, view.band)
+    # view.factors → {"ais": 0.41, "gdelt": 0.55, "price": 0.30, "sanctions": 0.00}
+    # view.valid_at, view.recorded_at → bitemporal timestamps
+
+    if view.score >= ACTION_THRESHOLD:
+        # fire systems 2/3/4
+        pass
+```
+
+`RiskScoreView` matches the canonical JSON shape from §6.2 of the schema spec exactly.
+
+---
+
+### 4. Reading subgraph for cascade modelling (scenario_agent)
+
+```python
+from knowledge.api.read import get_subgraph
+
+subgraph = await get_subgraph("Strait of Hormuz", hops=2)
+# subgraph.nodes → list of entity dicts with uuid, display_name, labels, attributes
+# subgraph.edges → list of edge dicts with relation_type, fact, valid_at, attributes
+```
+
+Use `subgraph.nodes` to initialise the ARIO IO matrix. Use `subgraph.edges` to identify which suppliers, ports, and refineries are connected to the disrupted corridor.
+
+---
+
+### 5. Writing scenario/procurement/SPR outputs (Systems 2/3/4)
+
+Each system calls its dedicated write function. The function builds episode prose, writes to Graphiti, and creates an `AFFECTS_SCENARIO` edge back to the trigger entity so the copilot can retrieve the full chain in one hop.
+
+```python
+# scenario_agent
+from knowledge.api.write import write_scenario
+from contracts.outputs import ScenarioOutputData
+
+result = await write_scenario(ScenarioOutputData(
+    scenario_id="sc-20260228-001",
+    trigger_entity="Strait of Hormuz",
+    status="confirmed",
+    confidence=0.85,
+    gap_mbpd=1.2,
+    gap_duration_days=14.0,
+    feedstock_gap_timeline=[1.1, 1.2, 1.3, 1.2, 1.1, 1.0, 0.9],
+    price_impact_low=8.0,
+    price_impact_high=22.0,
+    spr_depletion_days=6.5,
+    assumptions={"import_dependence_pct": {"value": 88.2, "unit": "%", "source": "PPAC 2025"}},
+))
+# result.episode_uuid  — reference this in subsequent procurement/SPR writes
+
+# alt_procurement_agent
+from knowledge.api.write import write_procurement
+from contracts.outputs import ProcurementRecData, ProcurementOption, ScoreBreakdown
+
+await write_procurement(ProcurementRecData(
+    scenario_id="sc-20260228-001",
+    status="confirmed",
+    ranked=[
+        ProcurementOption(
+            supplier="Saudi Aramco", grade="Arab Light", route_via="Yanbu bypass",
+            landed_cost_usd_bbl=85.30, lead_time_days=12.0,
+            grade_compatibility=0.92, corridor_risk=0.18, topsis_score=0.87,
+            score_breakdown=ScoreBreakdown(
+                cost_score=0.78, lead_time_score=0.85,
+                grade_compatibility_score=0.92, corridor_risk_score=0.82,
+            ),
+            rationale="Yanbu pipeline bypasses Hormuz entirely...",
+        )
+    ],
+))
+
+# reserve_optim_agent
+from knowledge.api.write import write_spr_schedule
+from contracts.outputs import SPRScheduleData, SPRDay
+
+await write_spr_schedule(SPRScheduleData(
+    scenario_id="sc-20260228-001",
+    status="confirmed",
+    daily_plan=[
+        SPRDay(day=1, action="draw", volume_mmt=0.18,
+               reserve_after_mmt=5.15, days_cover_after=9.2,
+               decision_driver="gap onset — begin draw"),
+    ],
+    prob_above_buffer=0.96,
+    constraint_satisfied=True,
+    policy_memo="Draw at 0.18 MMT/day for 14 days...",
+))
+```
+
+---
+
+### 6. Reading supply chain state for procurement routing (alt_procurement_agent)
+
+```python
+from knowledge.api.read import get_available_suppliers, get_grade_specs, get_routes
+
+# Suppliers with risk < 0.4, not sanctioned
+suppliers = await get_available_suppliers(risk_max=0.4)
+for s in suppliers:
+    print(s.display_name, s.country, s.daily_export_mbpd, s.risk_score)
+
+# Crude grades compatible with a specific refinery
+grades = await get_grade_specs("Jamnagar")
+for g in grades:
+    print(g.grade, g.api_gravity, g.sulfur_pct, g.compatibility)
+
+# Corridors below risk threshold
+routes = await get_routes(risk_max=0.5)
+for r in routes:
+    print(r.display_name, r.risk_score, r.h3_cells)
+```
+
+---
+
+### 7. Reading SPR state (reserve_optim_agent)
+
+```python
+from knowledge.api.read import get_spr_state
+
+caverns = await get_spr_state()
+total_fill = sum(c.current_fill_mmt or 0 for c in caverns)
+# India total capacity: 5.33 MMT (Vizag 1.33 + Mangaluru 1.50 + Padur 2.50)
+```
+
+---
+
+### 8. Copilot and wiki (visualizer_agent)
+
+```python
+from knowledge.api.read import copilot_query, get_wiki_page
+
+# EA-GraphRAG routed copilot
+answer = await copilot_query("Why did the Hormuz risk score spike and which refineries are most exposed?")
+print(answer.answer)      # Nova Pro synthesised prose
+print(answer.citations)   # list of Graphiti episode UUIDs cited
+print(answer.route)       # "vector" | "graph" — which search path was used
+print(answer.latency_ms)  # ~380ms (vector) or ~1,800ms (graph)
+
+# Narrative wiki page (shown on node click in the map)
+page = await get_wiki_page("Strait of Hormuz")
+print(page.content)        # Markdown prose from /wiki store
+print(page.last_updated)
+```
+
+---
+
+### 9. Sandbox / speculative lifecycle
+
+```python
+# sandbox.py — write a speculative PendingScenario (NEVER write_risk_state here)
+from knowledge.api.write import write_pending, promote_pending
+
+ref = await write_pending(
+    confidence=0.73,
+    projected_crossing_hours=18.0,
+    scenario_ref="sandbox-abc12345",
+    entity="Strait of Hormuz",
+)
+
+# When the monitor confirms a real crossing, promote it
+episode = await promote_pending("sandbox-abc12345")
+# This flips status → promoted and hooks into the feedback loop
+```
+
+---
+
+### 10. Adding a new agent — checklist
+
+1. **Do not import** `graphiti_core`, `falkordb`, `knowledge.connection`, or `knowledge.triage` — only `knowledge/api/read.py` and `knowledge/api/write.py`.
+2. Call `await kb_init()` once in your container startup before any KB call.
+3. If your agent **writes** a new output type, add a `write_<type>()` function to `knowledge/api/write.py` and a matching typed model to `contracts/outputs.py`. Don't call `add_episode()` directly.
+4. If your agent **reads** a new view, add a `get_<thing>()` function to `knowledge/api/read.py` and a typed `*View` model. Don't return raw Graphiti objects.
+5. All new entity types go in `knowledge/schema/entities.py` (update `ENTITY_TYPES` dict). All new edge types go in `knowledge/schema/edges.py` (update `EDGE_TYPES` and `EDGE_TYPE_MAP`). Bump `SCHEMA_VERSION` on breaking changes.
+6. Check the import boundary in `CLAUDE.md` before submitting — `ruff` will not catch cross-module leakage.
+
+---
+
 ## Team Ownership
 
 | Module | Owner |
