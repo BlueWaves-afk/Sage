@@ -115,10 +115,12 @@ async def ingest_signal(signal: NormalizedSignal) -> IngestResult:
         )
 
     if decision == "synthesize":
-        from knowledge.synthesis import render_wiki_page, write_wiki_page
+        from knowledge.synthesis import write_wiki_page
+        from knowledge.wikilink_processor import validate_page as _validate_page
 
         # Full narrative synthesis per entity_ref. persist=False defers the wiki
         # write until the graph write succeeds, so the stores can't drift.
+        # synthesize() now returns a complete page with frontmatter + wikilinks.
         entity_refs = signal.entity_refs or [signal.summary[:60]]
         entity_texts: list[tuple[str, str]] = []
 
@@ -126,10 +128,17 @@ async def ingest_signal(signal: NormalizedSignal) -> IngestResult:
             text = await synthesize(signal=signal, entity=entity, persist=False)
             entity_texts.append((entity, text))
 
-        # Episode body holds BOTH the synthesized prose (primary, semantic) AND
-        # the verbatim raw signal (provenance, non-lossy) so Store 1 stays a
-        # complete record of ground truth, not just the derived assessment.
-        synth_join   = "\n\n---\n\n".join(text for _, text in entity_texts)
+        # Episode body: strip frontmatter so Graphiti gets clean prose (not YAML).
+        # Provenance block is appended so Store 1 holds the non-lossy ground truth.
+        def _body_only(page: str) -> str:
+            if not page.startswith("---"):
+                return page
+            try:
+                return page[page.index("---", 3) + 3:].strip()
+            except ValueError:
+                return page
+
+        synth_join   = "\n\n---\n\n".join(_body_only(text) for _, text in entity_texts)
         episode_body = f"{synth_join}\n\n{_render_raw_signal(signal)}"
         episode_name = f"{signal.source}_{signal.signal_id}"
 
@@ -155,9 +164,17 @@ async def ingest_signal(signal: NormalizedSignal) -> IngestResult:
             log.error("add_episode failed for signal %s: %s", signal.signal_id, exc)
             raise
 
-        # Graph write committed — now it is safe to persist the wiki pages.
+        # Graph write committed — validate and persist wiki pages.
+        # Hard validation errors keep the old page; soft warnings pass through.
         for entity, text in entity_texts:
-            write_wiki_page(entity, render_wiki_page(entity, text))
+            errors = _validate_page(text)
+            if errors:
+                log.warning(
+                    "Wiki page for '%s' failed validation (keeping old page): %s",
+                    entity, errors,
+                )
+            else:
+                write_wiki_page(entity, text)
 
         return IngestResult(
             signal_id=signal.signal_id,
@@ -285,13 +302,24 @@ async def write_risk_state(
         edge_type_map=EDGE_TYPE_MAP,
     )
 
-    # Graph committed — append the risk block to the wiki (preserve narrative).
+    # Graph committed — update only the risk frontmatter fields in place.
+    # Body prose and [[wikilinks]] are preserved; no appended blocks accumulate.
+    from knowledge.wikilink_processor import update_frontmatter_risk
     current = load_wiki_page(entity)
-    risk_section = (
-        f"\n\n---\n**Risk Assessment** _{now.strftime('%Y-%m-%d %H:%M UTC')}_\n\n"
-        f"{episode_text}"
+    updated = update_frontmatter_risk(
+        content=current,
+        score=score,
+        band=band,
+        factors={
+            "ais":       factor_ais,
+            "gdelt":     factor_gdelt,
+            "price":     factor_price,
+            "sanctions": factor_sanctions,
+        },
+        valid_at=now.isoformat(),
+        last_updated=now.isoformat(),
     )
-    write_wiki_page(entity, current.rstrip() + risk_section)
+    write_wiki_page(entity, updated)
 
     return EpisodeRef(episode_uuid=episode_uuid)
 

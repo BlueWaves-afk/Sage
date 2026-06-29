@@ -12,6 +12,7 @@ dependencies = [
     # Knowledge base
     "graphiti-core[falkordb]",
     "pydantic>=2.0",
+    "pyyaml>=6.0",
     # Orchestration
     "langgraph",
     "langchain-core",

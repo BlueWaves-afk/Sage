@@ -41,6 +41,15 @@ SYNTH_THRESHOLD   = 0.72
 EXTRACT_THRESHOLD = 0.40
 CACHE_TTL_S       = 300   # 5 minutes
 
+# Sources that NEVER produce standalone wiki prose — they contribute numeric
+# factors to the risk score and may trigger re-synthesis of affected entities,
+# but never author a wiki page on their own.
+# AIS: telemetry, not narrative. Price: a number, not prose.
+_NUMERIC_SOURCES: frozenset[str] = frozenset({"ais", "price"})
+
+# Sources that always bypass similarity scoring and go straight to (light) synthesis.
+_ALWAYS_SYNTH_SOURCES: frozenset[str] = frozenset({"sanctions"})
+
 # In-memory embedding cache: entity_name → (embedding, expiry_timestamp)
 _embed_cache: dict[str, tuple[list[float], float]] = {}
 _cache_lock = asyncio.Lock()
@@ -50,23 +59,33 @@ async def triage(signal: NormalizedSignal) -> tuple[TriageDecision, float]:
     """
     Returns (decision, similarity_score).
 
-    similarity_score is:
-      1.0 if force_synthesis
-      max cosine similarity across entity_refs if available
-      0.0 if no entity_refs (store raw)
+    Source-aware routing (applied before similarity scoring):
+      ais / price  → always "extract" (numeric factor, never narrative prose)
+      sanctions    → always "synthesize" (structured facts, always significant)
+      news / gdelt → similarity-based (expensive path for rich content only)
+
+    force_synthesis=True is respected for news/gdelt/sanctions but is BLOCKED
+    for ais/price — numeric sources must never trigger narrative synthesis regardless
+    of sub-agent priority hint.
     """
-    if signal.force_synthesis:
+    source = signal.source
+
+    # ── Numeric sources: always extract, never synthesize ─────────────────────
+    if source in _NUMERIC_SOURCES:
+        return "extract", 1.0
+
+    # ── Sanctions: always synthesize (high importance, structured facts) ───────
+    if source in _ALWAYS_SYNTH_SOURCES or signal.force_synthesis:
         return "synthesize", 1.0
 
     if not signal.entity_refs:
         return "store", 0.0
 
-    # Embed the incoming signal summary
+    # ── News / GDELT: similarity-based ────────────────────────────────────────
     signal_embedding = await _embed_text(signal.summary)
     if not signal_embedding:
         return "store", 0.0
 
-    # Compute cosine similarity against each entity_ref's name embedding
     max_sim = 0.0
     for entity_name in signal.entity_refs:
         entity_embedding = await _get_entity_embedding(entity_name)
