@@ -646,3 +646,450 @@ Priority order for KB team to fix before System 1 is connected:
 | P1 | Entity name resolver (§6.5) | `knowledge/entity_resolver.py` (new) | Duplicate nodes created for same entity with variant names |
 | P2 | `source_episodes` tracking (§6.4) | `knowledge/api/write.py`, `knowledge/synthesis.py` | No citation audit trail in wiki pages |
 | P2 | Block `force_synthesis=True` for AIS/price (§6.6) | `knowledge/ingest_queue.py` | AIS HIGH signals could bypass triage source-routing fix |
+
+---
+
+## 10. Entity Resolution — Which Node and Which .md File
+
+This is the make-or-break detail for the whole knowledge base. Get it wrong and you either create duplicate nodes (two "Hormuz" pages, two "Strait of Hormuz" graph nodes) or write to the wrong entity entirely.
+
+There are **two separate resolution mechanisms** operating at two different layers. Conflating them is where confusion creeps in.
+
+- **Layer 1 — Wiki routing (SAGE layer):** which `.md` file to load before synthesis runs
+- **Layer 2 — Graph routing (Graphiti layer):** which entity node the synthesized episode attaches to
+
+These use different mechanisms because they operate on different things. Graphiti resolves from extracted text using embeddings + LLM. The wiki layer must resolve *before* synthesis runs so it can load the right current page to reconcile against. Wiki routing happens first.
+
+---
+
+### 10.1 Layer 1 — Wiki Routing (SAGE Layer, Before Synthesis)
+
+**The critical design point:** `entity_refs` are attached during System 1's detection, not guessed at synthesis time. Each stream's detector knows what it's looking at before the signal ever reaches the KB:
+
+| Stream | How `entity_refs` is populated | Mechanism |
+|---|---|---|
+| **AIS** | H3 cell → entity lookup in canonical registry | `CELL_TO_ENTITY["8a2a1072b59ffff"] == "corridor_hormuz"` |
+| **Price** | Instrument → entity mapping in canonical registry | `INSTRUMENT_TO_ENTITY["BZ=F"] == ["corridor_hormuz", "global_market"]` |
+| **Sanctions** | Named entity in structured OFAC/EU/UN record | Literal string extraction — "MT Destiny" is in the XML |
+| **News / GDELT** | Nova Micro extraction pass against registry | LLM returns candidate names; matched against registry aliases + embedding fallback |
+
+By the time any signal reaches `ingest_signal()`, `entity_refs` is already populated. The wiki router then does something simple and deterministic:
+
+```python
+# In knowledge/api/write.py → ingest_signal(), synthesis path
+for entity_id in signal.entity_refs:
+    page = load_wiki(entity_id)          # /wiki/{entity_id}.md
+    synthesized_text = await synthesize(signal, entity=entity_id, current_page=page)
+    save_wiki(entity_id, synthesized_text)
+```
+
+The `.md` file is keyed by `entity_id` directly. `corridor_hormuz` → `/wiki/corridor_hormuz.md`. There is no ambiguity at this layer — resolution already happened in the detector.
+
+**Current KB mismatch:** The KB currently uses `entity` (display name string like `"Strait of Hormuz"`) as the wiki key, deriving the slug via `entity.lower().replace(" ", "_")`. This works only if every sub-agent uses the exact same string. The canonical registry (§10.3) replaces this with `entity_id` as the key — a stable, lowercase, underscore-separated identifier that doesn't depend on display-name formatting.
+
+---
+
+### 10.2 Layer 2 — Graph Routing (Graphiti Layer, During Write)
+
+Once synthesis runs and `add_episode()` is called with the synthesized text, Graphiti does its own entity resolution independently. It reads the synthesized text, extracts entities, and for each one checks whether it already exists in the graph using embedding similarity + an LLM confirmation step.
+
+**The alignment problem:** If the wiki router decided this signal is about `corridor_hormuz` but Graphiti's extraction creates a new "Hormuz Strait" node because it didn't recognise the existing "Strait of Hormuz" node, the two stores have diverged. The wiki updated one entity; the graph created a different one.
+
+**Three mechanisms keep them aligned:**
+
+1. **Canonical name in the synthesized text.** When synthesis runs for `corridor_hormuz`, the synthesized text always opens with `"Strait of Hormuz"` (the canonical display name from the registry). Graphiti's extractor sees the canonical form, not an alias. This is the primary alignment mechanism.
+
+2. **Strong type docstrings.** The `Corridor` entity docstring says: *"e.g. 'Strait of Hormuz', 'Bab-el-Mandeb', 'Suez Canal'"*. This example acts as an anchor for Graphiti's classifier — it collapses "Hormuz", "the Strait", "SoH" onto the same node because it's seen the canonical name as an example.
+
+3. **Explicit entity assertion (robust path).** Because the wiki router already resolved the entity from the registry, SAGE doesn't have to let Graphiti rediscover it from scratch. The synthesis text can assert the entity explicitly:
+
+```python
+# In synthesize() — always open with the canonical name so Graphiti anchors correctly
+episode_text = (
+    f"Strait of Hormuz — intelligence update {observed_at}.\n"   # canonical name first
+    f"{synthesized_assessment}\n"
+    f"{risk_block}\n"
+)
+```
+
+If Graphiti still creates a duplicate despite this (a known Graphiti footgun on first-time extraction), `add_triplet()` can be used to explicitly assert the entity by its known UUID — but that requires knowing the UUID, which means a prior graph lookup. For the hackathon, the canonical-name-first approach is sufficient.
+
+---
+
+### 10.3 The Canonical Entity Registry — The Shared Key Space
+
+For both layers to agree, you need a single source of truth for entity identity. This is a piece that must be built. Without it, alias resolution is ad-hoc and sub-agents will silently create duplicate entities.
+
+**Location:** `knowledge/registry.py` (new file to build)
+
+**Structure:**
+
+```python
+# knowledge/registry.py
+from dataclasses import dataclass, field
+
+@dataclass
+class EntityRegistryEntry:
+    entity_id:      str          # stable key: e.g. "corridor_hormuz"
+    entity_type:    str          # C2 type: "Corridor" | "Supplier" | ...
+    canonical_name: str          # exact string used in wiki files and graph episodes
+    aliases:        list[str]    # all variants that resolve to this entity
+    h3_cells:       list[str] = field(default_factory=list)   # AIS routing (Corridor/Port only)
+    instruments:    list[str] = field(default_factory=list)   # price routing (market entities)
+    coordinates:    dict     = field(default_factory=dict)    # lat/lon for spatial entities
+
+REGISTRY: dict[str, EntityRegistryEntry] = {
+    # ── Corridors ──────────────────────────────────────────────────────────────
+    "corridor_hormuz": EntityRegistryEntry(
+        entity_id="corridor_hormuz",
+        entity_type="Corridor",
+        canonical_name="Strait of Hormuz",
+        aliases=["Hormuz", "Hormuz Strait", "the Strait", "SoH", "Strait of Hormuz"],
+        h3_cells=["8a2a1072b59ffff", "8a2a1072b4fffff", "8a2a10728b7ffff"],   # Larak + Hormuz mouth
+        instruments=["BZ=F", "CL=F"],    # Brent and WTI price changepoints affect Hormuz
+        coordinates={"lat": 26.5, "lon": 56.4},
+    ),
+    "corridor_bab_el_mandeb": EntityRegistryEntry(
+        entity_id="corridor_bab_el_mandeb",
+        entity_type="Corridor",
+        canonical_name="Bab-el-Mandeb",
+        aliases=["Bab el Mandeb", "BAM", "Red Sea Strait", "Mandeb"],
+        h3_cells=["8a2a4d64b0fffff", "8a2a4d64b27ffff"],
+        instruments=["BZ=F"],
+        coordinates={"lat": 12.5, "lon": 43.3},
+    ),
+    "corridor_suez": EntityRegistryEntry(
+        entity_id="corridor_suez",
+        entity_type="Corridor",
+        canonical_name="Suez Canal",
+        aliases=["Suez", "the Canal", "SUMED", "Suez Canal Authority"],
+        h3_cells=["8a3900000007fff"],
+        coordinates={"lat": 30.7, "lon": 32.3},
+    ),
+    # ── Suppliers ──────────────────────────────────────────────────────────────
+    "supplier_aramco": EntityRegistryEntry(
+        entity_id="supplier_aramco",
+        entity_type="Supplier",
+        canonical_name="Saudi Aramco",
+        aliases=["Aramco", "Saudi Arabian Oil Company", "Aramco Trading"],
+    ),
+    "supplier_nioc": EntityRegistryEntry(
+        entity_id="supplier_nioc",
+        entity_type="Supplier",
+        canonical_name="NIOC",
+        aliases=["National Iranian Oil Company", "Iran National Oil", "NIOC Trading"],
+    ),
+    "supplier_adnoc": EntityRegistryEntry(
+        entity_id="supplier_adnoc",
+        entity_type="Supplier",
+        canonical_name="ADNOC",
+        aliases=["Abu Dhabi National Oil Company", "Abu Dhabi NOC"],
+    ),
+    "supplier_rosneft": EntityRegistryEntry(
+        entity_id="supplier_rosneft",
+        entity_type="Supplier",
+        canonical_name="Rosneft",
+        aliases=["Rosneft Oil", "PJSC Rosneft"],
+    ),
+    "supplier_iraqoil": EntityRegistryEntry(
+        entity_id="supplier_iraqoil",
+        entity_type="Supplier",
+        canonical_name="Iraqi Oil Ministry",
+        aliases=["SOMO", "State Organisation for Marketing of Oil", "Iraq oil"],
+    ),
+    # ── Refineries ─────────────────────────────────────────────────────────────
+    "refinery_jamnagar": EntityRegistryEntry(
+        entity_id="refinery_jamnagar",
+        entity_type="Refinery",
+        canonical_name="Jamnagar",
+        aliases=["Reliance Jamnagar", "RIL Jamnagar", "Jamnagar Refinery"],
+        coordinates={"lat": 22.5, "lon": 70.0},
+    ),
+    "refinery_mangaluru": EntityRegistryEntry(
+        entity_id="refinery_mangaluru",
+        entity_type="Refinery",
+        canonical_name="Mangaluru",
+        aliases=["MRPL Mangaluru", "Mangalore Refinery", "MRPL"],
+        coordinates={"lat": 12.9, "lon": 74.8},
+    ),
+    "refinery_paradip": EntityRegistryEntry(
+        entity_id="refinery_paradip",
+        entity_type="Refinery",
+        canonical_name="Paradip",
+        aliases=["IOCL Paradip", "Paradip Refinery", "IOC Paradip"],
+        coordinates={"lat": 20.3, "lon": 86.7},
+    ),
+    # ── Ports ──────────────────────────────────────────────────────────────────
+    "port_vadinar": EntityRegistryEntry(
+        entity_id="port_vadinar",
+        entity_type="Port",
+        canonical_name="Vadinar",
+        aliases=["Vadinar Port", "Vadinar Terminal", "Reliance Vadinar"],
+        coordinates={"lat": 22.5, "lon": 69.8},
+    ),
+    "port_yanbu": EntityRegistryEntry(
+        entity_id="port_yanbu",
+        entity_type="Port",
+        canonical_name="Yanbu",
+        aliases=["Yanbu Terminal", "Yanbu Al Bahr", "Yanbu port"],
+        coordinates={"lat": 24.1, "lon": 38.1},
+    ),
+    "port_sikka": EntityRegistryEntry(
+        entity_id="port_sikka",
+        entity_type="Port",
+        canonical_name="Sikka",
+        aliases=["Sikka Port", "Sikka Terminal", "IOCL Sikka"],
+        coordinates={"lat": 22.6, "lon": 69.9},
+    ),
+    # ── SPR Caverns ────────────────────────────────────────────────────────────
+    "spr_vizag": EntityRegistryEntry(
+        entity_id="spr_vizag",
+        entity_type="SPRCavern",
+        canonical_name="Vizag SPR",
+        aliases=["Visakhapatnam SPR", "Vizag cavern", "ISPRL Vizag"],
+        coordinates={"lat": 17.7, "lon": 83.3},
+    ),
+    "spr_mangaluru": EntityRegistryEntry(
+        entity_id="spr_mangaluru",
+        entity_type="SPRCavern",
+        canonical_name="Mangaluru SPR",
+        aliases=["Padur SPR Mangaluru", "ISPRL Mangaluru", "Mangalore SPR"],
+        coordinates={"lat": 12.9, "lon": 74.8},
+    ),
+    "spr_padur": EntityRegistryEntry(
+        entity_id="spr_padur",
+        entity_type="SPRCavern",
+        canonical_name="Padur SPR",
+        aliases=["Padur cavern", "ISPRL Padur", "Padur storage"],
+        coordinates={"lat": 13.1, "lon": 74.7},
+    ),
+    # ── Authorities ────────────────────────────────────────────────────────────
+    "authority_ofac": EntityRegistryEntry(
+        entity_id="authority_ofac",
+        entity_type="Authority",
+        canonical_name="OFAC",
+        aliases=["US Treasury OFAC", "Office of Foreign Assets Control", "Treasury SDN"],
+    ),
+    "authority_eu": EntityRegistryEntry(
+        entity_id="authority_eu",
+        entity_type="Authority",
+        canonical_name="EU",
+        aliases=["European Union", "EU sanctions", "Council of the EU"],
+    ),
+    "authority_un": EntityRegistryEntry(
+        entity_id="authority_un",
+        entity_type="Authority",
+        canonical_name="UN",
+        aliases=["United Nations", "UN Security Council", "UNSC"],
+    ),
+}
+
+# ── Lookup indices (built once at startup) ──────────────────────────────────────
+
+# H3 cell → entity_id  (AIS routing)
+H3_TO_ENTITY: dict[str, str] = {
+    cell: entry.entity_id
+    for entry in REGISTRY.values()
+    for cell in entry.h3_cells
+}
+
+# Instrument → list[entity_id]  (price routing)
+INSTRUMENT_TO_ENTITIES: dict[str, list[str]] = {}
+for entry in REGISTRY.values():
+    for inst in entry.instruments:
+        INSTRUMENT_TO_ENTITIES.setdefault(inst, []).append(entry.entity_id)
+
+# Alias (lowercase) → entity_id  (sanctions + news resolution)
+ALIAS_TO_ENTITY: dict[str, str] = {
+    alias.lower(): entry.entity_id
+    for entry in REGISTRY.values()
+    for alias in [entry.canonical_name] + entry.aliases
+}
+
+
+def resolve_name(name: str) -> str | None:
+    """Resolve a free-form name to an entity_id, or None if not in registry."""
+    return ALIAS_TO_ENTITY.get(name.lower())
+
+
+def resolve_h3(h3_cell: str) -> str | None:
+    """Resolve an H3 cell index to an entity_id, or None if cell not tracked."""
+    return H3_TO_ENTITY.get(h3_cell)
+
+
+def resolve_instrument(instrument: str) -> list[str]:
+    """Resolve a price instrument to the entity_ids it affects."""
+    return INSTRUMENT_TO_ENTITIES.get(instrument, [])
+
+
+def canonical_name(entity_id: str) -> str:
+    """Return the canonical display name for an entity_id."""
+    return REGISTRY[entity_id].canonical_name
+```
+
+---
+
+### 10.4 How Each Stream Populates `entity_refs` Using the Registry
+
+```python
+# ── AIS sub-agent ─────────────────────────────────────────────────────────────
+from knowledge.registry import resolve_h3, canonical_name
+
+entity_id = resolve_h3("8a2a1072b59ffff")   # → "corridor_hormuz"
+if entity_id:
+    signal = NormalizedSignal(
+        entity_refs=[canonical_name(entity_id)],   # "Strait of Hormuz"
+        ...
+    )
+```
+
+```python
+# ── Price sub-agent ───────────────────────────────────────────────────────────
+from knowledge.registry import resolve_instrument, canonical_name
+
+entity_ids = resolve_instrument("BZ=F")   # → ["corridor_hormuz", ...]
+signal = NormalizedSignal(
+    entity_refs=[canonical_name(eid) for eid in entity_ids],
+    ...
+)
+```
+
+```python
+# ── Sanctions sub-agent ───────────────────────────────────────────────────────
+from knowledge.registry import resolve_name, canonical_name
+
+# Named entities come directly from structured OFAC/EU/UN XML
+raw_name = "NIOC"                          # literal string from the XML record
+entity_id = resolve_name(raw_name)
+if entity_id:
+    entity_refs = [canonical_name(entity_id)]
+else:
+    # New entity — add to registry (see §10.5) or use raw name for extraction only
+    entity_refs = [raw_name]
+```
+
+```python
+# ── News / GDELT sub-agent ───────────────────────────────────────────────────
+# Step 1: Nova Micro extraction pass on the article
+candidate_names = await nova_micro_extract_entities(article_text)
+# returns e.g. ["IRGC", "Strait of Hormuz", "Larak Island", "MT Destiny"]
+
+# Step 2: resolve against registry (alias lookup + embedding fallback)
+from knowledge.registry import resolve_name, canonical_name, REGISTRY
+from knowledge.triage import _embed_text, _cosine
+
+entity_refs = []
+for name in candidate_names:
+    entity_id = resolve_name(name)   # alias lookup first (fast, deterministic)
+    if entity_id:
+        entity_refs.append(canonical_name(entity_id))
+    else:
+        # Embedding fallback: check cosine similarity against all canonical names
+        name_emb = await _embed_text(name)
+        best_sim, best_id = 0.0, None
+        for eid, entry in REGISTRY.items():
+            canon_emb = await _embed_text(entry.canonical_name)
+            sim = _cosine(name_emb, canon_emb)
+            if sim > best_sim:
+                best_sim, best_id = sim, eid
+        if best_sim > 0.88:            # high bar for embedding fallback
+            entity_refs.append(canonical_name(best_id))
+        # else: not a tracked entity — don't add to entity_refs (see §10.5)
+
+signal = NormalizedSignal(entity_refs=entity_refs, ...)
+```
+
+---
+
+### 10.5 The New-Entity Decision
+
+Both layers need a rule for signals that mention something not in the registry. A new tanker appears in OFAC. A new port becomes relevant. An actor not previously tracked shows up in GDELT.
+
+**Rule: admit a new entity only if it's connected to a tracked entity and crosses a significance bar.**
+
+| Scenario | Decision | Action |
+|---|---|---|
+| Newly-sanctioned vessel operated by a tracked supplier (NIOC) | **Admit** | Add `vessel_{mmsi}` to registry; create node + wiki page; write `SANCTIONED_BY` edge |
+| Minor port mentioned in passing in a news article, no connection to tracked entities | **Reject** | Signal stored as episode; entity not promoted; not added to registry |
+| New geopolitical actor (e.g. new IRGC unit name) directly threatening a tracked corridor | **Admit** | Add `geoevent_{slug}` to registry; create `GeoEvent` node |
+| Price instrument not in `INSTRUMENT_TO_ENTITIES` | **Reject** | Store raw; do not create entity |
+
+The triage gate already enforces the significance bar indirectly: LOW-relevance signals that mention untracked entities get `"store"` or `"extract"` decisions, meaning their entities don't get wiki pages or graph nodes. HIGH signals that mention a genuinely new connected entity should trigger a registry addition. This is a manual step during the hackathon — the sanctions sub-agent adds newly-sanctioned vessels to the registry at ingest time because it always has enough structured data (MMSI, operator) to create a well-formed entry.
+
+**How to add a new entity at runtime (sanctions example):**
+
+```python
+# In sensory_agent/sanctions.py — when a vessel not in registry is sanctioned
+from knowledge.registry import REGISTRY, ALIAS_TO_ENTITY, EntityRegistryEntry
+
+new_entry = EntityRegistryEntry(
+    entity_id=f"vessel_{mmsi}",
+    entity_type="Vessel",
+    canonical_name=vessel_name,          # e.g. "MT Destiny"
+    aliases=[vessel_name, mmsi, imo_number],
+)
+REGISTRY[new_entry.entity_id]  = new_entry
+for alias in [vessel_name, mmsi]:
+    ALIAS_TO_ENTITY[alias.lower()] = new_entry.entity_id
+# Now push the signal with entity_refs=[vessel_name, "NIOC"] — both resolve correctly
+```
+
+---
+
+### 10.6 Full Resolution Trace — AIS Anomaly End to End
+
+```
+1. AIS detector fires anomaly in H3 cell "8a2a1072b59ffff"
+   → resolve_h3("8a2a1072b59ffff") == "corridor_hormuz"
+   → signal.entity_refs = ["Strait of Hormuz"]
+
+2. Signal pushed to Redis sage:ingest
+   → ingest_queue.run_consumer_loop() pops it
+
+3. triage() runs
+   → source = "ais" → _NUMERIC_SOURCES → decision = "extract"
+   → (no wiki synthesis for this signal alone)
+
+4. _run_fusion_for_entity("Strait of Hormuz", [signal, ...])
+   → weighted-sum fusion on accumulated AIS buffer
+   → factor_ais = 0.31
+   → write_risk_state("Strait of Hormuz", score=0.62, factor_ais=0.31, ...)
+
+5. write_risk_state()
+   → add_episode("corridor_hormuz_risk_...", "Strait of Hormuz risk level is assessed at...")
+   → Graphiti extracts entity: "Strait of Hormuz" → matches existing Corridor node
+     (canonical name in episode text = unambiguous match)
+   → updates RISK_STATE edge: score=0.62, factor_ais=0.31, invalid_at=NULL
+   → _update_wiki_risk_frontmatter("Strait of Hormuz", score=0.62, ...)
+     → parses /wiki/strait_of_hormuz.md frontmatter
+     → updates risk_score, risk_band, factors.ais in place
+     → body (Current Assessment prose) unchanged until next synthesis
+
+6. If a related news article also arrives in the same flush window:
+   → triage() on news signal: similarity > 0.72 → "synthesize"
+   → synthesize("Strait of Hormuz", current_page=load_wiki("strait_of_hormuz"))
+   → LLM reconciles: "AIS dark gaps corroborate Reuters report"
+   → wiki Current Assessment rewritten, source_episodes updated
+   → add_episode("news_...", synthesized text) → Graphiti MENTIONS edge added
+```
+
+Both layers resolved to the same entity because:
+- Wiki router used `entity_refs=["Strait of Hormuz"]` (from H3 registry lookup)
+- Graphiti saw `"Strait of Hormuz"` as the first tokens of the episode body (canonical name)
+
+---
+
+### 10.7 Registry Wiring Checklist
+
+- [ ] `knowledge/registry.py` created with all 20 seed entities (3 corridors, 5 suppliers, 3 refineries, 3 ports, 3 SPR caverns, 3 authorities)
+- [ ] `H3_TO_ENTITY` populated with all H3 cells from `Corridor` entity `h3_cells` fields
+- [ ] `INSTRUMENT_TO_ENTITIES` wired to corridors and market entities affected by each instrument
+- [ ] `ALIAS_TO_ENTITY` covers all plausible variants for every tracked entity
+- [ ] AIS sub-agent imports `resolve_h3()` and uses it exclusively for `entity_refs` population
+- [ ] Price sub-agent imports `resolve_instrument()` and uses it exclusively
+- [ ] Sanctions sub-agent imports `resolve_name()` and adds new vessels via registry mutation at ingest
+- [ ] News sub-agent runs Nova Micro extraction, then `resolve_name()` + embedding fallback
+- [ ] All sub-agents call `canonical_name(entity_id)` to populate `entity_refs` — never free-form strings
+- [ ] `ingest_signal()` uses `entity_refs` as the wiki key directly (not re-inferring the entity from signal content)
+- [ ] `synthesize()` opens every episode body with `canonical_name(entity_id)` so Graphiti anchors correctly
+- [ ] New-entity admission logic: sanctions sub-agent mutates registry at runtime; others reject unrecognised entities
