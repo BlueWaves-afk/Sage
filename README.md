@@ -33,7 +33,7 @@ Five systems, one shared knowledge base, one autonomous orchestration loop.
                         │   Graphiti + FalkorDB + /wiki store     │
                         │   Three stores: episodic · graph · vec  │
                         └────────────────┬────────────────────────┘
-                                         │  read/write API only
+                                         │  typed read/write API only
           ┌──────────────┬───────────────┼───────────────┬──────────────┐
           ▼              ▼               ▼               ▼              ▼
    sensory_agent   scenario_agent  alt_procurement  reserve_optim  visualizer
@@ -54,356 +54,570 @@ The knowledge base is the nervous system — it receives signals, synthesizes th
 ```
 sage/
 │
-├── CLAUDE.md                          # AI assistant rules — structural laws, import boundaries, conventions
-├── README.md                          # this file
-├── pyproject.toml                     # single Python project; all packages discoverable via setuptools
-├── docker-compose.yml                 # 12-container deployment on EC2 g4dn.xlarge
-│
 ├── contracts/                         # shared Pydantic contracts — imported by every package, imports nothing
-│   ├── signal.py                      # NormalizedSignal: the common shape all sensory sub-agents emit
+│   ├── signal.py                      # NormalizedSignal: common envelope all sensory sub-agents emit
 │   ├── outputs.py                     # ScenarioOutputData, ProcurementRecData, SPRScheduleData
-│   └── bands.py                       # risk band thresholds (calm/watch/elevated/action/critical) — single source of truth
+│   └── bands.py                       # risk band thresholds (calm/watch/elevated/action/critical)
 │
 ├── knowledge/                         # the knowledge base — only module that talks to Graphiti/FalkorDB
 │   ├── connection.py                  # FalkorDriver bootstrap; build_indices_and_constraints()
-│   ├── triage.py                      # embedding similarity gate → synthesize / extract / store / drop
-│   ├── synthesis.py                   # Nova Pro wiki agent: reconciles signals into /wiki prose, then hands to Graphiti
+│   ├── registry.py                    # canonical entity registry: 22 entities, H3 cells, alias lookup
+│   ├── triage.py                      # source-aware routing gate: extract / synthesize / store / drop
+│   ├── synthesis.py                   # Nova Pro wiki agent: reconciles signals → /wiki prose → Graphiti
+│   ├── wikilink_processor.py          # [[wikilink]] normalizer, frontmatter validator, links_out builder
+│   ├── ingest_queue.py                # Redis consumer loop; fusion model; write_risk_state dispatch
 │   ├── schema/
-│   │   ├── entities.py                # 11 entity types (Corridor, Supplier, Refinery…) as Pydantic + ENTITY_TYPES registry
+│   │   ├── entities.py                # 11 entity types (Corridor, Supplier, Refinery…) as Pydantic + ENTITY_TYPES
 │   │   └── edges.py                   # 9 edge types (RISK_STATE, EXPORTS_VIA…) + EDGE_TYPES + EDGE_TYPE_MAP
-│   ├── wiki/                          # Store 1: one Markdown file per entity, git-versioned narrative pages
+│   ├── wiki/                          # Store 3: one Markdown file per entity, git-versioned narrative pages
 │   └── api/
-│       ├── read.py                    # typed *View read wrappers — get_risk_scores, get_subgraph, copilot_query…
+│       ├── read.py                    # get_risk_scores, get_subgraph, copilot_query, get_wiki_page…
 │       └── write.py                   # ingest_signal, write_scenario, write_procurement, write_spr_schedule…
 │
-├── orchestration/                     # LangGraph autonomous loop — drives the 5-system pipeline without human input
-│   ├── state.py                       # SAGEState TypedDict: signal_id, entity, risk_score, band, pipeline_stage…
+├── orchestration/                     # LangGraph autonomous loop — drives the pipeline without human input
+│   ├── state.py                       # SAGEState TypedDict
 │   ├── monitor.py                     # polls get_risk_scores() every 30s; fires triggers on band crossings
-│   ├── sandbox.py                     # anticipatory fork: subgraph snapshot → trajectory → GNN → pre-stage systems 3+4
-│   ├── triggers.py                    # on_elevated / on_action / on_critical / on_sandbox_promoted event handlers
-│   └── graph.py                       # LangGraph StateGraph wiring: SENSE→TRIAGE→SAGE→SANDBOX→SCENARIO→PROCURE→RESERVE
+│   ├── sandbox.py                     # anticipatory fork: snapshot → trajectory → GNN → pre-stage systems 3+4
+│   ├── triggers.py                    # on_elevated / on_action / on_critical / on_sandbox_promoted
+│   └── graph.py                       # LangGraph StateGraph: SENSE→TRIAGE→SAGE→SANDBOX→SCENARIO→PROCURE→RESERVE
 │
-├── sensory_agent/                     # System 1 — four always-on sub-agents; the only system that writes raw signals
-│   ├── ais.py                         # AIS websocket (aisstream.io), H3 indexing, HABIT imputation, dark-vessel detection, SAR fusion
-│   ├── news.py                        # GDELT + NewsAPI every 15 min; Nova Micro extracts {actor, action, target, severity}
-│   ├── sanctions.py                   # OFAC/EU/UN diff every 6h; any new addition is force_synthesis=True immediately
-│   └── prices.py                      # EIA + yfinance every 5 min; BOCD changepoint detection; regime-switching HMM
+├── sensory_agent/                     # System 1 — four always-on sub-agents; sole writer of raw signals
+│   ├── ais.py                         # AIS websocket, H3 indexing, dark-vessel detection, SAR fusion
+│   ├── news.py                        # GDELT + NewsAPI every 15 min; Nova Micro entity extraction
+│   ├── sanctions.py                   # OFAC/EU/UN diff every 6h; any new addition is force_synthesis=True
+│   └── prices.py                      # EIA + yfinance every 5 min; BOCD changepoint detection
 │
-├── scenario_agent/                    # System 2 — disruption cascade modeller; triggered by sandbox or confirmed threshold
-│   ├── ario.py                        # ARIO dynamic IO cascade (Hallegatte 2008): day-by-day supply shock propagation
-│   ├── runner.py                      # reads subgraph from KB → runs ARIO (confirmed) or GNN (speculative) → write_scenario()
+├── scenario_agent/                    # System 2 — ARIO disruption cascade modeller
+│   ├── ario.py                        # Hallegatte 2008 dynamic IO cascade
+│   ├── runner.py                      # reads subgraph → runs ARIO or GNN → write_scenario()
 │   └── gnn/
-│       ├── model.py                   # PyTorch GNN surrogate: learns ARIO param→output mapping; <150ms on T4 GPU
-│       └── train.py                   # generates ARIO Monte Carlo sweep → trains and saves GNN weights
+│       ├── model.py                   # PyTorch GraphSAGE surrogate; <150ms on T4 GPU
+│       └── train.py                   # Monte Carlo ARIO sweep → GNN training
 │
-├── alt_procurement_agent/             # System 3 — finds and ranks alternative crude sources when primary routes are blocked
-│   ├── routing.py                     # OR-Tools MILP + RRNCO heuristic: asymmetric cost matrix over corridors and ports
-│   ├── grade.py                       # RF + Peng-Robinson EOS: crude API gravity/sulfur compatibility per refinery
-│   ├── rank.py                        # TOPSIS multi-objective ranking: cost × lead time × compatibility × corridor risk
-│   └── runner.py                      # reads suppliers/grades/routes from KB → ranks options → write_procurement()
+├── alt_procurement_agent/             # System 3 — finds and ranks alternative crude sources
+│   ├── routing.py                     # OR-Tools MILP over corridors and ports
+│   ├── grade.py                       # RF + Peng-Robinson EOS: crude compatibility per refinery
+│   ├── rank.py                        # TOPSIS multi-objective ranking
+│   └── runner.py                      # reads KB → ranks options → write_procurement()
 │
-├── reserve_optim_agent/               # System 4 — optimal SPR drawdown schedule under supply shock uncertainty
-│   ├── sdp.py                         # Bellman iteration over (reserve, regime, price, day) state space; CMDP Lagrangian relaxation
-│   ├── options.py                     # real-options valuation: quantifies the value of waiting before committing to drawdown
-│   └── runner.py                      # reads SPR state + scenario gap from KB → solves SDP → write_spr_schedule()
+├── reserve_optim_agent/               # System 4 — optimal SPR drawdown under supply shock uncertainty
+│   ├── sdp.py                         # Bellman iteration; CMDP Lagrangian relaxation
+│   ├── options.py                     # real-options valuation: value of waiting before drawdown
+│   └── runner.py                      # reads SPR state + scenario gap → write_spr_schedule()
 │
-├── visualizer_agent/                  # System 5 — digital twin UI; pure consumer, reads everything, writes nothing
+├── visualizer_agent/                  # System 5 — digital twin UI; pure consumer, writes nothing
 │   ├── api_gateway/
-│   │   └── main.py                    # FastAPI + WebSocket: REST endpoints, risk-score push, copilot, wiki page on node click
+│   │   └── main.py                    # FastAPI + WebSocket: REST, risk-score push, copilot, wiki
 │   └── frontend/
-│       └── src/                       # React + deck.gl: geospatial KG map, H3 heatmap, staged alert, pipeline bar, copilot
+│       └── src/                       # React + deck.gl: geospatial map, H3 heatmap, copilot, pipeline bar
 │
-└── demo_cache/                        # pre-recorded Feb 23–28 2026 Hormuz signal replay for DEMO_MODE=true
+└── demo_cache/                        # pre-recorded Feb 23–28 2026 Hormuz replay for DEMO_MODE=true
 ```
 
 ---
 
-## Key Structural Rules
+## Knowledge Base — What You Need to Know
 
-These rules are enforced by `CLAUDE.md` and must not be violated:
+The KB has **three stores**, all written in one sequence by `knowledge/api/write.py`. No agent touches Graphiti, FalkorDB, or the wiki files directly.
 
-**1. Import boundaries**
-`contracts/` → no internal imports.
-`knowledge/` → `contracts/` only.
-Everyone else → `contracts/` and `knowledge/api/` only.
-No agent imports another agent. No one imports `graphiti_core` outside `knowledge/`.
-
-**2. Single write path**
-Raw signals never go to Graphiti directly. The only path is:
-`NormalizedSignal → ingest_signal() → triage → synthesis → add_episode()`
-
-**3. Speculative isolation**
-Sandbox outputs are never written as `RISK_STATE` on live nodes. Speculative risk lives only on `PendingScenario` nodes.
-
-**4. Frozen contracts**
-`RISK_STATE` edge field names are frozen after Week-1 sign-off. Any change bumps `schema_version` and requires team approval.
-
----
-
-## Knowledge Base — Contracts & Schema
-
-The knowledge base is the only module that writes to Graphiti/FalkorDB. Everything else talks to it through a typed API. The schema and contracts are the **Week-1 lock-in artifact** — four people build in parallel against these, so stability matters more than perfection.
-
-Full normative spec: [`.claude/design/SAGE_Schema_and_Contracts_Spec.md`](.claude/design/SAGE_Schema_and_Contracts_Spec.md)
-
----
-
-### The Three Stores
-
-| Store | What | Where | Owner |
-|---|---|---|---|
-| **Episodic subgraph** | Every synthesized episode node, non-lossy, with `MENTIONS` edges back to extracted entities. Ground-truth provenance. | FalkorDB (Graphiti-managed) | Graphiti |
-| **Semantic entity subgraph** | Typed entity nodes + typed edges + validity windows (bitemporal) + 1024-D embeddings for hybrid search. | FalkorDB (Graphiti-managed) | Graphiti |
-| **/wiki store** | One Markdown file per entity — the reconciled, human-readable intelligence page. Git-versioned history. | `knowledge/wiki/` (Docker volume) | SAGE (`knowledge/synthesis.py`) |
-
-All three are written in one sequence by `knowledge/api/write.py:ingest_signal()`. No other code path writes to any store.
-
----
-
-### The 7 Contracts
-
-Every contract is a Python Pydantic v2 `BaseModel`. All carry `schema_version`. Consumers assert on the major version at startup.
-
-#### C0 — Connection
-```python
-from knowledge.connection import build_graphiti, bootstrap
-# FalkorDriver(database='sage') passed as graph_driver= to Graphiti()
-# database must never be None — silently falls back to default_db otherwise
-```
-
-#### C1 — Normalized Signal (`contracts/signal.py`)
-The common envelope all four `sensory_agent` sub-agents emit onto the Redis queue. Stable envelope + per-source `payload` pocket so sub-agents evolve independently.
-
-```python
-class NormalizedSignal(BaseModel):
-    signal_id: str           # ULID/UUID
-    source: Literal["ais", "gdelt", "news", "sanctions", "price"]
-    observed_at: datetime    # when true in the world → becomes Graphiti reference_time
-    priority_hint: Literal["HIGH", "MED", "LOW"]
-    force_synthesis: bool    # True bypasses triage gate (sanctions adds, BOCD breakpoints)
-    entity_refs: list[str]   # display names of affected entities
-    summary: str             # one-line description
-    payload: dict            # source-specific fields (AisPayload, EventPayload, etc.)
-```
-
-#### C2 — Entity Ontology (`knowledge/schema/entities.py`)
-11 node types passed to `graphiti.add_episode(entity_types=ENTITY_TYPES)`. Every field is `Optional` — required fields cause extraction failures. Docstrings and `Field(description=...)` are read verbatim by the extraction LLM; write them carefully.
-
-| Entity | What it represents |
-|---|---|
-| `Corridor` | Maritime chokepoint — Hormuz, Bab-el-Mandeb, Suez. `choke_severity` 0–1, H3 cells. |
-| `Supplier` | Crude exporting org — Saudi Aramco, NIOC. `daily_export_mbpd`, `sanctioned`. |
-| `Refinery` | Processing plant — Jamnagar, Mangaluru. `inventory_days`, lat/lon. |
-| `CrudeGrade` | Oil assay — Arab Medium, Bonny Light. `api_gravity`, `sulfur_pct`. |
-| `Port` | Physical terminal — Vadinar, Yanbu. `draft_m`, `congestion`. |
-| `SPRCavern` | Reserve site — Vizag (1.33 MMT), Mangaluru (1.5), Padur (2.5). |
-| `Vessel` | Individual tanker by MMSI. `sanctioned`, `operator` (beneficial owner). |
-| `GeoEvent` | Discrete event — IRGC exercise, Houthi strike. `event_time`, `severity`. |
-| `Authority` | Sanctioning body — OFAC, EU, UN. Referenced by `SANCTIONED_BY` edges. |
-| `PendingScenario` | Speculative sandbox fork. `confidence`, `status` (speculative→promoted→expired). |
-| `ScenarioOutput` | Confirmed cascade result anchored to an entity. |
-
-#### C3 — Edge Ontology (`knowledge/schema/edges.py`)
-9 edge types + `EDGE_TYPE_MAP`. The `("Entity","Entity")` wildcard covers `RISK_STATE` and `AFFECTS_SCENARIO` — valid between any node pair.
-
-```
-Supplier   ──EXPORTS_VIA──►  Corridor
-Corridor   ──FEEDS──────────►  Port
-Port       ──SUPPLIES───────►  Refinery
-Refinery   ──CONFIGURED_FOR─►  CrudeGrade   (carries yield_pct, compatibility 0–1)
-Vessel     ──SANCTIONED_BY──►  Authority    (carries list_name, effective_date)
-Supplier   ──SANCTIONED_BY──►  Authority
-Supplier   ──BYPASS_ROUTE───►  Port         (carries cost_premium USD/bbl, added_days)
-Refinery   ──FEEDS_RESERVE──►  SPRCavern
-(any)      ──RISK_STATE─────►  (any)        ⭐ see C4
-(any)      ──AFFECTS_SCENARIO► (any)        links entity to its PendingScenario/ScenarioOutput
-```
-
-#### C4 — RISK_STATE Edge ⭐ (`knowledge/schema/edges.py:RiskState`)
-The contract the autonomous loop runs on. **Field names are frozen after Week-1 sign-off.** Computed by `sensory_agent`, stored by SAGE, polled by the LangGraph monitor every 30s.
-
-```python
-class RiskState(BaseModel):
-    score: float          # fused risk 0–1
-    band: str             # computed by SAGE at write time — never re-derive downstream
-    factor_ais: float     # AIS / dark-vessel contribution
-    factor_gdelt: float   # news / GDELT tone contribution
-    factor_price: float   # price / war-risk-premium contribution
-    factor_sanctions: float
-    rationale: str        # one-line driver explanation
-    model_version: str    # which fusion model produced this
-```
-
-Risk bands (`contracts/bands.py`) — single source of truth:
-
-| Band | Score | What fires | UI colour |
-|---|---|---|---|
-| `calm` | < 0.25 | — | phosphor green |
-| `watch` | 0.25 – 0.45 | — | cyan |
-| `elevated` | 0.45 – 0.70 | sandbox fork if P(crossing in 24h) > 0.5 | amber |
-| `action` | 0.70 – 0.90 | promote sandbox / fire Systems 2–4 | red |
-| `critical` | ≥ 0.90 | immediate human escalation | pulsing red |
-
-#### C5 — Output Episodes (`contracts/outputs.py`)
-Systems 2/3/4 write results through typed data models. All outputs carry `scenario_id` so the full chain (signal → scenario → procurement → SPR) is retrievable in one graph hop.
-
-| Model | Written by | Key fields |
+| Store | What | Where |
 |---|---|---|
-| `ScenarioOutputData` | `scenario_agent` | `gap_mbpd`, `feedstock_gap_timeline[]`, `price_impact_low/high`, `spr_depletion_days`, `assumptions{}` |
-| `ProcurementRecData` | `alt_procurement_agent` | `ranked: list[ProcurementOption]` — each with `topsis_score`, `grade_compatibility`, `rationale` |
-| `SPRScheduleData` | `reserve_optim_agent` | `daily_plan: list[SPRDay]`, `prob_above_buffer`, `policy_memo` |
+| **Episodic** | Every synthesized episode node + provenance. Non-lossy ground truth. | FalkorDB (Graphiti-managed) |
+| **Semantic graph** | Typed entity nodes + typed edges + embeddings + bitemporal validity windows. | FalkorDB (Graphiti-managed) |
+| **/wiki store** | One Markdown file per entity. Human-readable intelligence pages with YAML frontmatter and `[[wikilinks]]`. | `knowledge/wiki/` volume |
 
-#### C6 — Sandbox / PendingScenario
-Lifecycle of a speculative fork: `speculative` → `promoted` (on threshold crossing, ≤30s) → `expired` (72h TTL with no crossing). Speculative outputs are **never** written as `RISK_STATE` on live nodes.
-
-#### C7 — Read/Write API (`knowledge/api/`)
-The only interface all other agents use. Returns typed `*View` Pydantic models — never raw Graphiti internals.
-
-```python
-# Write (knowledge/api/write.py)
-ingest_signal(signal: NormalizedSignal) -> IngestResult    # sensory_agent entry point
-write_scenario(data: ScenarioOutputData) -> EpisodeRef     # scenario_agent
-write_procurement(data: ProcurementRecData) -> EpisodeRef  # alt_procurement_agent
-write_spr_schedule(data: SPRScheduleData) -> EpisodeRef    # reserve_optim_agent
-write_pending(confidence, projected_crossing_hours, scenario_ref) -> EpisodeRef
-promote_pending(scenario_ref: str) -> EpisodeRef           # LangGraph monitor on crossing
-
-# Read (knowledge/api/read.py)
-get_risk_scores() -> list[RiskScoreView]          # monitor + visualizer — all RISK_STATE edges
-get_subgraph(entity, hops=2) -> SubgraphView      # scenario_agent — cascade initialisation
-get_available_suppliers(risk_max=0.4) -> list[SupplierView]   # procurement — risk < max, not sanctioned
-get_grade_specs(refinery) -> list[GradeSpecView]  # procurement — CONFIGURED_FOR edges
-get_routes(risk_max=0.5) -> list[CorridorView]    # procurement — open corridors
-get_spr_state() -> list[SPRCavernView]            # reserve — Vizag/Mangaluru/Padur fill levels
-copilot_query(q: str) -> CopilotAnswer            # visualizer — EA-GraphRAG routed, cited
-get_wiki_page(entity: str) -> WikiPage            # visualizer — narrative page on node click
+**The only write path:**
+```
+NormalizedSignal → Redis queue → ingest_signal() → triage → synthesis → add_episode()
 ```
 
----
+**The only import surface for agents:**
+```python
+from knowledge.api.read import ...    # reads
+from knowledge.api.write import ...   # writes
+# Never import graphiti_core, falkordb, or knowledge internals directly
+```
 
-## Wiring an Agent to the Knowledge Base
-
-The KB exposes one import surface: `knowledge/api/read.py` and `knowledge/api/write.py`. No agent ever imports `graphiti_core`, `falkordb`, or any other KB internals. This section is the complete integration guide for any agent — current or future.
-
----
-
-### 0. One-time startup (container entrypoint)
-
-Every container that uses the KB must call `init()` once before any read or write. This connects to FalkorDB, builds indices, and seeds edge types.
+**Key contracts (all in `contracts/`):**
 
 ```python
-# In your container's startup / FastAPI lifespan / LangGraph entry
+# NormalizedSignal — System 1's only output
+class NormalizedSignal(BaseModel):
+    signal_id: str                                               # ULID/UUID unique per signal
+    source: Literal["ais", "gdelt", "news", "sanctions", "price"]
+    observed_at: datetime                                        # when true in the world
+    priority_hint: Literal["HIGH", "MED", "LOW"]
+    force_synthesis: bool                                        # bypasses triage gate
+    entity_refs: list[str]                                       # canonical display names
+    summary: str                                                 # one-line description
+    payload: dict                                                # source-specific fields
+
+# Risk bands — contracts/bands.py
+# calm (<0.25) · watch (0.25–0.45) · elevated (0.45–0.70) · action (0.70–0.90) · critical (≥0.90)
+```
+
+Full schema: [`.claude/design/SAGE_Schema_and_Contracts_Spec.md`](.claude/design/SAGE_Schema_and_Contracts_Spec.md)
+
+---
+
+## One-Time Startup (All Containers)
+
+```python
 from knowledge.connection import init as kb_init
-await kb_init()   # idempotent — safe to call on every boot
+await kb_init()   # idempotent — call once at container boot before any KB call
 ```
-
-After `init()`, all KB functions are safe to call from any async context.
 
 ---
 
-### 1. Writing signals (sensory_agent)
+## System 1 — Sensory Agent Wiring Guide
 
-System 1 sub-agents push `NormalizedSignal` onto the Redis queue. The KB consumer loop picks them up and runs the full triage → synthesis → graph pipeline automatically. Sub-agents never call `ingest_signal()` directly.
+System 1 is the **sole producer** of raw signals. Its four sub-agents run continuously and push `NormalizedSignal` objects onto the Redis queue. The KB consumer handles everything from there — sub-agents never call `ingest_signal()` or `write_risk_state()` directly.
+
+### How Entity Resolution Works
+
+Before emitting any signal, System 1 must populate `entity_refs` with **canonical display names** that match the entity registry. Inconsistent naming creates duplicate graph nodes.
 
 ```python
-# sensory_agent/ais.py  (or news.py / sanctions.py / prices.py)
-from contracts.signal import NormalizedSignal, AisPayload
+# Import these resolvers — never guess entity names manually
+from knowledge.registry import (
+    resolve_h3,           # AIS: H3 cell → entity_id
+    resolve_instrument,   # Price: ticker → [entity_id, ...]
+    resolve_name,         # Sanctions/News: free-form name → entity_id
+    canonical_name,       # entity_id → exact display name string
+)
+
+# AIS example
+entity_id = resolve_h3("8a2a1072b59ffff")        # → "corridor_hormuz"
+display = canonical_name(entity_id)               # → "Strait of Hormuz"
+
+# Price example
+entity_ids = resolve_instrument("BZ=F")           # → ["corridor_hormuz", "corridor_bab_el_mandeb"]
+displays = [canonical_name(eid) for eid in entity_ids]
+
+# Sanctions/News example
+entity_id = resolve_name("Aramco")                # → "supplier_aramco"
+display = canonical_name(entity_id)               # → "Saudi Aramco"
+```
+
+**All 22 tracked entities live in `knowledge/registry.py`.** Canonical names by category:
+
+| Category | Canonical names |
+|---|---|
+| Corridors | `"Strait of Hormuz"`, `"Bab-el-Mandeb"`, `"Suez Canal"`, `"Strait of Malacca"` |
+| Suppliers | `"Saudi Aramco"`, `"NIOC"`, `"ADNOC"`, `"Rosneft"`, `"Iraqi Oil Ministry"` |
+| Refineries | `"Jamnagar Refinery"`, `"Mangaluru"`, `"Paradip"` |
+| Ports | `"Vadinar"`, `"Yanbu"`, `"Sikka"`, `"Fujairah"` |
+| SPR sites | `"Vizag SPR"`, `"Mangaluru SPR"`, `"Padur SPR"` |
+| Authorities | `"OFAC"`, `"EU"`, `"UN"` |
+
+---
+
+### Sub-Agent 1: AIS (always-on, push on anomaly only)
+
+**What it monitors:** vessel position stream from aisstream.io. Runs internal H3 clustering to detect dark-vessel gaps and anomaly clusters.
+
+**When to push:** only on detected anomaly events. Never push individual position pings — high-frequency telemetry that isn't an anomaly is noise, not signal.
+
+**Frequency:** event-driven (whenever gap > 4h or anomaly cluster detected). Typically 0–10 pushes per hour under normal conditions; up to 50/hour during a crisis event.
+
+**Triage routing:** always `"extract"` — AIS telemetry updates the `factor_ais` contribution to the risk score but never authors wiki prose directly. The narrative update happens at the next fusion flush window when news corroborates.
+
+```python
+from contracts.signal import NormalizedSignal
 from knowledge.ingest_queue import push_signal
+from knowledge.registry import resolve_h3, canonical_name
 
-signal = NormalizedSignal(
-    signal_id="ais-20260228-001",
+async def on_ais_anomaly(h3_cell: str, mmsi: str, gap_hours: float, anomaly_score: float):
+    entity_id = resolve_h3(h3_cell)
+    if not entity_id:
+        return  # cell not in tracked registry — discard
+
+    await push_signal(NormalizedSignal(
+        signal_id=f"ais-{ulid()}",
+        source="ais",
+        observed_at=datetime.now(timezone.utc),    # when the gap started, not when detected
+        ingested_at=datetime.now(timezone.utc),
+        priority_hint="HIGH",                       # AIS anomalies are always HIGH
+        force_synthesis=False,                      # NEVER True for AIS — triage handles routing
+        entity_refs=[canonical_name(entity_id)],   # e.g. "Strait of Hormuz"
+        h3_cells=[h3_cell],
+        lat=26.1, lon=57.2,                         # cluster centroid
+        summary=f"AIS dark-vessel gap: MMSI {mmsi}, {gap_hours:.1f}h gap, "
+                f"anomaly score {anomaly_score:.2f}, H3 cell {h3_cell}",
+        payload={
+            "mmsi":           mmsi,
+            "gap_hours":      gap_hours,
+            "dark_vessel":    True,
+            "anomaly_score":  anomaly_score,
+            "sar_confirmed":  False,         # update to True if SAR cross-reference confirms
+            "dark_count":     1,             # number of vessels in cluster
+        },
+    ))
+```
+
+**Vessel cluster (multiple dark vessels):**
+```python
+# When multiple vessels show coordinated dark gaps — push one signal per cluster, not per vessel
+await push_signal(NormalizedSignal(
+    signal_id=f"ais-cluster-{ulid()}",
     source="ais",
-    observed_at=datetime.now(timezone.utc),
-    ingested_at=datetime.now(timezone.utc),
     priority_hint="HIGH",
-    force_synthesis=True,           # dark vessel → bypass triage gate
-    entity_refs=["Strait of Hormuz", "MT Destiny"],
-    h3_cells=["8526800bfffffff"],
-    summary="MT Destiny went AIS-dark near Larak Island — 6h gap, SAR confirmed",
-    payload=AisPayload(
-        mmsi="123456789", dark_vessel=True, anomaly_score=0.92, gap_hours=6.0
-    ).model_dump(),
+    force_synthesis=False,
+    entity_refs=["Strait of Hormuz"],
+    summary=f"AIS dark-vessel cluster: {dark_count} vessels, Larak Island area, {gap_hours:.0f}h max gap",
+    payload={
+        "mmsi":          representative_mmsi,    # most significant vessel
+        "dark_vessel":   True,
+        "dark_count":    dark_count,             # cluster size
+        "gap_hours":     gap_hours,              # maximum gap in cluster
+        "anomaly_score": cluster_anomaly_score,
+        "h3_cluster":    h3_cells,               # all cells in cluster
+    },
+))
+```
+
+**What NOT to push:**
+```python
+# WRONG — do not push position pings
+NormalizedSignal(source="ais", summary="MMSI 477553000 at 26.1N 57.2E speed 0.1kt", ...)
+
+# WRONG — do not push routine AIS data
+NormalizedSignal(source="ais", summary="Vessel transiting Hormuz at normal speed", ...)
+```
+
+---
+
+### Sub-Agent 2: News / GDELT (every 15 minutes)
+
+**What it monitors:** GDELT event stream and NewsAPI for articles mentioning tracked entities.
+
+**When to push:** after Nova Micro extraction pass identifies a tracked entity. Push per article, not per topic batch.
+
+**Frequency:** every 15 minutes poll → push 0–20 signals per cycle depending on news volume. During a crisis event, can be higher. Do not debounce within the same article.
+
+**Triage routing:** similarity-based. Articles with cosine similarity > 0.72 against the entity's current page trigger full synthesis (wiki updated). Articles scoring 0.40–0.72 trigger extraction only (graph updated, wiki unchanged). Below 0.40 → stored raw.
+
+```python
+from knowledge.registry import resolve_name, canonical_name, REGISTRY
+from knowledge.triage import _embed_text, _cosine   # for embedding fallback
+
+async def on_news_article(article_text: str, article_url: str, published_at: datetime):
+    # Step 1: Nova Micro extraction — extract candidate entity names from article
+    candidate_names = await nova_micro_extract_entities(article_text)
+    # returns e.g. ["IRGC", "Strait of Hormuz", "Larak Island", "MT Destiny"]
+
+    # Step 2: Resolve candidates against registry
+    entity_refs = []
+    for name in candidate_names:
+        entity_id = resolve_name(name)           # alias lookup (fast, deterministic)
+        if entity_id:
+            entity_refs.append(canonical_name(entity_id))
+        # else: not a tracked entity — skip (don't add unresolved names)
+
+    if not entity_refs:
+        return   # article mentions no tracked entities — discard
+
+    # Step 3: Push one signal covering all resolved entities in the article
+    severity = await estimate_severity(article_text)   # 0..1 based on tone/goldstein
+    tone = await get_gdelt_tone(article_url)           # negative = hostile
+
+    await push_signal(NormalizedSignal(
+        signal_id=f"news-{ulid()}",
+        source="news",
+        observed_at=published_at,                  # article publish time, not now
+        ingested_at=datetime.now(timezone.utc),
+        priority_hint="HIGH" if severity > 0.6 else "MED",
+        force_synthesis=False,                     # let triage decide — don't bypass
+        entity_refs=entity_refs,
+        summary=f"{source_name}: {article_headline}",   # first sentence of article
+        payload={
+            "actor":      extracted_actor,         # e.g. "IRGC"
+            "action":     extracted_action,        # e.g. "naval exercise"
+            "target":     extracted_target,        # e.g. "Strait of Hormuz" (optional)
+            "tone":       tone,                    # GDELT tone score (negative = hostile)
+            "severity":   severity,                # 0..1 severity estimate
+            "goldstein":  goldstein_score,         # GDELT Goldstein scale (optional)
+        },
+        source_url=article_url,
+        raw_ref=f"s3://sage-raw/news/{article_id}",
+    ))
+```
+
+**GDELT stream (raw event records):**
+```python
+# GDELT event records don't need Nova Micro — entity is already in the record
+await push_signal(NormalizedSignal(
+    signal_id=f"gdelt-{gdelt_global_event_id}",
+    source="gdelt",
+    observed_at=gdelt_event_date,
+    priority_hint="MED",
+    force_synthesis=False,
+    entity_refs=[canonical_name(resolve_name(gdelt_actor1))] if resolve_name(gdelt_actor1) else [],
+    summary=f"GDELT: {gdelt_event_code_description} — {gdelt_actor1} vs {gdelt_actor2}",
+    payload={
+        "actor":      gdelt_actor1,
+        "action":     gdelt_event_code,
+        "tone":       gdelt_avg_tone,
+        "goldstein":  gdelt_goldstein_scale,
+        "severity":   abs(gdelt_avg_tone) / 10.0,   # normalize GDELT tone to 0..1
+    },
+))
+```
+
+---
+
+### Sub-Agent 3: Sanctions (every 6 hours + immediate on diff)
+
+**What it monitors:** OFAC SDN, EU consolidated list, UN sanctions committee list. Runs a diff against the last cached version.
+
+**When to push:** immediately on any detected change (add or remove). The 6-hour polling interval is the minimum check frequency — push as soon as the diff is detected, even if outside the normal poll window.
+
+**Frequency:** 0–5 pushes per 6-hour cycle under normal conditions. During a sanctions burst (coordinated designations), can be 20+ pushes in a single cycle.
+
+**Triage routing:** always `"synthesize"` — `_ALWAYS_SYNTH_SOURCES = {"sanctions"}` in triage. Every sanctions change produces a wiki update because it always changes a specific tracked entity's status.
+
+**New vessels — register before pushing:**
+```python
+from knowledge.registry import resolve_name, canonical_name, register_vessel
+
+async def on_ofac_diff(diff_entries: list[dict]):
+    for entry in diff_entries:
+        subject_name = entry["subject"]
+        mmsi = entry.get("mmsi")
+
+        # Try to resolve against existing registry first
+        entity_id = resolve_name(subject_name)
+
+        if not entity_id and mmsi:
+            # New vessel — register it now so entity_refs resolves correctly
+            entity_id = register_vessel(
+                mmsi=mmsi,
+                vessel_name=subject_name,
+                imo=entry.get("imo"),
+            )
+
+        entity_refs = [canonical_name(entity_id)] if entity_id else [subject_name]
+
+        # Also include the operator if known and tracked
+        operator_name = entry.get("operator")
+        if operator_name:
+            op_id = resolve_name(operator_name)
+            if op_id:
+                entity_refs.append(canonical_name(op_id))
+
+        await push_signal(NormalizedSignal(
+            signal_id=f"sanctions-{entry['list']}-{ulid()}",
+            source="sanctions",
+            observed_at=datetime.now(timezone.utc),
+            ingested_at=datetime.now(timezone.utc),
+            priority_hint="HIGH",
+            force_synthesis=True,              # ALWAYS True for sanctions
+            entity_refs=entity_refs,
+            summary=f"{entry['list']}: {subject_name} {entry['change']}ed — "
+                    f"{entry.get('subject_type', 'entity')}, operator: {operator_name or 'unknown'}",
+            payload={
+                "list":          entry["list"],            # "OFAC_SDN" | "EU" | "UN"
+                "change":        entry["change"],          # "add" | "remove"
+                "subject":       subject_name,
+                "subject_type":  entry.get("subject_type", "entity"),  # "vessel" | "entity" | "person"
+                "effective_date": entry.get("effective_date"),
+                "mmsi":          mmsi,
+                "dwt":           entry.get("dwt"),         # vessel deadweight tonnage
+                "operator":      operator_name,
+            },
+        ))
+```
+
+**Removal events are also significant** — a delisted supplier or vessel changes procurement options:
+```python
+# Sanctions removal (entity restored) — still force_synthesis=True
+NormalizedSignal(
+    source="sanctions",
+    force_synthesis=True,
+    priority_hint="HIGH",
+    summary=f"OFAC removed {subject_name} from SDN list — entity restored",
+    payload={"change": "remove", ...},
 )
-await push_signal(signal)   # pushes to Redis; consumer handles the rest
 ```
-
-**Sanctions and price changepoints** set `force_synthesis=True` to bypass similarity triage — they are always written immediately.
 
 ---
 
-### 2. Writing risk state (after fusion aggregation)
+### Sub-Agent 4: Prices (every 5 minutes poll, push on changepoint only)
 
-After the fusion model aggregates signals for a 30-second window, call `write_risk_state()` directly. This is the only function that creates `RISK_STATE` edges on live nodes.
+**What it monitors:** Brent (BZ=F) and WTI (CL=F) via yfinance every 5 minutes. Runs BOCD (Bayesian Online Changepoint Detection) on the rolling price series. Also monitors EIA weekly reserves.
+
+**When to push:** only on BOCD changepoint detection or market regime shift. Normal price ticks are never pushed — a `$0.20` move in Brent is noise.
+
+**Frequency:** 0–3 pushes per day under calm conditions. During a crisis event with volatile prices, up to 10–15 per day.
+
+**Triage routing:** always `"extract"` — price signals update `factor_price` in the risk score but never author wiki prose directly. The narrative update happens via fusion when multiple signals align.
 
 ```python
-from knowledge.api.write import write_risk_state
+from knowledge.registry import resolve_instrument, canonical_name
 
-await write_risk_state(
-    entity="Strait of Hormuz",
-    score=0.73,
-    factor_ais=0.41,
-    factor_gdelt=0.55,
-    factor_price=0.30,
-    factor_sanctions=0.00,
-    rationale="3 dark-vessel gaps + BOCD price breakpoint",
-    model_version="gbm-platt-v1.0",
-    observed_at=datetime.now(timezone.utc),
-)
+async def on_price_tick(instrument: str, price: float, price_series: list[float]):
+    # Run BOCD on rolling window
+    bocd_result = detect_changepoint(price_series)
+
+    if not bocd_result.is_changepoint and not bocd_result.regime_shift:
+        return   # normal tick — do not push
+
+    # Resolve which entities this instrument affects
+    entity_ids = resolve_instrument(instrument)     # e.g. ["corridor_hormuz", "corridor_bab_el_mandeb"]
+    if not entity_ids:
+        return
+
+    entity_refs = [canonical_name(eid) for eid in entity_ids]
+
+    price_change_pct = (price - price_series[-2]) / price_series[-2] * 100
+    war_risk_premium = estimate_war_risk_premium(price_series)
+
+    await push_signal(NormalizedSignal(
+        signal_id=f"price-{instrument}-{ulid()}",
+        source="price",
+        observed_at=datetime.now(timezone.utc),
+        ingested_at=datetime.now(timezone.utc),
+        priority_hint="HIGH",                      # changepoints are always HIGH
+        force_synthesis=False,                     # price never triggers wiki prose directly
+        entity_refs=entity_refs,
+        summary=f"{instrument} BOCD changepoint: {price_change_pct:+.1f}% move, "
+                f"war-risk premium {war_risk_premium:.2%}, regime {bocd_result.regime}",
+        payload={
+            "instrument":           instrument,         # "BZ=F" | "CL=F"
+            "price":                price,
+            "price_change_pct":     price_change_pct,
+            "changepoint":          bocd_result.is_changepoint,
+            "bocd_probability":     bocd_result.probability,
+            "regime":               bocd_result.regime,        # "calm" | "stressed" | "crisis"
+            "war_risk_premium":     war_risk_premium,
+            "regime_stressed":      1.0 if bocd_result.regime != "calm" else 0.0,
+        },
+    ))
 ```
 
-> **Isolation rule:** never call `write_risk_state()` from the sandbox. Speculative risk uses `write_pending()` only.
+**Regime shift (distinct from individual changepoint):**
+```python
+# A sustained regime change (e.g. calm → stressed for 3+ consecutive ticks) is also worth pushing
+if regime_changed:
+    await push_signal(NormalizedSignal(
+        source="price",
+        force_synthesis=False,
+        summary=f"{instrument} regime shift: {old_regime} → {new_regime}, "
+                f"sustained for {duration_minutes:.0f}min",
+        payload={
+            "instrument": instrument,
+            "regime":     new_regime,
+            "regime_stressed": 1.0 if new_regime != "calm" else 0.0,
+            "changepoint": False,   # regime shift, not a point change
+        },
+    ))
+```
 
 ---
 
-### 3. Reading risk scores (LangGraph monitor)
+### After the Fusion Flush (every 30s): Write Risk State
+
+The ingest queue consumer automatically calls `write_risk_state()` after accumulating 10 signals or 30 seconds — whichever comes first. **You do not call `write_risk_state()` from sub-agents.** But you must implement the fusion model if overriding the default weighted-sum fallback.
+
+The built-in weighted-sum fusion (`knowledge/ingest_queue.py:_weighted_fusion`) is the default. To replace it with a trained GBM:
 
 ```python
-from knowledge.api.read import get_risk_scores
-from contracts.bands import ACTION_THRESHOLD, CRITICAL_THRESHOLD
+# sensory_agent/fusion_model.pkl — place trained model here
+# The consumer loop loads it automatically on next flush
+# Interface contract: model.predict(fv: _FeatureVector) -> _FusionResult
 
-scores = await get_risk_scores()   # list[RiskScoreView]
-
-for view in scores:
-    print(view.entity, view.score, view.band)
-    # view.factors → {"ais": 0.41, "gdelt": 0.55, "price": 0.30, "sanctions": 0.00}
-    # view.valid_at, view.recorded_at → bitemporal timestamps
-
-    if view.score >= ACTION_THRESHOLD:
-        # fire systems 2/3/4
-        pass
+@dataclass
+class _FeatureVector:
+    ais_gap_count_24h:         float   # number of AIS gaps > 4h in last 24h
+    ais_dark_vessel_count:     float   # dark vessels in monitored cells
+    ais_anomaly_score_max:     float   # max HABIT anomaly score (0..1)
+    ais_gap_duration_max_h:    float   # max gap duration in hours
+    ais_monitored_cell_pct:    float   # % of tracked H3 cells with activity
+    ais_velocity_std:          float   # velocity standard deviation
+    gdelt_tone_24h_mean:       float   # average GDELT tone (negative = hostile)
+    gdelt_tone_delta:          float   # tone change in last window
+    news_severity_max:         float   # max article severity (0..1)
+    news_event_count_24h:      float   # number of severity > 0.7 events
+    price_brent_pct_change_24h: float  # Brent 24h % change
+    price_bocd_flag:           float   # 1.0 if BOCD breakpoint detected
+    price_regime:              float   # 1.0 if regime = stressed
+    price_war_risk_premium:    float   # war-risk premium proxy (0..1)
+    sanctions_new_additions_24h: float # new SDN additions in last 24h
+    sanctions_vessel_count:    float   # sanctioned vessels in monitored corridors
+    sanctions_major_entity:    float   # 1.0 if major state entity sanctioned
 ```
-
-`RiskScoreView` matches the canonical JSON shape from §6.2 of the schema spec exactly.
 
 ---
 
-### 4. Reading subgraph for cascade modelling (scenario_agent)
+### System 1 KB Field Requirements
 
+| Field | Required? | Rules |
+|---|---|---|
+| `signal_id` | Yes | Unique ULID/UUID per signal. Used as Graphiti episode name. |
+| `source` | Yes | Exactly one of: `"ais" "gdelt" "news" "sanctions" "price"` |
+| `observed_at` | Yes | When the event happened in the world — not when your sub-agent detected it. This is `reference_time` in Graphiti. |
+| `entity_refs` | Yes | **Canonical display names from `knowledge/registry.py`**. Wrong names = duplicate graph nodes. Always use `canonical_name(resolve_*(x))`. |
+| `summary` | Yes | One-line prose description. Becomes the triage embedding input. Write informative sentences, not log-line format. |
+| `force_synthesis` | Conditional | `True` for sanctions always. `False` for AIS always. `False` for price (triage handles routing). `False` for news (let triage decide). |
+| `priority_hint` | Recommended | `"HIGH"` for: dark vessels, sanctions adds, BOCD breakpoints. `"MED"` for: routine news. `"LOW"` rarely used. |
+| `raw_ref` | Recommended | S3 URI or DB ID of verbatim raw record. Required for full audit trail. |
+| `source_url` | For news | Article or source URL. Used for citation in copilot. |
+| `h3_cells` | For AIS | H3 cell IDs of the anomaly cluster. Used for spatial indexing. |
+
+### System 1 Build Checklist
+
+- [ ] Sub-agent calls only `push_signal()` — never `ingest_signal()` or `write_risk_state()`
+- [ ] AIS imports `resolve_h3()` → uses `canonical_name()` for `entity_refs` population
+- [ ] Price imports `resolve_instrument()` → uses `canonical_name()` for `entity_refs`
+- [ ] Sanctions imports `resolve_name()` → calls `register_vessel()` for new MMSI before pushing
+- [ ] News runs Nova Micro extraction → resolves candidates via `resolve_name()` → discards unresolved
+- [ ] AIS: `force_synthesis=False` always; pushes per anomaly cluster, never per position ping
+- [ ] Price: `force_synthesis=False`; pushes only on BOCD changepoint or regime shift
+- [ ] Sanctions: `force_synthesis=True` always; pushes both add and remove events
+- [ ] News: `force_synthesis=False`; pushes per article, not per topic batch
+- [ ] `observed_at` is the event time in the world, not the sub-agent's current time
+- [ ] `signal_id` is a ULID or UUID — unique per signal emission
+- [ ] `raw_ref` set to the S3 key or DB ID of the verbatim raw record
+- [ ] Container calls `await kb_init()` before the first `push_signal()`
+
+---
+
+## System 2 — Disruption Scenario Modeller
+
+**Trigger:** automatic, via `orchestration/triggers.py` when risk band crosses `action` (score ≥ 0.70) or a sandbox `PendingScenario` is promoted.
+
+**Reads from KB:**
 ```python
-from knowledge.api.read import get_subgraph
+from knowledge.api.read import get_subgraph, get_risk_scores
 
+# 2-hop supply-chain subgraph for ARIO initialisation
 subgraph = await get_subgraph("Strait of Hormuz", hops=2)
-# subgraph.nodes → list of entity dicts with uuid, display_name, labels, attributes
-# subgraph.edges → list of edge dicts with relation_type, fact, valid_at, attributes
+# subgraph.nodes: [{uuid, display_name, labels, attributes}]
+# subgraph.edges: [{relation_type, attributes: {throughput_share_pct}, valid_at}]
+
+scores = await get_risk_scores()
+hormuz_score = next(s.score for s in scores if s.entity == "Strait of Hormuz")
 ```
 
-Use `subgraph.nodes` to initialise the ARIO IO matrix. Use `subgraph.edges` to identify which suppliers, ports, and refineries are connected to the disrupted corridor.
+**Key node attributes used by ARIO:**
 
----
+| Property | Node type | Unit |
+|---|---|---|
+| `throughput_capacity_mbpd` | Refinery | mbpd |
+| `inventory_days` | Refinery | days |
+| `throughput_share_pct` | FEEDS / SUPPLIES edge | 0..1 fraction |
+| `daily_export_mbpd` | Supplier | mbpd |
+| `choke_severity` | Corridor | 0..1 |
 
-### 5. Writing scenario/procurement/SPR outputs (Systems 2/3/4)
-
-Each system calls its dedicated write function. The function builds episode prose, writes to Graphiti, and creates an `AFFECTS_SCENARIO` edge back to the trigger entity so the copilot can retrieve the full chain in one hop.
-
+**Writes to KB:**
 ```python
-# scenario_agent
 from knowledge.api.write import write_scenario
 from contracts.outputs import ScenarioOutputData
 
 result = await write_scenario(ScenarioOutputData(
     scenario_id="sc-20260228-001",
     trigger_entity="Strait of Hormuz",
-    status="confirmed",
+    status="confirmed",             # "speculative" if from sandbox
     confidence=0.85,
     gap_mbpd=1.2,
     gap_duration_days=14.0,
@@ -411,11 +625,31 @@ result = await write_scenario(ScenarioOutputData(
     price_impact_low=8.0,
     price_impact_high=22.0,
     spr_depletion_days=6.5,
-    assumptions={"import_dependence_pct": {"value": 88.2, "unit": "%", "source": "PPAC 2025"}},
+    assumptions={
+        "import_dependence_pct": {"value": 88.2, "unit": "%", "source": "PPAC 2025"},
+        "hormuz_share_pct":      {"value": 42.0, "unit": "%", "source": "IEA 2025"},
+    },
 ))
-# result.episode_uuid  — reference this in subsequent procurement/SPR writes
+# result.episode_uuid → pass as scenario_ref to Systems 3 and 4
+```
 
-# alt_procurement_agent
+---
+
+## System 3 — Adaptive Procurement Orchestrator
+
+**Trigger:** automatic, via `orchestration/triggers.py` when a new `ScenarioOutput` node appears.
+
+**Reads from KB:**
+```python
+from knowledge.api.read import get_available_suppliers, get_grade_specs, get_routes
+
+suppliers = await get_available_suppliers(risk_max=0.4)  # excludes sanctioned + high-risk
+grades    = await get_grade_specs("Jamnagar Refinery")   # CONFIGURED_FOR edges
+routes    = await get_routes(risk_max=0.5)               # open corridors
+```
+
+**Writes to KB:**
+```python
 from knowledge.api.write import write_procurement
 from contracts.outputs import ProcurementRecData, ProcurementOption, ScoreBreakdown
 
@@ -426,17 +660,36 @@ await write_procurement(ProcurementRecData(
         ProcurementOption(
             supplier="Saudi Aramco", grade="Arab Light", route_via="Yanbu bypass",
             landed_cost_usd_bbl=85.30, lead_time_days=12.0,
-            grade_compatibility=0.92, corridor_risk=0.18, topsis_score=0.87,
+            grade_compatibility=0.92, corridor_risk=0.12, topsis_score=0.87,
             score_breakdown=ScoreBreakdown(
                 cost_score=0.78, lead_time_score=0.85,
-                grade_compatibility_score=0.92, corridor_risk_score=0.82,
+                grade_compatibility_score=0.92, corridor_risk_score=0.88,
             ),
-            rationale="Yanbu pipeline bypasses Hormuz entirely...",
-        )
+            rationale="Yanbu pipeline bypasses Hormuz; Arab Light within Jamnagar gravity envelope.",
+        ),
     ],
 ))
+```
 
-# reserve_optim_agent
+**Note:** a supplier's `sanctioned` flag is updated in real time by System 1's sanctions sub-agent. When `get_available_suppliers()` runs, a supplier sanctioned 30 minutes ago is already excluded.
+
+---
+
+## System 4 — Strategic Reserve Optimisation
+
+**Trigger:** automatic, parallel to System 3.
+
+**Reads from KB:**
+```python
+from knowledge.api.read import get_spr_state, get_subgraph
+
+caverns = await get_spr_state()
+total_fill_mmt = sum(c.current_fill_mmt or 0 for c in caverns)
+# India total capacity: 5.33 MMT (Vizag 1.33 + Mangaluru 1.50 + Padur 2.50)
+```
+
+**Writes to KB:**
+```python
 from knowledge.api.write import write_spr_schedule
 from contracts.outputs import SPRScheduleData, SPRDay
 
@@ -447,584 +700,72 @@ await write_spr_schedule(SPRScheduleData(
         SPRDay(day=1, action="draw", volume_mmt=0.18,
                reserve_after_mmt=5.15, days_cover_after=9.2,
                decision_driver="gap onset — begin draw"),
+        SPRDay(day=15, action="hold", volume_mmt=0.0,
+               reserve_after_mmt=3.89, days_cover_after=6.9,
+               decision_driver="procurement alternatives arrived — halt draw"),
     ],
     prob_above_buffer=0.96,
     constraint_satisfied=True,
-    policy_memo="Draw at 0.18 MMT/day for 14 days...",
+    policy_memo="Draw at 0.18 MMT/day for 14 days; buffer maintained at >6.9 days cover.",
 ))
 ```
 
 ---
 
-### 6. Reading supply chain state for procurement routing (alt_procurement_agent)
+## System 5 — Digital Twin (Visualizer)
+
+**Pure consumer — reads everything, writes nothing.** If you find yourself calling a write function from `visualizer_agent`, it belongs in one of Systems 1–4.
 
 ```python
-from knowledge.api.read import get_available_suppliers, get_grade_specs, get_routes
+from knowledge.api.read import (
+    get_risk_scores,            # every 30s — drives map node colours
+    get_subgraph,               # on node click — connected entities
+    get_wiki_page,              # on node click — narrative prose panel
+    copilot_query,              # on user question — EA-GraphRAG routed
+    get_available_suppliers,    # for procurement results panel
+    get_spr_state,              # for SPR timeline panel
+)
 
-# Suppliers with risk < 0.4, not sanctioned
-suppliers = await get_available_suppliers(risk_max=0.4)
-for s in suppliers:
-    print(s.display_name, s.country, s.daily_export_mbpd, s.risk_score)
+# Risk band → UI colour
+# "calm" (<0.25) → phosphor green
+# "watch" (0.25–0.45) → cyan
+# "elevated" (0.45–0.70) → amber
+# "action" (0.70–0.90) → red
+# "critical" (≥0.90) → pulsing red
 
-# Crude grades compatible with a specific refinery
-grades = await get_grade_specs("Jamnagar")
-for g in grades:
-    print(g.grade, g.api_gravity, g.sulfur_pct, g.compatibility)
+# Copilot
+answer = await copilot_query("Which refineries are most exposed to a Hormuz closure?")
+# answer.answer      → Nova Pro synthesised prose
+# answer.citations   → Graphiti episode UUIDs — render as clickable sources
+# answer.latency_ms  → show in UI
 
-# Corridors below risk threshold
-routes = await get_routes(risk_max=0.5)
-for r in routes:
-    print(r.display_name, r.risk_score, r.h3_cells)
-```
-
----
-
-### 7. Reading SPR state (reserve_optim_agent)
-
-```python
-from knowledge.api.read import get_spr_state
-
-caverns = await get_spr_state()
-total_fill = sum(c.current_fill_mmt or 0 for c in caverns)
-# India total capacity: 5.33 MMT (Vizag 1.33 + Mangaluru 1.50 + Padur 2.50)
-```
-
----
-
-### 8. Copilot and wiki (visualizer_agent)
-
-```python
-from knowledge.api.read import copilot_query, get_wiki_page
-
-# EA-GraphRAG routed copilot
-answer = await copilot_query("Why did the Hormuz risk score spike and which refineries are most exposed?")
-print(answer.answer)      # Nova Pro synthesised prose
-print(answer.citations)   # list of Graphiti episode UUIDs cited
-print(answer.route)       # "vector" | "graph" — which search path was used
-print(answer.latency_ms)  # ~380ms (vector) or ~1,800ms (graph)
-
-# Narrative wiki page (shown on node click in the map)
+# Wiki page on node click
 page = await get_wiki_page("Strait of Hormuz")
-print(page.content)        # Markdown prose from /wiki store
-print(page.last_updated)
+# page.content → Markdown with [[wikilinks]] and YAML frontmatter
 ```
+
+**Pipeline bar** (`SENSE → TRIAGE → SAGE → SANDBOX → SCENARIO → PROCURE → RESERVE`) is driven by WebSocket events from `orchestration/graph.py` — not KB polling.
 
 ---
 
-### 9. Sandbox / speculative lifecycle
+## Sandbox / Speculative Lifecycle
 
 ```python
-# sandbox.py — write a speculative PendingScenario (NEVER write_risk_state here)
 from knowledge.api.write import write_pending, promote_pending
 
-ref = await write_pending(
+# sandbox.py — speculative fork (NEVER write_risk_state here)
+await write_pending(
     confidence=0.73,
     projected_crossing_hours=18.0,
     scenario_ref="sandbox-abc12345",
     entity="Strait of Hormuz",
 )
 
-# When the monitor confirms a real crossing, promote it
-episode = await promote_pending("sandbox-abc12345")
-# This flips status → promoted and hooks into the feedback loop
+# orchestration/monitor.py — on confirmed live crossing
+await promote_pending("sandbox-abc12345")
 ```
 
----
-
-### 10. Adding a new agent — checklist
-
-1. **Do not import** `graphiti_core`, `falkordb`, `knowledge.connection`, or `knowledge.triage` — only `knowledge/api/read.py` and `knowledge/api/write.py`.
-2. Call `await kb_init()` once in your container startup before any KB call.
-3. If your agent **writes** a new output type, add a `write_<type>()` function to `knowledge/api/write.py` and a matching typed model to `contracts/outputs.py`. Don't call `add_episode()` directly.
-4. If your agent **reads** a new view, add a `get_<thing>()` function to `knowledge/api/read.py` and a typed `*View` model. Don't return raw Graphiti objects.
-5. All new entity types go in `knowledge/schema/entities.py` (update `ENTITY_TYPES` dict). All new edge types go in `knowledge/schema/edges.py` (update `EDGE_TYPES` and `EDGE_TYPE_MAP`). Bump `SCHEMA_VERSION` on breaking changes.
-6. Check the import boundary in `CLAUDE.md` before submitting — `ruff` will not catch cross-module leakage.
-
----
-
-## Per-System Knowledge Base Integration Guide
-
-This section is the complete contract for each of the five systems: what data they receive from the KB, what data the KB expects from them, and how to wire the integration. The KB is the only shared state — no system talks to another system directly.
-
----
-
-### System 1 — Geopolitical Risk Intelligence Agent (Sense)
-
-**Role in the pipeline:** the only system that **writes raw signals**. Everything else reads. System 1 is a pure producer.
-
-**What System 1 reads FROM the KB at startup:**
-```python
-from knowledge.api.read import get_risk_scores, get_subgraph
-
-# Load which entities are currently tracked (to know which H3 cells / corridors to monitor)
-scores = await get_risk_scores()
-for view in scores:
-    # view.entity      → entity display name (e.g. "Strait of Hormuz")
-    # view.score       → current fused risk 0–1
-    # view.band        → "calm" / "watch" / "elevated" / "action" / "critical"
-    # view.valid_at    → when this risk state is true in the world (bitemporal)
-    pass
-
-# Optionally: pull entity metadata (H3 cells to watch, sanctioned suppliers)
-subgraph = await get_subgraph("Strait of Hormuz", hops=1)
-# subgraph.nodes[n]["attributes"]["h3_cells"] → list of H3 cell IDs for AIS monitoring
-# subgraph.nodes[n]["attributes"]["sanctioned"] → True/False for supplier nodes
-```
-
-**What System 1 writes TO the KB (per sub-agent):**
-
-All four sub-agents push a `NormalizedSignal` to the Redis queue. The KB consumer handles everything from there — sub-agents never call `ingest_signal()` or `write_risk_state()` directly.
-
-```python
-from contracts.signal import NormalizedSignal
-from knowledge.ingest_queue import push_signal
-import asyncio
-
-# AIS sub-agent — dark vessel / anomalous gap
-signal = NormalizedSignal(
-    signal_id="ais-20260228-001",        # ULID or UUID, unique per signal
-    source="ais",
-    observed_at=datetime.now(timezone.utc),   # when true in the world
-    ingested_at=datetime.now(timezone.utc),
-    priority_hint="HIGH",
-    force_synthesis=True,                # dark vessel → bypass triage cosine gate
-    entity_refs=["Strait of Hormuz", "MT Destiny"],   # display names of affected entities
-    h3_cells=["8526800bfffffff"],        # H3 cell IDs (optional, AIS-specific)
-    summary="MT Destiny went AIS-dark near Larak Island — 6h gap, SAR confirmed",
-    payload={
-        "mmsi": "123456789",
-        "dark_vessel": True,
-        "anomaly_score": 0.92,
-        "gap_hours": 6.0,
-        "sar_confirmed": True,
-    },
-)
-await push_signal(signal)
-
-# GDELT / news sub-agent — extracted event
-signal = NormalizedSignal(
-    signal_id="gdelt-20260228-002",
-    source="gdelt",
-    observed_at=event_timestamp,
-    ingested_at=datetime.now(timezone.utc),
-    priority_hint="MED",
-    force_synthesis=False,               # goes through triage cosine gate
-    entity_refs=["Strait of Hormuz", "IRGC"],
-    summary="IRGC announced live-fire naval drills in the Strait of Hormuz",
-    payload={
-        "actor": "IRGC", "action": "military_exercise",
-        "target": "Strait of Hormuz", "severity": 0.72,
-        "gdelt_tone": -4.5, "article_url": "...",
-    },
-)
-await push_signal(signal)
-
-# Sanctions sub-agent — new SDN listing
-signal = NormalizedSignal(
-    signal_id="ofac-20260228-003",
-    source="sanctions",
-    observed_at=datetime.now(timezone.utc),
-    ingested_at=datetime.now(timezone.utc),
-    priority_hint="HIGH",
-    force_synthesis=True,                # sanctions always bypass triage
-    entity_refs=["NIOC", "MT Destiny"],
-    summary="OFAC added NIOC subsidiary to SDN list",
-    payload={
-        "list_name": "OFAC_SDN", "entity_name": "NIOC Trading Ltd",
-        "effective_date": "2026-02-28", "vessel_mmsi": "123456789",
-    },
-)
-await push_signal(signal)
-
-# Prices sub-agent — BOCD changepoint
-signal = NormalizedSignal(
-    signal_id="price-20260228-004",
-    source="price",
-    observed_at=datetime.now(timezone.utc),
-    ingested_at=datetime.now(timezone.utc),
-    priority_hint="HIGH",
-    force_synthesis=True,                # BOCD breakpoint → bypass triage
-    entity_refs=["Brent crude"],
-    summary="Brent crude BOCD breakpoint: +$8.20/bbl in 4 hours, war-risk premium spike",
-    payload={
-        "price_usd": 96.40, "price_delta": 8.20, "bocd_probability": 0.94,
-        "regime": "stressed", "war_risk_premium_proxy": 0.61,
-    },
-)
-await push_signal(signal)
-```
-
-**After fusion aggregation (30-second window):** write the fused risk state directly.
-
-```python
-from knowledge.api.write import write_risk_state
-
-await write_risk_state(
-    entity="Strait of Hormuz",
-    score=0.73,                    # fused 0–1 score
-    factor_ais=0.41,               # AIS / dark-vessel contribution
-    factor_gdelt=0.55,             # news / GDELT tone contribution
-    factor_price=0.30,             # price / war-risk-premium contribution
-    factor_sanctions=0.00,
-    rationale="3 dark-vessel gaps + BOCD price breakpoint",
-    model_version="gbm-platt-v1.0",
-    observed_at=datetime.now(timezone.utc),
-)
-# This creates / updates the RISK_STATE edge on the entity node.
-# The LangGraph monitor picks it up within 30s. NEVER call this from sandbox.
-```
-
-**KB field expectations — what must be filled for correct graph behaviour:**
-| Field | Required | Notes |
-|---|---|---|
-| `signal_id` | yes | Unique. Used as Graphiti episode name. |
-| `source` | yes | Must be one of `"ais" "gdelt" "news" "sanctions" "price"`. |
-| `observed_at` | yes | Graphiti reference_time — determines bitemporal validity window. |
-| `entity_refs` | yes | Display names must match existing entity nodes or Graphiti will create new ones. Spell consistently. |
-| `summary` | yes | One-line description. Becomes triage embedding input. |
-| `force_synthesis=True` | for sanctions / BOCD | Bypasses 0.40 cosine similarity gate. |
-| `priority_hint="HIGH"` | for dark vessels, sanctions, BOCD | Routes to synthesis, not just extraction. |
-
----
-
-### System 2 — Disruption Scenario Modeller (Reason)
-
-**Role:** triggered by the LangGraph sandbox or threshold monitor. Reads the supply-chain subgraph, runs ARIO/GNN, writes cascade results back.
-
-**Trigger (automatic — no user action):**
-```python
-# orchestration/triggers.py fires this when risk band crosses "action" (score >= 0.70)
-# OR when a PendingScenario is promoted from sandbox
-from scenario_agent.runner import run_scenario
-await run_scenario(trigger_entity="Strait of Hormuz", scenario_id="sc-20260228-001", status="confirmed")
-```
-
-**What System 2 reads FROM the KB:**
-```python
-from knowledge.api.read import get_subgraph, get_risk_scores
-
-# Full 2-hop supply-chain subgraph around the disrupted entity
-# Use this to initialise the ARIO IO matrix
-subgraph = await get_subgraph("Strait of Hormuz", hops=2)
-
-# subgraph.nodes → list of dicts:
-#   {"uuid": "...", "display_name": "Jamnagar Refinery", "labels": ["Refinery"],
-#    "attributes": {"inventory_days": 22.0, "throughput_capacity_mbpd": 1.24,
-#                   "lat": 22.3, "lon": 70.1, "configured_grades": ["Arab Medium"]}}
-
-# subgraph.edges → list of dicts:
-#   {"uuid": "...", "source_uuid": "...", "target_uuid": "...",
-#    "relation_type": "FEEDS", "fact": "Hormuz feeds Vadinar Port",
-#    "attributes": {"throughput_share_pct": 42.0},
-#    "valid_at": "2026-02-28T00:00:00Z", "invalid_at": null}
-
-# Current risk scores to calibrate initial shock magnitude
-scores = await get_risk_scores()
-hormuz_score = next((s.score for s in scores if s.entity == "Strait of Hormuz"), 0.0)
-```
-
-**What System 2 writes TO the KB:**
-```python
-from knowledge.api.write import write_scenario
-from contracts.outputs import ScenarioOutputData
-
-result = await write_scenario(ScenarioOutputData(
-    scenario_id="sc-20260228-001",          # matches trigger ID
-    trigger_entity="Strait of Hormuz",
-    status="confirmed",                      # "speculative" if from sandbox
-    confidence=0.85,
-    gap_mbpd=1.2,                           # supply gap in million barrels per day
-    gap_duration_days=14.0,
-    feedstock_gap_timeline=[1.1, 1.2, 1.3, 1.2, 1.1, 1.0, 0.9],  # day-by-day mbpd gap
-    price_impact_low=8.0,                   # USD/bbl low estimate
-    price_impact_high=22.0,                 # USD/bbl high estimate
-    spr_depletion_days=6.5,                 # days until SPR below emergency threshold
-    assumptions={
-        "import_dependence_pct": {"value": 88.2, "unit": "%", "source": "PPAC 2025"},
-        "hormuz_share_pct":      {"value": 42.0, "unit": "%", "source": "IEA 2025"},
-        "spr_total_mmt":         {"value": 5.33, "unit": "MMT", "source": "MoPNG 2025"},
-    },
-))
-# result.episode_uuid — pass this as scenario_ref to Systems 3 and 4
-```
-
-**Node properties used by ARIO initialisation:**
-| Property | Node type | Unit | Notes |
-|---|---|---|---|
-| `throughput_capacity_mbpd` | Refinery | mbpd | Max crude intake |
-| `inventory_days` | Refinery | days | Current feedstock buffer |
-| `throughput_share_pct` | FEEDS edge | % | How much of refinery supply transits this corridor |
-| `daily_export_mbpd` | Supplier | mbpd | Supplier's export volume |
-| `sanctioned` | Supplier | bool | Exclude from supply mix |
-| `choke_severity` | Corridor | 0–1 | Severity of closure (1.0 = full blockage) |
-| `risk_score` (RISK_STATE) | any | 0–1 | Current live risk on this node |
-
----
-
-### System 3 — Adaptive Procurement Orchestrator (Act)
-
-**Role:** triggered by a new `ScenarioOutputData` node in the graph. Queries available suppliers, compatible grades, and open routes. Runs RF/EOS grade matching + OR-Tools routing + TOPSIS ranking. Writes back a ranked procurement recommendation.
-
-**Trigger (automatic):**
-```python
-# orchestration/triggers.py detects new ScenarioOutput and fires:
-from alt_procurement_agent.runner import run_procurement
-await run_procurement(scenario_id="sc-20260228-001")
-```
-
-**What System 3 reads FROM the KB (three targeted queries):**
-```python
-from knowledge.api.read import get_available_suppliers, get_grade_specs, get_routes
-
-# Query 1 — suppliers with risk < 0.4, not sanctioned, not on any watch list
-suppliers = await get_available_suppliers(risk_max=0.4)
-for s in suppliers:
-    # s.display_name         → "Saudi Aramco"
-    # s.country              → "Saudi Arabia"
-    # s.daily_export_mbpd    → 6.2
-    # s.risk_score           → 0.18
-    # s.sanctioned           → False
-    # s.available_grades     → ["Arab Light", "Arab Medium", "Arab Heavy"]
-    pass
-
-# Query 2 — crude grade specs each affected refinery is configured for
-grades = await get_grade_specs("Jamnagar Refinery")
-for g in grades:
-    # g.grade          → "Arab Medium"
-    # g.api_gravity    → 29.0
-    # g.sulfur_pct     → 2.60
-    # g.compatibility  → 0.95   (CONFIGURED_FOR edge attribute)
-    pass
-
-# Query 3 — corridors below risk threshold (Yanbu automatically appears if Hormuz > 0.5)
-routes = await get_routes(risk_max=0.5)
-for r in routes:
-    # r.display_name   → "Yanbu bypass pipeline"
-    # r.risk_score     → 0.12
-    # r.h3_cells       → ["..."]
-    # r.transit_days   → 12.0
-    pass
-```
-
-**What System 3 writes TO the KB:**
-```python
-from knowledge.api.write import write_procurement
-from contracts.outputs import ProcurementRecData, ProcurementOption, ScoreBreakdown
-
-await write_procurement(ProcurementRecData(
-    scenario_id="sc-20260228-001",
-    status="confirmed",              # "speculative" if from sandbox
-    ranked=[
-        ProcurementOption(
-            supplier="Saudi Aramco",
-            grade="Arab Light",
-            route_via="Yanbu bypass pipeline",
-            landed_cost_usd_bbl=85.30,
-            lead_time_days=12.0,
-            grade_compatibility=0.92,     # RF + Peng-Robinson EOS output
-            corridor_risk=0.12,           # Yanbu route risk score at query time
-            topsis_score=0.87,            # TOPSIS multi-objective composite
-            score_breakdown=ScoreBreakdown(
-                cost_score=0.78,
-                lead_time_score=0.85,
-                grade_compatibility_score=0.92,
-                corridor_risk_score=0.88,
-            ),
-            rationale="Yanbu pipeline bypasses Hormuz entirely; 12-day lead time "
-                      "within feedstock buffer; Arab Light within Jamnagar gravity envelope.",
-        ),
-        # ... more ranked options
-    ],
-))
-```
-
-**How the KB knows which suppliers are live vs. sanctioned:**
-A supplier's `sanctioned` attribute is updated in real time by System 1's sanctions sub-agent. When `get_available_suppliers(risk_max=0.4)` is called, it queries FalkorDB with `WHERE n.sanctioned = false AND r.score < 0.4` — a supplier sanctioned 30 minutes ago is already excluded because SAGE updated its node when the OFAC signal arrived.
-
----
-
-### System 4 — Strategic Reserve Optimisation Agent (Act)
-
-**Role:** runs in parallel with System 3, triggered by the same `ScenarioOutput` node. Reads current SPR fill levels and the gap volume from the scenario. Solves the SDP/CMDP Bellman iteration and writes a day-by-day drawdown schedule.
-
-**Trigger (automatic, parallel to System 3):**
-```python
-from reserve_optim_agent.runner import run_spr_optimisation
-await run_spr_optimisation(scenario_id="sc-20260228-001")
-```
-
-**What System 4 reads FROM the KB:**
-```python
-from knowledge.api.read import get_spr_state, get_subgraph
-
-# Current fill levels for all three SPR caverns
-caverns = await get_spr_state()
-for c in caverns:
-    # c.display_name          → "Vizag SPR Cavern"
-    # c.capacity_mmt          → 1.33
-    # c.current_fill_mmt      → 1.21     (most recent fill level from episode history)
-    # c.days_cover            → 8.7      (fill / daily_consumption)
-    # c.fill_pct              → 0.91
-    pass
-
-total_fill_mmt = sum(c.current_fill_mmt or 0 for c in caverns)
-# India total: ~5.33 MMT = ~9.5 days cover at normal consumption
-
-# Read gap volume and duration from System 2's ScenarioOutput
-subgraph = await get_subgraph("Strait of Hormuz", hops=1)
-# Find ScenarioOutput node linked via AFFECTS_SCENARIO edge
-# scenario_node["attributes"]["gap_mbpd"] → 1.2
-# scenario_node["attributes"]["gap_duration_days"] → 14.0
-# scenario_node["attributes"]["confidence"] → 0.85
-```
-
-**What System 4 writes TO the KB:**
-```python
-from knowledge.api.write import write_spr_schedule
-from contracts.outputs import SPRScheduleData, SPRDay
-
-await write_spr_schedule(SPRScheduleData(
-    scenario_id="sc-20260228-001",
-    status="confirmed",
-    daily_plan=[
-        SPRDay(
-            day=1, action="draw", volume_mmt=0.18,
-            reserve_after_mmt=5.15, days_cover_after=9.2,
-            decision_driver="gap onset — begin draw at sustained rate",
-        ),
-        SPRDay(
-            day=8, action="draw", volume_mmt=0.18,
-            reserve_after_mmt=3.89, days_cover_after=6.9,
-            decision_driver="mid-crisis: maintain draw, monitor procurement arrival",
-        ),
-        SPRDay(
-            day=15, action="hold", volume_mmt=0.0,
-            reserve_after_mmt=3.89, days_cover_after=6.9,
-            decision_driver="procurement alternatives arrived — halt draw, begin replenishment planning",
-        ),
-    ],
-    prob_above_buffer=0.96,         # P(reserve > 3-day buffer) across the plan
-    constraint_satisfied=True,      # CMDP chance constraint met: P(reserve < 3 days) ≤ 0.05
-    policy_memo=(
-        "Draw at 0.18 MMT/day for 14 days; buffer maintained at >6.9 days cover throughout. "
-        "Real-options analysis shows positive waiting value is exhausted by Day 3 — delay "
-        "beyond Day 3 risks hitting the 5-day buffer floor. Replenishment window opens at Day 20 "
-        "assuming procurement alternatives arrive by Day 15."
-    ),
-))
-```
-
-**State space used by SDP solver:**
-| Dimension | Source | Range |
-|---|---|---|
-| Reserve level | `get_spr_state()` | 0 – 5.33 MMT |
-| Market regime | `get_risk_scores()` band | `calm / watch / elevated / action / critical` |
-| Current crude price | Latest price signal payload | USD/bbl |
-| Day in crisis | Gap duration from ScenarioOutput | 0 – gap_duration_days |
-
----
-
-### System 5 — Supply Chain Digital Twin (Visualize)
-
-**Role:** pure consumer — reads everything, writes nothing. Renders the live KB state as a geospatial map, staged-alert panel, procurement results, SPR timeline, copilot, and pipeline status bar.
-
-**What System 5 reads FROM the KB (continuous + on-demand):**
-
-```python
-from knowledge.api.read import (
-    get_risk_scores,       # continuous — every 30s, feeds map node colours
-    get_subgraph,          # on node click — populates detail panel
-    copilot_query,         # on user question — EA-GraphRAG routed
-    get_wiki_page,         # on node click — narrative prose panel
-    get_available_suppliers,   # for procurement results panel
-    get_spr_state,         # for SPR timeline panel
-)
-
-# 1. Map node risk colours — polled every 30s via FastAPI background task
-scores = await get_risk_scores()
-for view in scores:
-    # view.entity          → "Strait of Hormuz"
-    # view.score           → 0.73
-    # view.band            → "action"   → render as red + pulsing glow
-    # view.factors         → {"ais": 0.41, "gdelt": 0.55, "price": 0.30, "sanctions": 0.00}
-    # view.valid_at        → ISO8601 timestamp (shown in tooltip)
-    pass
-
-# Risk band → UI colour mapping (from contracts/bands.py):
-# "calm"     (<0.25)  → phosphor green
-# "watch"    (0.25–0.45) → cyan
-# "elevated" (0.45–0.70) → amber
-# "action"   (0.70–0.90) → red
-# "critical" (≥0.90)  → pulsing red
-
-# 2. Node click → detail panel
-subgraph = await get_subgraph("Strait of Hormuz", hops=2)
-# Render subgraph.nodes as the connected-entities list
-# Render subgraph.edges as arc lines between map markers
-
-# 3. Node click → wiki prose panel (RETRIEVED, not generated)
-page = await get_wiki_page("Strait of Hormuz")
-# page.content       → full Markdown prose from /wiki store
-# page.last_updated  → timestamp of last synthesis run
-# Render as-is in the right panel
-
-# 4. Copilot question (user-initiated — only human-triggered step)
-answer = await copilot_query("Which refineries are most exposed to a Hormuz closure?")
-# answer.answer      → Nova Pro synthesised prose (≤400 words)
-# answer.citations   → list of Graphiti episode UUIDs — render as clickable sources
-# answer.route       → "vector" (~380ms) or "graph" (~1,800ms)
-# answer.latency_ms  → show in UI for transparency
-
-# 5. PendingScenario staged alert — polled with risk scores
-# get_risk_scores() also returns entries where band is from a PendingScenario node:
-# view.status == "speculative" → show Staged Alert: "{confidence}% probability, crossing in {hours}h"
-# view.status == "promoted"   → show confirmed threshold crossing, surface procurement/SPR panels
-
-# 6. Procurement panel — shown after threshold crosses
-suppliers = await get_available_suppliers(risk_max=0.4)
-# Render as ranked table: supplier / grade / route / TOPSIS score / rationale
-
-# 7. SPR timeline
-caverns = await get_spr_state()
-# Render as bar chart: current fill vs. capacity, days cover, drawdown plan overlay
-```
-
-**WebSocket push (LangGraph → frontend):**
-The pipeline bar (`SENSE → TRIAGE → SAGE → SANDBOX → SCENARIO → PROCURE → RESERVE`) is driven by LangGraph state-change events, not KB polling. Wire it in `orchestration/graph.py`:
-
-```python
-# In each LangGraph node, emit a status event:
-async def emit_pipeline_status(stage: str, status: str):
-    # stage: "SENSE" | "TRIAGE" | "SAGE" | "SANDBOX" | "SCENARIO" | "PROCURE" | "RESERVE"
-    # status: "waiting" | "processing" | "staged" | "done" | "error"
-    await websocket_manager.broadcast({"stage": stage, "status": status})
-```
-
-**System 5 writes NOTHING to the KB. If you find yourself calling a write function from visualizer_agent, stop — it belongs in one of Systems 1–4.**
-
----
-
-### Graph Extraction — Edge Hallucination Prevention
-
-Nova Lite (Graphiti's extraction LLM) reads every episode body and tries to extract relationships. If the text contains structured key-value labels like `"Current risk score: 0.73"` or `"Factor breakdown: AIS 0.41"`, Nova Lite invents edge types — `HAS_RISK_SCORE`, `HAS_FACTOR_BREAKDOWN` — that are not in SAGE's schema. Graphiti then fails to resolve the target entity (a bare number like `0.73` has no entity node) and logs a warning, dropping the edge.
-
-**This is fixed by design in both write paths:**
-
-- `knowledge/api/write.py:write_risk_state()` — uses flowing prose: `"risk level is assessed at 0.73 out of 1.0 (action band)"` instead of `"Current risk score: 0.73"`.
-- `knowledge/synthesis.py:RISK_STATE_TEMPLATE` — uses the same prose format, with matching instructions in `SYNTH_PROMPT` to never use `"Current risk score:"` or `"Factor breakdown:"` as labels.
-
-The actual risk data is identical — it just reads as a sentence, not a key-value pair. The `RISK_STATE` edge (which IS in the schema) is still extracted correctly from the prose because it matches the typed edge definition, not a hallucinated label.
-
----
-
-## Team Ownership
-
-| Module | Owner |
-|---|---|
-| `contracts/`, `knowledge/`, `scenario_agent/`, `orchestration/sandbox.py`, `orchestration/monitor.py` | Tom |
-| `sensory_agent/`, `knowledge/triage.py` | Teammate B |
-| `alt_procurement_agent/`, `reserve_optim_agent/` | Teammate C |
-| `visualizer_agent/`, `orchestration/graph.py` | Teammate D |
+Lifecycle: `speculative` → `promoted` (within 30s of crossing) → `expired` (72h TTL).
 
 ---
 
@@ -1032,33 +773,62 @@ The actual risk data is identical — it just reads as a sentence, not a key-val
 
 ```bash
 # 1. Copy and fill in environment variables
-cp .env.example .env   # set FALKORDB_PASSWORD, BEDROCK_*, AISSTREAM_API_KEY, EIA_API_KEY, NEWSAPI_KEY
+cp .env.example .env
+# set FALKORDB_PASSWORD, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION,
+#     AISSTREAM_API_KEY, EIA_API_KEY, NEWSAPI_KEY, REDIS_URL
 
-# 2. Start infrastructure first
+# 2. Start infrastructure
 docker compose up falkordb redis -d
 
-# 3. Run the Day-1 smoke test
-python -c "from knowledge.connection import build_graphiti, bootstrap; import asyncio; asyncio.run(bootstrap(build_graphiti()))"
+# 3. Smoke test the KB
+python3 -c "
+from knowledge.connection import init
+from knowledge.registry import REGISTRY, resolve_h3, canonical_name
+import asyncio
+asyncio.run(init())
+print('Registry:', len(REGISTRY), 'entities')
+print('Hormuz H3 lookup:', canonical_name(resolve_h3('8a2a1072b59ffff')))
+"
 
 # 4. Start everything
 docker compose up
 
-# 5. Open FalkorDB browser to inspect the graph
+# 5. FalkorDB graph browser
 open http://localhost:3000
+
+# 6. Demo mode (pre-recorded signals, no live API keys needed)
+DEMO_MODE=true docker compose up
 ```
+
+---
+
+## Team Ownership
+
+| Module | Owner |
+|---|---|
+| `contracts/`, `knowledge/`, `orchestration/sandbox.py`, `orchestration/monitor.py` | Tom |
+| `sensory_agent/`, `knowledge/triage.py`, `knowledge/ingest_queue.py` | Teammate B |
+| `alt_procurement_agent/`, `reserve_optim_agent/` | Teammate C |
+| `visualizer_agent/`, `orchestration/graph.py` | Teammate D |
+| `scenario_agent/` | Tom + Teammate B |
 
 ---
 
 ## Design Specs
 
-Full architectural documentation lives in `.claude/design/`:
+Full documentation in `.claude/design/`:
 
-- [`SAGE_Knowledge_Base_Spec.md`](.claude/design/SAGE_Knowledge_Base_Spec.md) — architecture narrative and build order
-- [`SAGE_Schema_and_Contracts_Spec.md`](.claude/design/SAGE_Schema_and_Contracts_Spec.md) — normative schema, all 7 contracts, lock-in artifact
-- [`SAGE_Knowledge_Base_Deployment.md`](.claude/design/SAGE_Knowledge_Base_Deployment.md) — infrastructure, cost breakdown, deployment guide
+| Spec | What it covers |
+|---|---|
+| [`SAGE_Schema_and_Contracts_Spec.md`](.claude/design/SAGE_Schema_and_Contracts_Spec.md) | Normative schema, all 7 contracts, lock-in artifact |
+| [`system1_interaction.md`](.claude/design/system1_interaction.md) | How each sensing stream writes to and reads from the KB; entity resolution detail |
+| [`system2_designspec.md`](.claude/design/system2_designspec.md) | ARIO model equations, GNN surrogate, India parameters, demo targets |
+| [`secondbrain_design.md`](.claude/design/secondbrain_design.md) | Wikilink format, `links_out` frontmatter, Obsidian + geospatial visualization |
+| [`SAGE_Knowledge_Base_Spec.md`](.claude/design/SAGE_Knowledge_Base_Spec.md) | KB architecture narrative and build order |
+| [`SAGE_Knowledge_Base_Deployment.md`](.claude/design/SAGE_Knowledge_Base_Deployment.md) | Infrastructure, cost breakdown, deployment guide |
 
 ---
 
 ## Cost
 
-~$6/day during development (spot EC2), ~$13/day demo week (on-demand). Total 4-week cost ~$197, effectively $0 with AWS new-account credits. See deployment spec §6 for full breakdown.
+~$6/day development (spot EC2), ~$13/day demo week (on-demand). Total 4-week cost ~$197 — effectively $0 with AWS new-account credits. See deployment spec §6 for full breakdown.
