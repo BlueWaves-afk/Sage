@@ -104,6 +104,32 @@ def write_wiki_page(entity: str, content: str) -> None:
     path = _wiki_path(entity)
     path.write_text(content, encoding="utf-8")
     log.debug("Wiki page updated: %s", path)
+    _git_commit_wiki(path, entity)
+
+
+def _git_commit_wiki(path: Path, entity: str) -> None:
+    """
+    Commit the updated wiki page to git so history is preserved (spec §6.2).
+    Runs as a subprocess — failure is non-fatal so a missing git repo or
+    un-configured identity doesn't block ingest.
+    """
+    import subprocess
+    try:
+        subprocess.run(
+            ["git", "-C", str(WIKI_DIR), "add", path.name],
+            capture_output=True, check=True, timeout=10,
+        )
+        subprocess.run(
+            ["git", "-C", str(WIKI_DIR), "commit", "-m",
+             f"chore(wiki): update {entity} [{datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}]"],
+            capture_output=True, check=True, timeout=10,
+        )
+    except FileNotFoundError:
+        pass   # git not installed in this environment
+    except subprocess.CalledProcessError:
+        pass   # not a git repo, nothing to commit, or no identity configured
+    except Exception as exc:
+        log.debug("Wiki git commit skipped: %s", exc)
 
 
 def render_wiki_page(entity: str, synthesized_text: str) -> str:

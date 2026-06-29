@@ -1,51 +1,159 @@
 """
 LangGraph threshold monitor.
 
-Polls get_risk_scores() every 30 seconds. On band crossing, fires the appropriate
-trigger: sandbox fork (elevated), scenario promotion (action), escalation (critical).
-This is what makes the system autonomous — no human query required to start the pipeline.
+Polls get_risk_scores() every 30 seconds. On band crossing:
+  elevated → fire sandbox fork if no pending scenario exists yet
+  action   → promote pending scenario (fast path) OR cold-trigger pipeline
+  critical → escalation alert + action path
+
+Pending scenario tracking uses Redis keys `sage:pending:{entity}` with a 72h TTL
+set by ingest_queue._maybe_sandbox_fork(). When the TTL expires, Redis deletes the
+key automatically — this implements the C6 PendingScenario 72h expiry contract.
+
+On each poll cycle the monitor also scans for recently expired scenarios and calls
+record_expired_outcome() to close the feedback loop (false positive detection).
 """
 from __future__ import annotations
 
 import asyncio
+import json
+import logging
+import os
+from typing import Optional
+
+import redis.asyncio as aioredis
 
 from contracts.bands import ACTION_THRESHOLD, CRITICAL_THRESHOLD, SANDBOX_FORK_THRESHOLD
 from knowledge.api.read import get_risk_scores
-from knowledge.api.write import promote_pending
+
+log = logging.getLogger(__name__)
 
 POLL_INTERVAL_S = 30
-_already_fired: set[str] = set()   # entity names that have already triggered in this session
+REDIS_URL       = os.environ.get("REDIS_URL", "redis://redis:6379/0")
+EVENTS_CHANNEL  = "sage:events"
+
+# entity → last fired band (prevents re-firing on every poll while entity stays hot)
+_fired_bands: dict[str, str] = {}
+# entity → scenario_ref for scenarios we know about (used for expiry detection)
+_registered_scenarios: dict[str, str] = {}
 
 
 async def run_monitor() -> None:
-    """
-    Continuous async loop. Entry point for the LangGraph monitor node.
-    Stub — real implementation emits LangGraph events on crossing detected.
-    """
+    """Continuous async loop. Entry point called from sage_core."""
+    log.info("Threshold monitor started. Poll interval: %ds", POLL_INTERVAL_S)
     while True:
-        await _poll()
+        try:
+            await _poll()
+        except Exception as exc:
+            log.error("Monitor poll error: %s", exc)
         await asyncio.sleep(POLL_INTERVAL_S)
 
 
 async def _poll() -> None:
     scores = await get_risk_scores()
-    for view in scores:
-        entity = view.entity
-        score  = view.score
+    client = aioredis.from_url(REDIS_URL, decode_responses=True)
 
-        if score >= CRITICAL_THRESHOLD:
-            _fire("critical", entity, score)
-        elif score >= ACTION_THRESHOLD and entity not in _already_fired:
-            _fire("action", entity, score)
-            _already_fired.add(entity)
-            # TODO: call promote_pending(scenario_ref) if PendingScenario exists
-            # TODO: emit LangGraph "threshold_crossed" event → triggers systems 2/3/4
-        elif score >= SANDBOX_FORK_THRESHOLD:
-            pass  # sandbox fork decision lives in sandbox.py
-        else:
-            _already_fired.discard(entity)
+    try:
+        for view in scores:
+            entity = view.entity
+            score  = view.score
+            prev   = _fired_bands.get(entity, "calm")
+
+            if score >= CRITICAL_THRESHOLD and prev != "critical":
+                _fired_bands[entity] = "critical"
+                scenario_ref = await _get_pending(client, entity)
+                await _publish(client, "critical", entity, score, scenario_ref)
+                from orchestration.triggers import on_critical
+                await on_critical(entity, score)
+
+            elif score >= ACTION_THRESHOLD and prev not in ("action", "critical"):
+                _fired_bands[entity] = "action"
+                scenario_ref = await _get_pending(client, entity)
+                await _publish(client, "action", entity, score, scenario_ref)
+                from orchestration.triggers import on_action
+                await on_action(entity, score, scenario_ref)
+                # Consume the key so we don't double-promote on the next poll
+                if scenario_ref:
+                    await client.delete(f"sage:pending:{entity}")
+                    _registered_scenarios.pop(entity, None)
+
+            elif score >= SANDBOX_FORK_THRESHOLD and prev not in ("elevated", "action", "critical"):
+                _fired_bands[entity] = "elevated"
+                scenario_ref = await _get_pending(client, entity)
+                await _publish(client, "elevated", entity, score, scenario_ref)
+                from orchestration.triggers import on_elevated
+                await on_elevated(entity, score)
+
+            elif score < SANDBOX_FORK_THRESHOLD:
+                # Entity cooled — reset so it can re-fire on the next escalation
+                _fired_bands.pop(entity, None)
+
+        await _check_expirations(client)
+
+    finally:
+        await client.aclose()
 
 
-def _fire(band: str, entity: str, score: float) -> None:
-    # TODO: emit LangGraph state-change event consumed by graph.py
-    print(f"[monitor] {band.upper()} crossing — {entity} score={score:.2f}")
+async def _get_pending(client: object, entity: str) -> Optional[str]:
+    """Return pending scenario_ref from Redis; track it for expiry detection."""
+    try:
+        val = await client.get(f"sage:pending:{entity}")
+        if val:
+            _registered_scenarios[entity] = val
+        return val
+    except Exception:
+        return None
+
+
+async def _check_expirations(client: object) -> None:
+    """
+    Detect pending scenarios whose 72h Redis TTL has expired (no crossing happened).
+    Records a false-positive outcome and publishes an expiry event to clear the UI.
+    """
+    expired = []
+    for entity, ref in list(_registered_scenarios.items()):
+        try:
+            still_alive = await client.exists(f"sage:pending:{entity}")
+        except Exception:
+            still_alive = True
+        if not still_alive:
+            expired.append((entity, ref))
+
+    for entity, scenario_ref in expired:
+        _registered_scenarios.pop(entity, None)
+        log.info("PendingScenario expired without crossing: %s ref=%s", entity, scenario_ref)
+        try:
+            from knowledge.feedback import record_expired_outcome
+            await record_expired_outcome(
+                scenario_id=scenario_ref,
+                entity=entity,
+                predicted_confidence=0.0,
+                predicted_crossing_hours=0.0,
+                feature_vector_at_prediction={},
+            )
+        except Exception as exc:
+            log.warning("record_expired_outcome failed for %s (non-fatal): %s", scenario_ref, exc)
+        await _publish(client, "expired", entity, 0.0, scenario_ref)
+
+
+async def _publish(
+    client: object,
+    band: str,
+    entity: str,
+    score: float,
+    scenario_ref: Optional[str],
+) -> None:
+    """Publish a pipeline event to sage:events (consumed by the WebSocket gateway)."""
+    event = json.dumps({
+        "type": "threshold",
+        "band": band,
+        "entity": entity,
+        "score": round(score, 4),
+        "scenario_ref": scenario_ref,
+    })
+    try:
+        await client.publish(EVENTS_CHANNEL, event)
+    except Exception as exc:
+        log.warning("Failed to publish monitor event: %s", exc)
+    log.info("[monitor] %s — %s score=%.2f scenario=%s",
+             band.upper(), entity, score, scenario_ref or "none")

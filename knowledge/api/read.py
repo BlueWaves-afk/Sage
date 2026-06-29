@@ -28,6 +28,9 @@ from typing import Any, Optional
 
 from pydantic import BaseModel
 
+# EpisodeRef is the canonical return type — import from write to avoid duplication
+from knowledge.api.write import EpisodeRef  # noqa: F401 — re-exported for consumers
+
 log = logging.getLogger(__name__)
 
 
@@ -91,11 +94,6 @@ class WikiPage(BaseModel):
     entity: str
     content: str
     last_updated: Optional[str] = None
-
-
-class EpisodeRef(BaseModel):
-    episode_uuid: str
-    scenario_id: Optional[str] = None
 
 
 class CopilotAnswer(BaseModel):

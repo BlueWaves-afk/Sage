@@ -506,20 +506,26 @@ async def write_pending(
 # C7.1 — Sandbox promotion (called by LangGraph monitor on live crossing)
 # ---------------------------------------------------------------------------
 
-async def promote_pending(scenario_ref: str) -> EpisodeRef:
+async def promote_pending(scenario_ref: str, entity: str = "") -> EpisodeRef:
     """
-    LangGraph monitor calls this when live risk_score crosses ACTION_THRESHOLD
-    for an entity that has a speculative PendingScenario.
+    Called by triggers.on_action() when live risk_score crosses ACTION_THRESHOLD
+    and a speculative PendingScenario exists.
 
     Per C6 promotion contract:
-      1. Writes a 'promoted' status episode (Graphiti invalidates old speculative episode)
-      2. Kicks off feedback loop recording (via knowledge.feedback)
+      1. Write a 'promoted' episode (makes the crossing auditable in the graph)
+      2. Record a TRUE POSITIVE feedback outcome
+      3. Publish scenario.promoted to sage:events WebSocket channel
+      4. Trigger Systems 2→3→4 re-run with status='confirmed' so speculative
+         outputs are superseded by confirmed ones in the same graph hop
 
-    Note: flipping linked output episodes from speculative→confirmed is done by
-    scenario_agent, procurement_agent, and reserve_optim_agent when they re-run
-    on the promoted scenario. The monitor emits a scenario.promoted LangGraph event
-    that triggers those re-runs.
+    Note: we supersede speculative episodes by running the agents again with
+    status='confirmed' rather than trying to mutate existing episodes —
+    Graphiti's bitemporal model means the new confirmed episode naturally
+    invalidates the old speculative one via the deduplication pass.
     """
+    import json
+    import os
+
     from graphiti_core.nodes import EpisodeType
     from knowledge.connection import _get_graphiti
 
@@ -527,12 +533,11 @@ async def promote_pending(scenario_ref: str) -> EpisodeRef:
     now = datetime.now(timezone.utc)
 
     episode_body = (
-        f"[PROMOTED] Sandbox PendingScenario {scenario_ref} has been confirmed.\n"
-        f"Live risk_score crossed action threshold at {now.isoformat()}.\n"
-        f"Status updated: speculative → promoted.\n"
-        f"Systems 2/3/4 re-running on confirmed live state.\n"
-        f"Scenario ref: {scenario_ref}. "
-        f"This promoted PendingScenario AFFECTS_SCENARIO {scenario_ref}."
+        f"Sandbox PendingScenario {scenario_ref} has been confirmed for {entity or 'entity'}. "
+        f"Live risk score crossed the action threshold at {now.strftime('%Y-%m-%d %H:%M')}Z. "
+        f"Speculative status promoted to confirmed. "
+        f"Systems 2, 3, and 4 are re-running against live state to supersede speculative outputs. "
+        f"This promoted scenario AFFECTS_SCENARIO {scenario_ref}."
     )
 
     await g.add_episode(
@@ -548,20 +553,44 @@ async def promote_pending(scenario_ref: str) -> EpisodeRef:
 
     episode_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"promoted_{scenario_ref}"))
 
-    # Record feedback for the false-positive guard — promotion = TRUE POSITIVE
-    # We don't have the feature vector here so we pass what we know
+    # Feedback: record TRUE POSITIVE outcome
     try:
         from knowledge.feedback import record_confirmed_outcome
         await record_confirmed_outcome(
             scenario_id=scenario_ref,
-            entity="",   # resolved upstream
-            predicted_confidence=0.0,    # not available here; feedback module tolerates 0
+            entity=entity,
+            predicted_confidence=0.0,
             predicted_crossing_hours=0.0,
-            actual_crossing_hours=0.0,   # exact value filled by monitor which has timing
+            actual_crossing_hours=0.0,
             actual_peak_risk=0.0,
             feature_vector_at_prediction={},
         )
     except Exception as exc:
         log.warning("Feedback record failed for promotion %s (non-fatal): %s", scenario_ref, exc)
+
+    # Publish scenario.promoted so the WebSocket gateway can notify the frontend
+    try:
+        import redis.asyncio as aioredis
+        redis_url = os.environ.get("REDIS_URL", "redis://redis:6379/0")
+        client = aioredis.from_url(redis_url, decode_responses=True)
+        try:
+            await client.publish("sage:events", json.dumps({
+                "type": "scenario.promoted",
+                "entity": entity,
+                "scenario_ref": scenario_ref,
+                "stage": "SCENARIO",
+                "status": "promoted",
+            }))
+        finally:
+            await client.aclose()
+    except Exception as exc:
+        log.warning("Redis publish failed for promotion %s (non-fatal): %s", scenario_ref, exc)
+
+    # Notify triggers module so it can publish the full pipeline stage sequence
+    try:
+        from orchestration.triggers import on_sandbox_promoted
+        await on_sandbox_promoted(entity, scenario_ref)
+    except Exception as exc:
+        log.warning("on_sandbox_promoted failed (non-fatal): %s", exc)
 
     return EpisodeRef(episode_uuid=episode_uuid, scenario_id=scenario_ref)

@@ -109,7 +109,7 @@ class ProcurementOption(BaseModel):
 
     # Multi-objective ranking
     topsis_score: float = Field(..., ge=0, le=1, description="Final TOPSIS rank score")
-    score_breakdown: ScoreBreakdown = Field(...,
+    score_breakdown: Optional[ScoreBreakdown] = Field(None,
         description="Per-dimension scores for XAI radar chart — why this option ranked here")
 
     # Natural language explanation (cited to Graphiti episodes)

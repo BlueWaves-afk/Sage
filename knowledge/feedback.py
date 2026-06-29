@@ -123,7 +123,7 @@ async def _write_feedback_episode(record: dict) -> None:
     Write a feedback episode to Graphiti so copilot can cite accuracy history.
     Uses the same ingest path as live signals to maintain single write-path rule.
     """
-    from contracts.signal import NormalizedSignal, SignalSource, Priority
+    from contracts.signal import NormalizedSignal
     from knowledge.api.write import ingest_signal
     import uuid
 
@@ -145,10 +145,10 @@ async def _write_feedback_episode(record: dict) -> None:
 
     signal = NormalizedSignal(
         signal_id=f"feedback-{uuid.uuid4().hex[:8]}",
-        source=SignalSource.NEWS,
+        source="news",          # SignalSource is a Literal alias, not an enum
         observed_at=datetime.now(timezone.utc),
         ingested_at=datetime.now(timezone.utc),
-        priority_hint=Priority.LOW,
+        priority_hint="LOW",    # Priority is a Literal alias, not an enum
         force_synthesis=True,
         entity_refs=[record["entity"], record["scenario_id"]],
         h3_cells=[],
