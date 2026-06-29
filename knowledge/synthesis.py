@@ -56,20 +56,27 @@ Produce an updated intelligence assessment. You MUST:
    the prior assessment without explanation.
 3. Note any historical pattern this matches (e.g. prior Hormuz closures, sanction cycles).
 4. List the downstream entities most directly affected (refineries, ports, vessels).
-5. If a risk score is provided, state it explicitly in this exact format on a new line:
-   "Current risk score: {score_placeholder} ({band_placeholder})."
-   "Factor breakdown: AIS {ais_placeholder}, GDELT {gdelt_placeholder}, price {price_placeholder}, sanctions {sanctions_placeholder}."
+5. If a risk score is provided, embed it in a sentence like:
+   "The assessed risk level is {score_placeholder} ({band_placeholder} band),
+   with AIS contributing {ais_placeholder}, GDELT {gdelt_placeholder},
+   price {price_placeholder}, and sanctions {sanctions_placeholder}."
+   Do NOT use "Current risk score:" or "Factor breakdown:" as labels.
 Keep the full response factual, cited, and under 250 words.
 Do not add headers or bullet points — write in flowing prose.\
 """
 
+# Prose-only format intentional: "Current risk score: X" / "Factor breakdown: Y"
+# labels cause Nova Lite (extraction LLM) to invent HAS_RISK_SCORE /
+# HAS_FACTOR_BREAKDOWN edges that are not in the SAGE schema. Same data as
+# sentences; the RISK_STATE edge is still extracted correctly from the prose.
 RISK_STATE_TEMPLATE = """\
 
-Current risk score: {score:.2f} ({band}).
-Factor breakdown: AIS {factor_ais:.2f}, GDELT {factor_gdelt:.2f}, \
-price {factor_price:.2f}, sanctions {factor_sanctions:.2f}.
-Rationale: {rationale}
-Model version: {model_version}\
+The assessed risk level is {score:.2f} out of 1.0 ({band} band). \
+Signal contributions: AIS dark-vessel {factor_ais:.2f}, \
+GDELT conflict tone {factor_gdelt:.2f}, \
+price war-risk premium {factor_price:.2f}, \
+sanctions exposure {factor_sanctions:.2f}. \
+{rationale} Fusion model: {model_version}.\
 """
 
 
@@ -99,6 +106,17 @@ def write_wiki_page(entity: str, content: str) -> None:
     log.debug("Wiki page updated: %s", path)
 
 
+def render_wiki_page(entity: str, synthesized_text: str) -> str:
+    """Render canonical wiki markdown without persisting it.
+
+    Split out from write_wiki_page so the caller can build the page but defer
+    the write until the graph write (add_episode) has succeeded — this is what
+    keeps the /wiki store and the graph from drifting apart on partial failure.
+    """
+    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    return f"# {entity}\n\n_Last updated: {stamp}_\n\n{synthesized_text}"
+
+
 def list_wiki_entities() -> list[str]:
     """Return all entity slugs that have wiki pages."""
     if not WIKI_DIR.exists():
@@ -121,6 +139,7 @@ async def synthesize(
     factor_sanctions: float = 0.0,
     rationale: Optional[str] = None,
     model_version: Optional[str] = None,
+    persist: bool = True,
 ) -> str:
     """
     Synthesize a new wiki page for `entity` given the incoming signal.
@@ -129,6 +148,11 @@ async def synthesize(
     a RISK_STATE edge from the prose (§6.4 of schema spec).
 
     Returns the full synthesized text — this is passed directly to add_episode().
+
+    persist=False returns the synthesized prose WITHOUT writing the wiki page.
+    The caller is then responsible for persisting it (via render_wiki_page +
+    write_wiki_page) only after the graph write succeeds, so the two stores
+    cannot drift. The default (True) preserves the standalone behaviour.
     """
     current_page = load_wiki_page(entity)
 
@@ -164,9 +188,10 @@ async def synthesize(
         )
         synthesized_text = synthesized_text.rstrip() + "\n" + risk_block
 
-    # Persist to /wiki store
-    wiki_content = f"# {entity}\n\n_Last updated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}_\n\n{synthesized_text}"
-    write_wiki_page(entity, wiki_content)
+    # Persist to /wiki store unless the caller wants to defer until the graph
+    # write succeeds (atomic wiki↔graph consistency — see ingest_signal).
+    if persist:
+        write_wiki_page(entity, render_wiki_page(entity, synthesized_text))
 
     return synthesized_text
 

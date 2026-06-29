@@ -118,22 +118,16 @@ async def _cypher(query: str, params: Optional[dict] = None) -> list[dict[str, A
     """
     from knowledge.connection import _get_graphiti
     g = _get_graphiti()
-    driver = g._driver   # FalkorDriver instance
+    driver = g.driver   # FalkorDriver instance (graphiti_core stores it as .driver)
 
     try:
-        results = await driver.execute_query(query, params or {})
-        # Normalise to list[dict]; driver may return various shapes
-        if isinstance(results, list):
-            return results
-        return list(results) if results else []
-    except AttributeError:
-        # Some graphiti versions use .run() instead of .execute_query()
-        try:
-            results = await driver.run(query, params or {})
-            return results if isinstance(results, list) else []
-        except Exception as exc:
-            log.error("Cypher execution failed: %s | query: %.200s", exc, query)
-            return []
+        # FalkorDriver.execute_query returns (rows: list[dict], columns: list[str], stats)
+        raw = await driver.execute_query(query, **(params or {}))
+        if isinstance(raw, tuple):
+            rows = raw[0]
+        else:
+            rows = raw
+        return rows if isinstance(rows, list) else []
     except Exception as exc:
         log.error("Cypher execution failed: %s | query: %.200s", exc, query)
         return []

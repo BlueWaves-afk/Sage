@@ -9,11 +9,21 @@ Why custom wrappers (not OpenAI-compatible endpoint):
   Bedrock Nova (Nova Micro/Lite/Pro) is NOT on Bedrock's OpenAI-compatible endpoint.
   Only Claude 3.x/4.x models appear there. Nova models require the native converse() API.
 
+Model routing:
+  ModelSize.medium (synthesis, policy memos)  → Nova Pro  (~$0.0008/1K tokens)
+  ModelSize.small  (entity extraction, triage) → Nova Micro (~$0.000035/1K tokens)
+
+Throttling:
+  "Too many requests"      → per-second rate limit; retried with exponential backoff,
+                             then re-raised as openai.RateLimitError so Graphiti's own
+                             tenacity wrapper also retries at the outer level.
+  "Too many tokens per day" → daily quota; fail fast (no retries), raise RateLimitError
+                              immediately so callers surface the error cleanly.
+
 Structured output:
   Graphiti serialises the response_model JSON schema and injects it into the prompt.
   The _generate_response return is a dict with key "content" containing the raw text.
   Graphiti's generate_response() then parses the content against the schema.
-  We don't need tool_use — just return clean JSON-parseable text for structured calls.
 """
 from __future__ import annotations
 
@@ -21,32 +31,49 @@ import asyncio
 import json
 import logging
 import os
+import random
+import time
 from typing import Any, Optional
 
 import boto3
+from openai import RateLimitError
+from graphiti_core.llm_client.errors import EmptyResponseError
 from pydantic import BaseModel
+
+from graphiti_core.llm_client.client import LLMClient
+from graphiti_core.llm_client.config import LLMConfig, ModelSize
+from graphiti_core.prompts.models import Message
+from graphiti_core.embedder.client import EmbedderClient
 
 log = logging.getLogger(__name__)
 
 _AWS_REGION  = os.environ.get("AWS_REGION", "ap-south-1")
 _NOVA_PRO    = "amazon.nova-pro-v1:0"
+_NOVA_LITE   = "amazon.nova-lite-v1:0"
 _NOVA_MICRO  = "amazon.nova-micro-v1:0"
 _TITAN_EMBED = "amazon.titan-embed-text-v2:0"
 _EMBED_DIM   = 1024
+
+_DAILY_QUOTA_PHRASE = "too many tokens per day"
+_RATE_LIMIT_RETRIES = 5
+
+_TOOL_NAME = "record_result"
+
+
+def _is_daily_quota(exc: Exception) -> bool:
+    return _DAILY_QUOTA_PHRASE in str(exc).lower()
 
 
 # ---------------------------------------------------------------------------
 # Graphiti LLMClient
 # ---------------------------------------------------------------------------
 
-from graphiti_core.llm_client.client import LLMClient
-from graphiti_core.llm_client.config import LLMConfig, ModelSize
-from graphiti_core.prompts.models import Message
-
-
 class BedrockLLMClient(LLMClient):
     """
     Graphiti-compatible LLM client backed by AWS Bedrock Nova via converse() API.
+
+    ModelSize.medium → Nova Pro  (synthesis, wiki updates, policy memos)
+    ModelSize.small  → Nova Micro (entity/edge extraction inside add_episode)
 
     Graphiti calls _generate_response() and expects a dict with "content" key
     containing the raw LLM text (which it then parses for structured output).
@@ -55,15 +82,22 @@ class BedrockLLMClient(LLMClient):
     def __init__(
         self,
         model_id: str = _NOVA_PRO,
+        small_model_id: str = _NOVA_LITE,
         region: str = _AWS_REGION,
         temperature: float = 0.0,
         max_tokens: int = 8192,
     ) -> None:
-        # LLMClient.__init__ may not exist as a proper __init__; set attributes directly
-        self.model_id    = model_id
-        self.temperature = temperature
-        self.max_tokens  = max_tokens
-        self._bedrock    = boto3.client("bedrock-runtime", region_name=region)
+        super().__init__(
+            config=LLMConfig(
+                model=model_id,
+                small_model=small_model_id,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            ),
+            cache=False,
+        )
+        self._region      = region
+        self._bedrock     = boto3.client("bedrock-runtime", region_name=region)
 
     async def _generate_response(
         self,
@@ -73,26 +107,94 @@ class BedrockLLMClient(LLMClient):
         model_size: ModelSize = ModelSize.medium,
     ) -> dict[str, Any]:
         """
-        Core interface method. Called by Graphiti's generate_response().
-        Returns {"content": "<text>", "input_tokens": N, "output_tokens": M}.
+        Core interface method called by Graphiti's generate_response().
+        Routes small model_size (entity extraction) to Nova Micro to save quota.
+
+        When response_model is set, Graphiti has injected a JSON schema into the
+        prompt and expects the PARSED structured dict back (e.g. {"extracted_entities": [...]}),
+        not text wrapped in a "content" key. Nova often wraps JSON in a ```json fence,
+        so strip fences before parsing. When response_model is None (synthesis,
+        copilot), return {"content": text} for the convenience generate() path.
         """
+        model_id = self.small_model if model_size == ModelSize.small else self.model
         bedrock_messages, system_blocks = _convert_messages(messages)
         n_tokens = min(max_tokens, self.max_tokens)
 
-        text = await asyncio.get_event_loop().run_in_executor(
+        if response_model is None:
+            text = await asyncio.get_event_loop().run_in_executor(
+                None,
+                lambda: self._call_converse(bedrock_messages, system_blocks, n_tokens, model_id),
+            )
+            return {"content": text, "input_tokens": 0, "output_tokens": 0}
+
+        # Structured output via native tool use: define the response_model schema
+        # as a forced tool so Nova returns a schema-validated `input` object rather
+        # than echoing the schema as text. This is far more reliable than parsing
+        # JSON out of free text.
+        tool_schema = _sanitize_schema(response_model.model_json_schema())
+        result = await asyncio.get_event_loop().run_in_executor(
             None,
-            lambda: self._call_converse(bedrock_messages, system_blocks, n_tokens),
+            lambda: self._call_converse_tool(
+                bedrock_messages, system_blocks, n_tokens, model_id, tool_schema
+            ),
         )
-        return {"content": text, "input_tokens": 0, "output_tokens": 0}
+        if result is None:
+            raise EmptyResponseError("Bedrock tool-use returned no structured input")
+        return result
+
+    def _call_converse_tool(
+        self,
+        messages: list[dict],
+        system: list[dict],
+        max_tokens: int,
+        model_id: str,
+        tool_schema: dict,
+    ) -> Optional[dict]:
+        """Force structured output through a single tool and return its input dict."""
+        kwargs: dict[str, Any] = {
+            "modelId": model_id,
+            "messages": messages,
+            "inferenceConfig": {"maxTokens": max_tokens, "temperature": self.temperature},
+            "toolConfig": {
+                "tools": [{
+                    "toolSpec": {
+                        "name": _TOOL_NAME,
+                        "description": "Return the extraction result as structured data.",
+                        "inputSchema": {"json": tool_schema},
+                    }
+                }],
+                "toolChoice": {"any": {}},
+            },
+        }
+        if system:
+            kwargs["system"] = system
+
+        for attempt in range(_RATE_LIMIT_RETRIES + 1):
+            try:
+                response = self._bedrock.converse(**kwargs)
+                for block in response["output"]["message"]["content"]:
+                    tu = block.get("toolUse")
+                    if tu and isinstance(tu.get("input"), dict):
+                        return tu["input"]
+                return None
+            except self._bedrock.exceptions.ThrottlingException as exc:
+                if _is_daily_quota(exc) or attempt == _RATE_LIMIT_RETRIES:
+                    raise RateLimitError(message=str(exc), response=None, body=None) from exc  # type: ignore[arg-type]
+                wait = (2 ** attempt) + random.uniform(0, 1)
+                log.warning("Bedrock tool converse throttled [%s], retry in %.1fs (%d/%d)",
+                            model_id, wait, attempt + 1, _RATE_LIMIT_RETRIES)
+                time.sleep(wait)
+        raise RuntimeError("Unreachable")
 
     def _call_converse(
         self,
         messages: list[dict],
         system: list[dict],
         max_tokens: int,
+        model_id: str,
     ) -> str:
         kwargs: dict[str, Any] = {
-            "modelId": self.model_id,
+            "modelId": model_id,
             "messages": messages,
             "inferenceConfig": {
                 "maxTokens": max_tokens,
@@ -102,13 +204,34 @@ class BedrockLLMClient(LLMClient):
         if system:
             kwargs["system"] = system
 
-        response = self._bedrock.converse(**kwargs)
-        content  = response["output"]["message"]["content"]
-        for block in content:
-            text = block.get("text", "")
-            if text:
-                return text
-        return ""
+        for attempt in range(_RATE_LIMIT_RETRIES + 1):
+            try:
+                response = self._bedrock.converse(**kwargs)
+                content  = response["output"]["message"]["content"]
+                for block in content:
+                    text = block.get("text", "")
+                    if text:
+                        return text
+                return ""
+            except self._bedrock.exceptions.ThrottlingException as exc:
+                if _is_daily_quota(exc):
+                    log.error("Bedrock daily token quota exhausted (%s)", model_id)
+                    raise RateLimitError(
+                        message=str(exc), response=None, body=None  # type: ignore[arg-type]
+                    ) from exc
+                if attempt == _RATE_LIMIT_RETRIES:
+                    log.error("Bedrock converse exhausted retries (%s)", model_id)
+                    raise RateLimitError(
+                        message=str(exc), response=None, body=None  # type: ignore[arg-type]
+                    ) from exc
+                wait = (2 ** attempt) + random.uniform(0, 1)
+                log.warning(
+                    "Bedrock converse throttled [%s], retrying in %.1fs (attempt %d/%d)",
+                    model_id, wait, attempt + 1, _RATE_LIMIT_RETRIES,
+                )
+                time.sleep(wait)
+
+        raise RuntimeError("Unreachable")
 
     # Convenience: non-Graphiti callers (synthesis.py) use this
     async def generate(
@@ -127,6 +250,7 @@ class BedrockLLMClient(LLMClient):
             graphiti_messages,
             response_model=response_model,
             max_tokens=max_tokens or self.max_tokens,
+            model_size=ModelSize.medium,  # synthesis always uses the large model
         )
         return result.get("content", "")
 
@@ -134,9 +258,6 @@ class BedrockLLMClient(LLMClient):
 # ---------------------------------------------------------------------------
 # Graphiti EmbedderClient
 # ---------------------------------------------------------------------------
-
-from graphiti_core.embedder.client import EmbedderClient
-
 
 class BedrockEmbedder(EmbedderClient):
     """
@@ -169,8 +290,19 @@ class BedrockEmbedder(EmbedderClient):
             None, lambda: self._embed_sync(text)
         )
 
-    # Convenience: non-Graphiti callers (triage.py) call this
+    async def create_batch(self, input_data_list: list[str]) -> list[list[float]]:
+        """
+        Graphiti batch interface. Titan's invoke_model is single-input, so we
+        embed each text sequentially (retry/backoff handled per call). Called
+        by Graphiti when embedding extracted edge facts and entity names.
+        """
+        results: list[list[float]] = []
+        for text in input_data_list:
+            results.append(await self.create(text))
+        return results
+
     async def embed(self, text: str) -> list[float]:
+        """Convenience method for non-Graphiti callers (triage.py)."""
         return await self.create(text)
 
     def _embed_sync(self, text: str) -> list[float]:
@@ -179,18 +311,124 @@ class BedrockEmbedder(EmbedderClient):
             "dimensions": self.embedding_dim,
             "normalize": True,
         })
-        response = self._bedrock.invoke_model(
-            modelId=self.model_id,
-            body=body,
-            contentType="application/json",
-            accept="application/json",
-        )
-        return json.loads(response["body"].read())["embedding"]
+        for attempt in range(_RATE_LIMIT_RETRIES + 1):
+            try:
+                response = self._bedrock.invoke_model(
+                    modelId=self.model_id,
+                    body=body,
+                    contentType="application/json",
+                    accept="application/json",
+                )
+                return json.loads(response["body"].read())["embedding"]
+            except self._bedrock.exceptions.ThrottlingException as exc:
+                if _is_daily_quota(exc):
+                    log.error("Bedrock embed daily quota exhausted")
+                    raise RateLimitError(
+                        message=str(exc), response=None, body=None  # type: ignore[arg-type]
+                    ) from exc
+                if attempt == _RATE_LIMIT_RETRIES:
+                    log.error("Bedrock embed exhausted retries")
+                    raise RateLimitError(
+                        message=str(exc), response=None, body=None  # type: ignore[arg-type]
+                    ) from exc
+                wait = (2 ** attempt) + random.uniform(0, 1)
+                log.warning(
+                    "Bedrock embed throttled, retrying in %.1fs (attempt %d/%d)",
+                    wait, attempt + 1, _RATE_LIMIT_RETRIES,
+                )
+                time.sleep(wait)
+
+        raise RuntimeError("Unreachable")
 
 
 # ---------------------------------------------------------------------------
 # Message conversion
 # ---------------------------------------------------------------------------
+
+def _strip_code_fences(text: str) -> str:
+    """Strip a leading ```json / ``` fence and trailing ``` from model output."""
+    s = text.strip()
+    if s.startswith("```"):
+        s = s.split("\n", 1)[-1] if "\n" in s else s[3:]
+        if s.rstrip().endswith("```"):
+            s = s.rstrip()[:-3]
+    return s.strip()
+
+
+def _extract_json_object(
+    text: str, required_keys: Optional[set[str]] = None
+) -> Optional[dict]:
+    """Extract the JSON object that matches the expected response shape.
+
+    Nova frequently echoes the injected JSON *schema* (an object with $defs /
+    properties / required) before or instead of the actual answer, sometimes as
+    a separate object, sometimes merged. Taking the first '{' would pick the
+    schema and miss the data. So we scan every top-level JSON object and, when
+    the caller tells us which keys the real answer must have, return the first
+    object containing all of them — falling back to the first parsed object.
+    """
+    s = _strip_code_fences(text)
+    decoder = json.JSONDecoder()
+    candidates: list[dict] = []
+    i, n = 0, len(s)
+    while i < n:
+        if s[i] == "{":
+            try:
+                obj, end = decoder.raw_decode(s[i:])
+                if isinstance(obj, dict):
+                    candidates.append(obj)
+                i += end
+                continue
+            except json.JSONDecodeError:
+                pass
+        i += 1
+
+    # Drop schema echoes — they are never the real answer.
+    data = [obj for obj in candidates if not _looks_like_schema(obj)]
+
+    if not data:
+        log.error("Bedrock structured output had no data object: %.300s", text)
+        return None
+
+    if required_keys:
+        for obj in data:
+            if required_keys.issubset(obj.keys()):
+                return obj
+    return data[0]
+
+
+def _sanitize_schema(schema: dict) -> dict:
+    """Inline $defs/$ref so Nova's tool-use input schema is self-contained.
+
+    Pydantic emits $ref/$defs for nested models; Bedrock tool schemas are most
+    reliable when references are resolved inline. We do a best-effort inline pass
+    and drop leftover $defs. Falls back to the original schema on any error.
+    """
+    try:
+        defs = schema.get("$defs", {})
+
+        def _resolve(node: Any) -> Any:
+            if isinstance(node, dict):
+                if "$ref" in node and node["$ref"].startswith("#/$defs/"):
+                    name = node["$ref"].split("/")[-1]
+                    return _resolve(defs.get(name, {}))
+                return {k: _resolve(v) for k, v in node.items() if k != "$defs"}
+            if isinstance(node, list):
+                return [_resolve(x) for x in node]
+            return node
+
+        return _resolve({k: v for k, v in schema.items() if k != "$defs"})
+    except Exception:
+        return schema
+
+
+def _looks_like_schema(obj: dict) -> bool:
+    """True if the object is an echoed JSON schema rather than a data instance."""
+    if "$defs" in obj or "$schema" in obj:
+        return True
+    # A bare schema is {"type": "object", "properties": {...}, "required": [...]}
+    return obj.get("type") == "object" and "properties" in obj
+
 
 def _convert_messages(
     messages: list[Message],
@@ -231,13 +469,29 @@ def _convert_messages(
 # ---------------------------------------------------------------------------
 
 def nova_pro(region: str = _AWS_REGION) -> BedrockLLMClient:
-    """Nova Pro — synthesis, policy memos, copilot. ~$0.0008/1K tokens."""
-    return BedrockLLMClient(model_id=_NOVA_PRO, region=region, temperature=0.0)
+    """Nova Pro (medium, synthesis) + Nova Lite (small, extraction) dual-model client.
+
+    Nova Micro proved too weak for Graphiti's structured extraction (it echoes the
+    JSON schema instead of producing data); Nova Lite is the cheapest model that
+    reliably emits valid structured output.
+    """
+    return BedrockLLMClient(
+        model_id=_NOVA_PRO,
+        small_model_id=_NOVA_LITE,
+        region=region,
+        temperature=0.0,
+    )
 
 
 def nova_micro(region: str = _AWS_REGION) -> BedrockLLMClient:
-    """Nova Micro — triage, simple extraction. ~$0.000035/1K tokens."""
-    return BedrockLLMClient(model_id=_NOVA_MICRO, region=region, temperature=0.0, max_tokens=2048)
+    """Nova Micro only — both model sizes route to Micro. Used in tests."""
+    return BedrockLLMClient(
+        model_id=_NOVA_MICRO,
+        small_model_id=_NOVA_MICRO,
+        region=region,
+        temperature=0.0,
+        max_tokens=2048,
+    )
 
 
 def titan_embedder(region: str = _AWS_REGION) -> BedrockEmbedder:

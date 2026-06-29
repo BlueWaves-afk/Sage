@@ -1,11 +1,25 @@
 version: "3.9"
 
-# 12-container SAGE deployment on EC2 g4dn.xlarge (ap-south-1)
-# Start order: falkordb + redis → graphiti → sage-core → everything else
-# Only api-gateway (8000) and frontend (80) are host-exposed.
+# SAGE — local development stack
+#
+# Quick start:
+#   cp .env.example .env          # edit LLM_PROVIDER and API keys as needed
+#   docker compose up falkordb redis -d   # start infrastructure first
+#   docker compose up sage-core api-gateway   # start the KB + API
+#   open http://localhost:8000/health   # should return {"status":"ok","kb_ready":true}
+#   open http://localhost:3000          # FalkorDB browser to inspect the graph
+#
+# Default: LLM_PROVIDER=stub (no credentials needed).
+# To use OpenAI: set LLM_PROVIDER=openai and OPENAI_API_KEY in .env
+# To use AWS Bedrock: set LLM_PROVIDER=bedrock and AWS_* in .env
 
 x-common-env: &common-env
   env_file: .env
+
+x-kb-build: &kb-build
+  build:
+    context: .
+    dockerfile: docker/api_gateway.Dockerfile
 
 services:
 
@@ -15,137 +29,166 @@ services:
     image: falkordb/falkordb:latest
     restart: unless-stopped
     volumes:
-      - falkordb_data:/data   # must point to separate EBS in production
+      - falkordb_data:/data
     ports:
       - "6379:6379"
-      - "3000:3000"           # FalkorDB browser UI — inspect the graph visually
+      - "3000:3000"     # FalkorDB browser — inspect graph at http://localhost:3000
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 10
-    mem_limit: 512m
 
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    mem_limit: 256m
+    ports:
+      - "6380:6379"     # exposed as 6380 locally to avoid clash with falkordb
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 10
 
-  # ── Knowledge Base ───────────────────────────────────────────────────────────
-
-  graphiti:
-    build:
-      context: .
-      dockerfile: docker/graphiti.Dockerfile   # TODO: create
-    restart: unless-stopped
-    <<: *common-env
-    depends_on:
-      falkordb: { condition: service_healthy }
-    mem_limit: 512m
-
-  # ── SAGE Core (most critical container) ─────────────────────────────────────
+  # ── SAGE Core ───────────────────────────────────────────────────────────────
+  # Runs the ingest consumer loop + risk monitor.
+  # Owns the /wiki volume.
 
   sage-core:
     build:
       context: .
-      dockerfile: docker/sage_core.Dockerfile  # TODO: create
+      dockerfile: docker/sage_core.Dockerfile
     restart: unless-stopped
     <<: *common-env
+    environment:
+      FALKORDB_HOST: falkordb
+      REDIS_URL: redis://redis:6379/0
     volumes:
-      - wiki_data:/app/wiki   # /wiki narrative pages persist across restarts
+      - wiki_data:/app/wiki
     depends_on:
       falkordb: { condition: service_healthy }
       redis:    { condition: service_healthy }
-      graphiti: { condition: service_started }
-    mem_limit: 1g
 
-  # ── Sensory Agent (System 1 — 4 sub-agents) ─────────────────────────────────
+  # ── API Gateway (System 5 backend) ──────────────────────────────────────────
+  # FastAPI + WebSocket. The only port exposed to the host (besides FalkorDB browser).
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: docker/api_gateway.Dockerfile
+    restart: unless-stopped
+    <<: *common-env
+    environment:
+      FALKORDB_HOST: falkordb
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - wiki_data:/app/wiki   # shares wiki volume with sage-core
+    depends_on:
+      falkordb: { condition: service_healthy }
+      redis:    { condition: service_healthy }
+      sage-core: { condition: service_started }
+    ports:
+      - "8000:8000"
+
+  # ── Sensory Agent sub-agents (System 1) ────────────────────────────────────
+  # Each pushes NormalizedSignal to Redis; sage-core consumes.
+  # All disabled by default — enable individually as you implement them.
 
   sensory-ais:
-    build: { context: ., dockerfile: docker/sensory_ais.Dockerfile }
+    build:
+      context: .
+      dockerfile: docker/sensory_ais.Dockerfile
     restart: unless-stopped
     <<: *common-env
-    depends_on: [redis, sage-core]
-    mem_limit: 256m
+    environment:
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      redis:     { condition: service_healthy }
+      sage-core: { condition: service_started }
+    profiles: ["sensory"]   # only starts with: docker compose --profile sensory up
 
   sensory-news:
-    build: { context: ., dockerfile: docker/sensory_news.Dockerfile }
+    build:
+      context: .
+      dockerfile: docker/sensory_news.Dockerfile
     restart: unless-stopped
     <<: *common-env
-    depends_on: [redis, sage-core]
-    mem_limit: 256m
+    environment:
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      redis:     { condition: service_healthy }
+      sage-core: { condition: service_started }
+    profiles: ["sensory"]
 
   sensory-sanctions:
-    build: { context: ., dockerfile: docker/sensory_sanctions.Dockerfile }
+    build:
+      context: .
+      dockerfile: docker/sensory_sanctions.Dockerfile
     restart: unless-stopped
     <<: *common-env
-    depends_on: [redis, sage-core]
-    mem_limit: 128m
+    environment:
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      redis:     { condition: service_healthy }
+      sage-core: { condition: service_started }
+    profiles: ["sensory"]
 
   sensory-prices:
-    build: { context: ., dockerfile: docker/sensory_prices.Dockerfile }
+    build:
+      context: .
+      dockerfile: docker/sensory_prices.Dockerfile
     restart: unless-stopped
     <<: *common-env
-    depends_on: [redis, sage-core]
-    mem_limit: 128m
+    environment:
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      redis:     { condition: service_healthy }
+      sage-core: { condition: service_started }
+    profiles: ["sensory"]
 
-  # ── Scenario Agent (System 2 — GPU) ─────────────────────────────────────────
+  # ── Scenario Agent (System 2) ───────────────────────────────────────────────
 
   scenario-agent:
-    build: { context: ., dockerfile: docker/scenario_agent.Dockerfile }
+    build:
+      context: .
+      dockerfile: docker/scenario_agent.Dockerfile
     restart: unless-stopped
     <<: *common-env
-    depends_on: [sage-core]
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    mem_limit: 2g
+    environment:
+      FALKORDB_HOST: falkordb
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      sage-core: { condition: service_started }
+    profiles: ["agents"]
 
   # ── Procurement + Reserve Agents (Systems 3 + 4) ────────────────────────────
 
   alt-procurement-agent:
-    build: { context: ., dockerfile: docker/alt_procurement_agent.Dockerfile }
+    build:
+      context: .
+      dockerfile: docker/alt_procurement_agent.Dockerfile
     restart: unless-stopped
     <<: *common-env
-    depends_on: [sage-core]
-    mem_limit: 512m
+    environment:
+      FALKORDB_HOST: falkordb
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      sage-core: { condition: service_started }
+    profiles: ["agents"]
 
   reserve-optim-agent:
-    build: { context: ., dockerfile: docker/reserve_optim_agent.Dockerfile }
+    build:
+      context: .
+      dockerfile: docker/reserve_optim_agent.Dockerfile
     restart: unless-stopped
     <<: *common-env
-    depends_on: [sage-core]
-    mem_limit: 256m
-
-  # ── Visualizer Agent (System 5) ──────────────────────────────────────────────
-
-  api-gateway:
-    build: { context: ., dockerfile: docker/api_gateway.Dockerfile }
-    restart: unless-stopped
-    <<: *common-env
-    depends_on: [sage-core]
-    ports:
-      - "8000:8000"           # only exposed port besides frontend
-    mem_limit: 512m
-
-  frontend:
-    build: { context: ./visualizer_agent/frontend, dockerfile: Dockerfile }
-    restart: unless-stopped
-    depends_on: [api-gateway]
-    ports:
-      - "80:80"
-      - "443:443"
-    mem_limit: 128m
+    environment:
+      FALKORDB_HOST: falkordb
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      sage-core: { condition: service_started }
+    profiles: ["agents"]
 
 volumes:
-  falkordb_data:   # mount to separate EBS in production: /var/lib/falkordb
-  wiki_data:       # /wiki narrative synthesis pages
+  falkordb_data:
+  wiki_data:

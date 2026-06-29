@@ -49,6 +49,36 @@ class IngestResult(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Raw-signal provenance block (appended to every synthesized episode)
+# ---------------------------------------------------------------------------
+
+def _render_raw_signal(signal: NormalizedSignal) -> str:
+    """Render the verbatim raw signal as a provenance block.
+
+    Appended to the synthesized episode body so Store 1 (episodes) holds the
+    non-lossy ground truth — the exact signal that produced the assessment —
+    alongside the derived prose. Every derived fact can be traced back here.
+    """
+    import json
+
+    payload = json.dumps(signal.payload, default=str, sort_keys=True) if signal.payload else "{}"
+    lines = [
+        "--- RAW SIGNAL (provenance, non-lossy) ---",
+        f"signal_id: {signal.signal_id}",
+        f"source: {signal.source} | priority: {signal.priority_hint} | "
+        f"observed_at: {signal.observed_at.isoformat()}",
+        f"entity_refs: {', '.join(signal.entity_refs)}",
+        f"summary: {signal.summary}",
+        f"payload: {payload[:2000]}",
+    ]
+    if signal.source_url:
+        lines.append(f"source_url: {signal.source_url}")
+    if signal.raw_ref:
+        lines.append(f"raw_ref: {signal.raw_ref}")
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
 # C7.1 — Main ingest entry point
 # ---------------------------------------------------------------------------
 
@@ -85,18 +115,28 @@ async def ingest_signal(signal: NormalizedSignal) -> IngestResult:
         )
 
     if decision == "synthesize":
-        # Full narrative synthesis per entity_ref
+        from knowledge.synthesis import render_wiki_page, write_wiki_page
+
+        # Full narrative synthesis per entity_ref. persist=False defers the wiki
+        # write until the graph write succeeds, so the stores can't drift.
         entity_refs = signal.entity_refs or [signal.summary[:60]]
-        episode_texts: list[str] = []
+        entity_texts: list[tuple[str, str]] = []
 
         for entity in entity_refs:
-            text = await synthesize(signal=signal, entity=entity)
-            episode_texts.append(text)
+            text = await synthesize(signal=signal, entity=entity, persist=False)
+            entity_texts.append((entity, text))
 
-        # Join multi-entity synthesis into one episode
-        episode_body = "\n\n---\n\n".join(episode_texts)
+        # Episode body holds BOTH the synthesized prose (primary, semantic) AND
+        # the verbatim raw signal (provenance, non-lossy) so Store 1 stays a
+        # complete record of ground truth, not just the derived assessment.
+        synth_join   = "\n\n---\n\n".join(text for _, text in entity_texts)
+        episode_body = f"{synth_join}\n\n{_render_raw_signal(signal)}"
         episode_name = f"{signal.source}_{signal.signal_id}"
 
+        # ── Consistency gate ──────────────────────────────────────────────
+        # The graph write is the atomic boundary we control: the wiki is only
+        # persisted AFTER add_episode succeeds. If add_episode raises, no wiki
+        # page is written, so the /wiki store and the graph never diverge.
         try:
             await g.add_episode(
                 name=episode_name,
@@ -114,6 +154,10 @@ async def ingest_signal(signal: NormalizedSignal) -> IngestResult:
         except Exception as exc:
             log.error("add_episode failed for signal %s: %s", signal.signal_id, exc)
             raise
+
+        # Graph write committed — now it is safe to persist the wiki pages.
+        for entity, text in entity_texts:
+            write_wiki_page(entity, render_wiki_page(entity, text))
 
         return IngestResult(
             signal_id=signal.signal_id,
@@ -209,29 +253,27 @@ async def write_risk_state(
     now = observed_at or datetime.now(timezone.utc)
     band = score_to_band(score)
 
+    # Prose-only format intentional: structured "Field: Value" labels cause Nova Lite
+    # to hallucinate HAS_RISK_SCORE / HAS_FACTOR_BREAKDOWN edges not in the schema.
+    # Same data expressed as sentences; RISK_STATE edge is still extracted correctly.
     episode_text = (
-        f"{entity} — risk assessment {now.strftime('%Y-%m-%d %H:%M')}Z.\n"
-        f"Current risk score: {score:.2f} ({band.upper()}).\n"
-        f"Factor breakdown: AIS {factor_ais:.2f}, GDELT {factor_gdelt:.2f}, "
-        f"price {factor_price:.2f}, sanctions {factor_sanctions:.2f}.\n"
-        f"Rationale: {rationale or 'no rationale provided'}.\n"
-        f"Model version: {model_version or 'unknown'}.\n"
+        f"{entity} risk level is assessed at {score:.2f} out of 1.0 ({band} band) "
+        f"as of {now.strftime('%Y-%m-%d %H:%M')}Z. "
+        f"Signal contributions: AIS dark-vessel {factor_ais:.2f}, "
+        f"GDELT conflict tone {factor_gdelt:.2f}, "
+        f"price war-risk premium {factor_price:.2f}, "
+        f"sanctions exposure {factor_sanctions:.2f}. "
+        f"{rationale or 'No specific rationale provided.'}. "
+        f"Fusion model: {model_version or 'unknown'}.\n"
     )
-
-    # Update /wiki with just the risk state block appended to existing page
-    current = load_wiki_page(entity)
-    risk_section = (
-        f"\n\n---\n**Risk Assessment** _{now.strftime('%Y-%m-%d %H:%M UTC')}_\n\n"
-        f"{episode_text}"
-    )
-    # Append rather than replace — preserve synthesis narrative
-    updated_wiki = current.rstrip() + risk_section
-    write_wiki_page(entity, updated_wiki)
 
     episode_name = f"{entity.lower().replace(' ', '_')}_risk_{now.strftime('%Y%m%dT%H%M%SZ')}"
     sig_id       = f"risk_{entity}_{now.isoformat()}"
     episode_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, sig_id))
 
+    # ── Consistency gate ──────────────────────────────────────────────────
+    # Graph write first; the wiki risk block is appended only after it commits,
+    # so a failed add_episode can't leave the wiki ahead of the graph.
     await g.add_episode(
         name=episode_name,
         episode_body=episode_text,
@@ -242,6 +284,14 @@ async def write_risk_state(
         edge_types=EDGE_TYPES,
         edge_type_map=EDGE_TYPE_MAP,
     )
+
+    # Graph committed — append the risk block to the wiki (preserve narrative).
+    current = load_wiki_page(entity)
+    risk_section = (
+        f"\n\n---\n**Risk Assessment** _{now.strftime('%Y-%m-%d %H:%M UTC')}_\n\n"
+        f"{episode_text}"
+    )
+    write_wiki_page(entity, current.rstrip() + risk_section)
 
     return EpisodeRef(episode_uuid=episode_uuid)
 
