@@ -18,11 +18,31 @@ class ExportsVia(BaseModel):
 
 
 class Feeds(BaseModel):
-    """Corridor feeds traffic into this Port."""
+    """Corridor feeds traffic into this Port.
+    throughput_share_pct records what fraction of this port's total inbound crude
+    transits this corridor — critical for System 2 supply-gap calculation."""
+    throughput_share_pct: Optional[float] = Field(
+        None,
+        description=(
+            "Fraction of this port's total crude inflow that transits this corridor, 0..1. "
+            "e.g. 0.42 means 42% of Vadinar's crude arrives via Hormuz. "
+            "Used by ARIO model to compute per-port feedstock gap."
+        ),
+    )
 
 
 class Supplies(BaseModel):
-    """Port supplies crude to this Refinery."""
+    """Port supplies crude to this Refinery.
+    throughput_share_pct records what fraction of this refinery's crude feed
+    arrives via this port — critical for System 2 feedstock-gap timeline."""
+    throughput_share_pct: Optional[float] = Field(
+        None,
+        description=(
+            "Fraction of this refinery's total crude supply that arrives via this port, 0..1. "
+            "e.g. 0.70 means 70% of Jamnagar's crude comes through Vadinar. "
+            "Used by ARIO model to attribute feedstock gap to specific refineries."
+        ),
+    )
 
 
 class ConfiguredFor(BaseModel):
