@@ -225,3 +225,6 @@ knowledge/graph_store/*
 # committed so the foundational knowledge (and its growth) is visible in the repo.
 # Ignore only Obsidian's local app config.
 knowledge/wiki/.obsidian/
+
+# Obsidian creates empty notes from wikilink clicks; ignore display-name stubs
+knowledge/wiki/[A-Z]*.md
