@@ -3,15 +3,15 @@ entity_id: supplier_aramco
 aliases:
 - Saudi Aramco
 entity_type: Supplier
-risk_score: 0.0
+risk_score: 0.18
 risk_band: CALM
 factors:
   ais: 0.0
-  gdelt: 0.0
+  gdelt: 0.15
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-06-30T09:20:54.520609+00:00'
-valid_at: '2026-06-30T09:20:54.520609+00:00'
+last_updated: '2026-06-30T10:23:23.189572+00:00'
+valid_at: '2026-06-30T10:23:23.189572+00:00'
 source_episodes: []
 links_out:
 - corridor_hormuz
@@ -25,6 +25,7 @@ links_out:
 - port_yanbu
 coordinates: {}
 ---
+
 
 
 ## Profile
