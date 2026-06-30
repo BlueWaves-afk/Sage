@@ -3,15 +3,15 @@ entity_id: corridor_hormuz
 aliases:
 - Strait of Hormuz
 entity_type: Corridor
-risk_score: 0.74
-risk_band: ACTION
+risk_score: 0.0
+risk_band: CALM
 factors:
-  ais: 0.6
-  gdelt: 0.68
-  price: 0.45
-  sanctions: 0.15
-last_updated: '2026-06-30T18:01:28.748578+00:00'
-valid_at: '2026-06-30T18:01:28.748578+00:00'
+  ais: 0.0
+  gdelt: 0.0
+  price: 0.0
+  sanctions: 0.0
+last_updated: '2026-06-30T18:01:41.932391+00:00'
+valid_at: '2026-06-30T18:01:36.480903+00:00'
 source_episodes: []
 links_out:
 - event_2019_hormuz_attacks
@@ -23,9 +23,8 @@ coordinates:
 ---
 
 
-
 ## Current Assessment
-The [[Strait of Hormuz]] is currently experiencing a projected supply gap of 0.00 mbpd over 0 days, with a price impact of $2-$4/bbl. The Strategic Petroleum Reserves (SPR) would last 45.0 days at the projected draw rate, with an inflation impact of 0.27%.
+The [[Strait of Hormuz]] is currently experiencing a projected supply gap of 0.00 mbpd over 0 days, with a significant price impact of $43-$74/bbl. The Strategic Petroleum Reserves (SPR) would last 45.0 days at the projected draw rate, with an inflation impact of 4.58%.
 
 ## Historical Pattern
 The current situation shows no significant precedent in terms of supply gap, aligning closely with the [[2019 Tanker Attacks]] in terms of minimal immediate impact but with a notable price impact.
@@ -43,4 +42,3 @@ The current situation shows no significant precedent in terms of supply gap, ali
 |------------------|----------------------|--------------------|----------|
 | supply_dependency| [[Jamnagar Refinery]]| refinery           | high     |
 | supply_dependency| [[Mangaluru]]        | refinery           | high     |
-| supply_dependency| Umm Al Nar       | refinery           | high     |
