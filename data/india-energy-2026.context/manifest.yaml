@@ -94,6 +94,15 @@ sources:
   NIPFP-gdp:
     label: NIPFP — Oil price shock impact on India GDP/inflation ($10/bbl → −40bps GDP)
     url:   https://www.nipfp.org.in/media/documents/wp_2012_99.pdf
+  MOSPI-IOTT:
+    label: MOSPI — India Input-Output Transactions Table / Supply-Use Table (full 140-sector)
+    url:   https://mospi.gov.in/publication/input-output-transactions-table-2006-07
+  IIOA-energy-io:
+    label: IIOA — Hybrid Energy Input-Output Table for India (sector petroleum intensities)
+    url:   https://www.iioa.org/conferences/28th/papers/files/4459_AHybridEnergyInput-OutputTableforIndiawithEIOT.pdf
+  CSEP-io:
+    label: CSEP — Input-Output Transactions Table India 2015-16 (aggregated)
+    url:   https://csep.org/discussion-note/input-output-transactions-table-india-2015-16/
 
 # ── Estimation methods ───────────────────────────────────────────────────────
 # Rows with tier=derived or estimated reference one of these as their `source`.

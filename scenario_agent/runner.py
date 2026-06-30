@@ -44,6 +44,13 @@ async def run(
         result = run_ario(params, refineries, sectors)
         bands  = run_monte_carlo(params, n=300)
 
+    # ── Full IO (Leontief) economic cascade + ABM emergent simulation ──────────
+    io_block, abm_block = _run_io_and_abm(result, params, refineries)
+    if io_block:
+        # IO Leontief is the richest economic layer → use it as the headline.
+        result.gdp_proxy_impact_pct = -io_block["gdp_loss_pct"]
+        result.inflation_impact_pct = io_block["inflation_pct"]
+
     # Dynamic war-risk premium (System 1): live fear/insurance premium on top of the
     # structural elasticity. 0 until System 1 produces price signals.
     premium = await _war_risk_premium(trigger_entity)
@@ -54,6 +61,10 @@ async def run(
     assumptions = dict(result.assumptions)
     if bands:
         assumptions["monte_carlo"] = bands   # p10/p50/p90 ranges for the UI uncertainty bands
+    if io_block:
+        assumptions["io_cascade"] = io_block      # Leontief multi-sector: gdp/inflation/multipliers/sectors
+    if abm_block:
+        assumptions["abm_emergent"] = abm_block   # agent competition: who rations, who secures bypass
     if premium > 0:
         assumptions["war_risk_premium"] = {"value": round(premium, 3), "unit": "frac", "source": "System 1 live price factor"}
 
@@ -165,11 +176,12 @@ def _extract_refineries(subgraph, trigger_entity: str) -> list[dict]:
     ingestion). Refineries with no EXPOSES edge to the trigger corridor get exposure 0.
     """
     # uuid → name, and refinery capacities
-    name_by_uuid, cap_by_name = {}, {}
+    name_by_uuid, cap_by_name, inv_by_name = {}, {}, {}
     for n in subgraph.nodes:
         name_by_uuid[n.get("uuid")] = n.get("display_name")
         if "Refinery" in (n.get("labels") or []):
             cap_by_name[n.get("display_name")] = float(n["attributes"].get("capacity_mbpd") or 0)
+            inv_by_name[n.get("display_name")] = float(n["attributes"].get("inventory_days") or 22)
 
     # EXPOSES edges from the trigger corridor → refinery
     exposure_by_name: dict[str, float] = {}
@@ -183,9 +195,53 @@ def _extract_refineries(subgraph, trigger_entity: str) -> list[dict]:
                                         float(e.get("attributes", {}).get("exposure_pct") or 0))
 
     return [
-        {"name": name, "capacity_mbpd": cap, "exposure": exposure_by_name.get(name, 0.0)}
+        {"name": name, "capacity_mbpd": cap, "exposure": exposure_by_name.get(name, 0.0),
+         "inventory_days": inv_by_name.get(name, 22)}
         for name, cap in cap_by_name.items()
     ]
+
+
+_BASELINE_BRENT = 75.0   # baseline price for the IO price-rise fraction
+
+
+def _run_io_and_abm(ario_result, params, refineries):
+    """Run the full Leontief IO economic cascade + the ABM emergent simulation."""
+    io_block = abm_block = None
+
+    try:
+        from scenario_agent.io_model import load_io
+        io = load_io(os.environ.get("SAGE_CONTEXT_BUNDLE", "data/india-energy-2026.context"))
+        if io:
+            shortfall = min(1.0, ario_result.gap_mbpd / max(params.daily_consumption_mbpd, 0.01))
+            price_mid = (ario_result.price_impact_low + ario_result.price_impact_high) / 2.0
+            ior = io.run(shortfall, price_mid / _BASELINE_BRENT)
+            io_block = {
+                "model": "Leontief IO (aggregated India IOTT, MOSPI/IIOA)",
+                "gdp_loss_pct": ior.gdp_loss_pct, "inflation_pct": ior.inflation_pct,
+                "output_multipliers": ior.output_multipliers,
+                "sectors": [{"sector": s.sector, "output_loss_pct": s.output_loss_pct,
+                             "price_rise_pct": s.price_rise_pct} for s in ior.sector_impacts],
+            }
+    except Exception:
+        pass
+
+    try:
+        from scenario_agent.abm import simulate
+        if refineries:
+            a = simulate(refineries, bypass_capacity_mbpd=params.bypass_capacity_mbpd,
+                         bypass_ramp_days=params.bypass_ramp_days,
+                         disruption_fraction=params.disruption_fraction,
+                         disruption_days=params.disruption_days, horizon_days=params.horizon_days)
+            abm_block = {
+                "model": "agent-based (refineries compete for limited bypass)",
+                "peak_system_gap": a.peak_system_gap, "refineries_rationing": a.refineries_rationing,
+                "bypass_utilization": a.bypass_utilization, "days_to_stabilize": a.days_to_stabilize,
+                "agents": a.agents,
+            }
+    except Exception:
+        pass
+
+    return io_block, abm_block
 
 
 async def _war_risk_premium(trigger_entity: str) -> float:
