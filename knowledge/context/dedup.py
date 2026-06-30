@@ -103,6 +103,60 @@ async def _merge_alias_nodes() -> int:
     return merged
 
 
+# Edge type → the numeric attribute columns that must be exact (not LLM-extracted).
+_EDGE_ATTR_COLS = {
+    "EXPORTS_VIA":    ["volume_mbpd"],
+    "FEEDS":          ["throughput_share_pct"],
+    "SUPPLIES":       ["throughput_share_pct"],
+    "CONFIGURED_FOR": ["compatibility", "yield_pct"],
+    "BYPASS_ROUTE":   ["cost_premium", "added_days"],
+}
+
+
+async def reconcile_edge_attributes(bundle) -> int:
+    """
+    Overwrite LLM-extracted edge attributes with the bundle's EXACT facts values.
+
+    Graphiti's extractor populates edge numerics (throughput_share_pct, volume_mbpd, …)
+    unreliably — values come out missing, 0, or wrong. ARIO (System 2) depends on
+    these. So we deterministically SET them from the facts CSVs, matching the
+    RELATES_TO edge by canonical src/dst names + edge type. Returns edges updated.
+    """
+    from knowledge.registry import REGISTRY
+
+    def _cn(eid: str) -> str:
+        e = REGISTRY.get(eid)
+        return e.canonical_name if e else eid
+
+    updated = 0
+    for etype, rows in bundle.edge_rows.items():
+        cols = _EDGE_ATTR_COLS.get(etype, [])
+        if not cols:
+            continue
+        for r in rows:
+            src, dst = _cn(r["src_entity_id"]), _cn(r["dst_entity_id"])
+            attrs = {}
+            for c in cols:
+                v = r.get(c)
+                if v not in (None, ""):
+                    try:
+                        attrs[c] = float(v)
+                    except ValueError:
+                        attrs[c] = v
+            if not attrs:
+                continue
+            # SET exact values on every matching edge (covers any residual duplicates).
+            set_clause = ", ".join(f"r.{k} = ${k}" for k in attrs)
+            await _cy(
+                f"MATCH (a:Entity {{name:$src}})-[r:RELATES_TO]->(b:Entity {{name:$dst}}) "
+                f"WHERE r.name = $etype SET {set_clause}",
+                {"src": src, "dst": dst, "etype": etype, **attrs},
+            )
+            updated += 1
+    log.info("reconcile_edge_attributes: set exact values on %d edge specs", updated)
+    return updated
+
+
 async def canonicalize_graph(graphiti=None) -> dict[str, int]:
     """
     Full canonicalization pass. Safe to run repeatedly (idempotent).

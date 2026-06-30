@@ -299,8 +299,10 @@ class ContextBundle:
         if canonicalize:
             if on_progress:
                 on_progress("canonicalizing", "dedup edges + merge alias nodes", len(eids), len(eids))
-            from knowledge.context.dedup import canonicalize_graph
+            from knowledge.context.dedup import canonicalize_graph, reconcile_edge_attributes
             dedup = await canonicalize_graph(graphiti)
+            # Overwrite LLM-extracted edge numerics with exact facts values (ARIO needs these).
+            dedup["edges_reconciled"] = await reconcile_edge_attributes(self)
 
         return {"facts": facts_written, "narratives": narr_written, **dedup}
 
