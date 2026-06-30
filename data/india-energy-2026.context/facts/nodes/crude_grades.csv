@@ -10,3 +10,8 @@ grade_murban,Murban,40.2,0.79,United Arab Emirates,28,15,22,20,15,real,BP-assay,
 grade_bonny_light,Bonny Light,38.0,0.37,Nigeria,26,14,23,20,17,real,BP-assay,2024,api/sulfur real; total distillate ~61% (comparative assay)
 grade_kuwait_export,Kuwait Export Crude,31.0,2.55,Kuwait,18,12,19,21,30,real,BP-assay,2024,api/sulfur real; yield_* representative
 grade_qatar_marine,Qatar Marine,36.0,1.40,Qatar,24,14,21,21,20,real,BP-assay,2024,api/sulfur real; yield_* representative
+grade_wti_midland,WTI Midland,40.0,0.40,United States,30,16,22,18,14,real,BP-assay,2024,light sweet; api/sulfur real; yield_* representative
+grade_tupi,Tupi,29.0,0.40,Brazil,18,13,21,24,24,real,BP-assay,2024,pre-salt medium sweet; yield_* representative
+grade_merey,Merey,16.0,2.50,Venezuela,8,7,12,18,55,real,BP-assay,2024,heavy sour; yield_* representative
+grade_cpc_blend,CPC Blend,45.0,0.55,Kazakhstan,32,16,22,18,12,real,BP-assay,2024,light sour; yield_* representative
+grade_cabinda,Cabinda,32.0,0.13,Angola,20,13,22,23,22,real,BP-assay,2024,medium sweet; yield_* representative

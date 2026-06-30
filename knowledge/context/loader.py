@@ -206,6 +206,7 @@ class ContextBundle:
         graphiti,
         reference_time=None,
         author_missing_with_llm: bool = False,
+        canonicalize: bool = True,
         on_progress=None,
     ) -> dict[str, int]:
         """
@@ -293,7 +294,15 @@ class ContextBundle:
             except Exception as exc:
                 log.warning("  narrative FAILED (%s): %s", entity_id, exc)
 
-        return {"facts": facts_written, "narratives": narr_written}
+        # ── Phase 3: canonicalize — dedup edges + merge alias-variant nodes ────
+        dedup = {"edges_removed": 0, "nodes_merged": 0}
+        if canonicalize:
+            if on_progress:
+                on_progress("canonicalizing", "dedup edges + merge alias nodes", len(eids), len(eids))
+            from knowledge.context.dedup import canonicalize_graph
+            dedup = await canonicalize_graph(graphiti)
+
+        return {"facts": facts_written, "narratives": narr_written, **dedup}
 
 
 # ── prose formatters (one fact per sentence → reliable LLM extraction) ────────

@@ -79,6 +79,9 @@ sources:
   Wikipedia-events:
     label: Wikipedia event articles (historical geopolitical/shipping events)
     url:   https://en.wikipedia.org/wiki/Strait_of_Hormuz
+  G7-pricecap:
+    label: G7 / EU Russian oil price cap coalition
+    url:   https://home.treasury.gov/policy-issues/financial-sanctions/sanctions-programs-and-country-information/russian-harmful-foreign-activities-sanctions
 
 # ── Estimation methods ───────────────────────────────────────────────────────
 # Rows with tier=derived or estimated reference one of these as their `source`.

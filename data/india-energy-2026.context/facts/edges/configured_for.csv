@@ -11,3 +11,8 @@ refinery_jamnagar,grade_kuwait_export,0.90,84,derived,DERIVED-compat,2025,medium
 refinery_panipat,grade_arab_light,0.92,86,derived,DERIVED-compat,2025,light-sour config
 refinery_kochi,grade_qatar_marine,0.88,83,derived,DERIVED-compat,2025,light config
 refinery_kochi,grade_bonny_light,0.90,85,derived,DERIVED-compat,2025,light-sweet config
+refinery_jamnagar,grade_merey,0.85,78,derived,DERIVED-compat,2025,bottomless config handles ultra-heavy
+refinery_jamnagar,grade_wti_midland,0.88,86,derived,DERIVED-compat,2025,light sweet flexibility
+refinery_visakh,grade_cpc_blend,0.88,84,derived,DERIVED-compat,2025,light-sour config
+refinery_chennai,grade_cabinda,0.90,85,derived,DERIVED-compat,2025,medium-sweet config
+refinery_nayara,grade_arab_light,0.93,86,derived,DERIVED-compat,2025,high-complexity config

@@ -1,5 +1,5 @@
 # Source evidence — event_ever_given
-_Fetched 2026-06-30. Provenance for grounded synthesis._
+_Curated from source 2026-06-30. Provenance for grounded synthesis._
 
 ## Source: https://en.wikipedia.org/wiki/2021_Suez_Canal_obstruction
 _Wikipedia Ever Given Suez obstruction_

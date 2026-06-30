@@ -1,0 +1,115 @@
+"""
+Graph canonicalization / de-duplication.
+
+LLM extraction (graphiti) sometimes creates:
+  • duplicate edges  — the same (source, target, edge-type) extracted from several
+    sentences (e.g. EXPORTS_VIA Aramco→Hormuz stated three ways);
+  • alias-variant nodes — "Abu Dhabi National Oil Company" as a separate node from
+    the canonical "ADNOC", because the prose used the long form.
+
+canonicalize_graph() cleans both, deterministically, against the registry:
+  1. EDGE DEDUP    — keep one RELATES_TO per (src, dst, name), delete the rest.
+  2. NODE MERGE    — for any node whose name is a registry ALIAS of a canonical
+                     entity that also exists as a node, re-point its edges onto the
+                     canonical node and delete the alias node.
+
+Distinct concepts (e.g. the country "Saudi Arabia" vs the company "Saudi Aramco")
+are left alone — only names that resolve to a canonical entity via the registry
+alias table are merged.
+
+Run after instantiate():  await canonicalize_graph(graphiti)
+"""
+from __future__ import annotations
+
+import logging
+
+log = logging.getLogger(__name__)
+
+
+async def _cy(query: str, params: dict | None = None) -> list[dict]:
+    from knowledge.api.read import _cypher
+    return await _cypher(query, params or {})
+
+
+async def _dedup_edges() -> int:
+    """Keep one RELATES_TO per (source, target, name); delete duplicates."""
+    # Count first (for reporting), then delete all-but-one in each group.
+    before = await _cy("MATCH ()-[r:RELATES_TO]->() RETURN count(r) AS c")
+    n0 = before[0]["c"] if before else 0
+    await _cy(
+        """
+        MATCH (a:Entity)-[r:RELATES_TO]->(b:Entity)
+        WITH a, b, r.name AS nm, collect(r) AS rels
+        WHERE size(rels) > 1
+        FOREACH (x IN rels[1..] | DELETE x)
+        """
+    )
+    after = await _cy("MATCH ()-[r:RELATES_TO]->() RETURN count(r) AS c")
+    n1 = after[0]["c"] if after else 0
+    return max(0, n0 - n1)
+
+
+async def _merge_alias_nodes() -> int:
+    """
+    Merge alias-variant nodes into their canonical node.
+    Returns the number of nodes merged away.
+    """
+    from knowledge.registry import REGISTRY, ALIAS_TO_ENTITY
+
+    # All distinct entity names currently in the graph.
+    rows = await _cy("MATCH (n:Entity) RETURN collect(DISTINCT n.name) AS names")
+    names = set(rows[0]["names"]) if rows and rows[0].get("names") else set()
+    canon_present = {REGISTRY[e].canonical_name for e in REGISTRY if REGISTRY[e].canonical_name in names}
+
+    merged = 0
+    for name in names:
+        eid = ALIAS_TO_ENTITY.get(name.strip().lower())
+        if not eid or eid not in REGISTRY:
+            continue
+        canonical = REGISTRY[eid].canonical_name
+        if name == canonical or canonical not in canon_present:
+            continue  # already canonical, or no canonical node to merge into
+
+        try:
+            # Re-point outgoing edges, then incoming edges, then delete the dup node.
+            await _cy(
+                """
+                MATCH (dup:Entity {name:$a})-[r:RELATES_TO]->(t:Entity)
+                MATCH (canon:Entity {name:$c})
+                WHERE dup <> canon
+                CREATE (canon)-[nr:RELATES_TO]->(t) SET nr = properties(r)
+                DELETE r
+                """,
+                {"a": name, "c": canonical},
+            )
+            await _cy(
+                """
+                MATCH (s:Entity)-[r:RELATES_TO]->(dup:Entity {name:$a})
+                MATCH (canon:Entity {name:$c})
+                WHERE dup <> canon
+                CREATE (s)-[nr:RELATES_TO]->(canon) SET nr = properties(r)
+                DELETE r
+                """,
+                {"a": name, "c": canonical},
+            )
+            await _cy("MATCH (dup:Entity {name:$a}) DETACH DELETE dup", {"a": name})
+            merged += 1
+            log.info("  merged alias node '%s' → '%s'", name, canonical)
+        except Exception as exc:
+            log.warning("  merge failed for '%s' → '%s': %s", name, canonical, exc)
+
+    # Edge dedup again — merging can create new duplicates.
+    await _dedup_edges()
+    return merged
+
+
+async def canonicalize_graph(graphiti=None) -> dict[str, int]:
+    """
+    Full canonicalization pass. Safe to run repeatedly (idempotent).
+    Returns {edges_removed, nodes_merged}.
+    """
+    edges_removed = await _dedup_edges()
+    nodes_merged = await _merge_alias_nodes()
+    log.info("canonicalize_graph: removed %d duplicate edges, merged %d alias nodes",
+             edges_removed, nodes_merged)
+    return {"edges_removed": edges_removed, "nodes_merged": nodes_merged}

@@ -7,3 +7,8 @@ supplier_nioc,NIOC,Iran,1.4,true,real,OFAC-sdn,2025,sanctioned default; authorit
 supplier_kpc,Kuwait Petroleum Corporation,Kuwait,2.0,false,real,PPAC-imports,2025,Kuwait crude exports; ~3% of India imports
 supplier_qatarenergy,QatarEnergy,Qatar,0.6,false,real,PPAC-imports,2025,mostly condensate/LNG; smaller crude flows to India
 supplier_nnpc,NNPC,Nigeria,1.4,false,real,PPAC-imports,2025,Nigerian crude exports; Bonny Light source for India
+supplier_us,United States,United States,4.0,false,real,PPAC-imports,2025,US crude exports; WTI Midland increasingly to India
+supplier_petrobras,Petrobras,Brazil,1.5,false,real,PPAC-imports,2025,Brazilian pre-salt crude exports
+supplier_pdvsa,PDVSA,Venezuela,0.7,true,real,OFAC-sdn,2025,US-sanctioned; heavy Merey crude
+supplier_kazmunaygas,KazMunayGas,Kazakhstan,1.4,false,real,PPAC-imports,2025,CPC Blend via Black Sea/Suez
+supplier_sonangol,Sonangol,Angola,1.1,false,real,PPAC-imports,2025,Angolan crude exports

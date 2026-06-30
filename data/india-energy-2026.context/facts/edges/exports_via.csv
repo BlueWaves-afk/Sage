@@ -6,3 +6,8 @@ supplier_rosneft,corridor_malacca,1.75,derived,DERIVED-import-volume,2025,PPAC ~
 supplier_kpc,corridor_hormuz,0.45,derived,DERIVED-import-volume,2025,Kuwait ~3% share via Hormuz
 supplier_qatarenergy,corridor_hormuz,0.15,derived,DERIVED-import-volume,2025,Qatar crude via Hormuz
 supplier_nnpc,corridor_cape,0.20,derived,DERIVED-import-volume,2025,Nigerian Bonny Light routed via Cape/Atlantic to India
+supplier_us,corridor_cape,0.30,derived,DERIVED-import-volume,2025,US crude to India via Cape/Atlantic
+supplier_petrobras,corridor_cape,0.20,derived,DERIVED-import-volume,2025,Brazilian crude via Cape/Atlantic
+supplier_pdvsa,corridor_cape,0.10,derived,DERIVED-import-volume,2025,Venezuelan Merey via Cape (sanctioned)
+supplier_kazmunaygas,corridor_suez,0.15,derived,DERIVED-import-volume,2025,CPC Blend via Black Sea and Suez
+supplier_sonangol,corridor_cape,0.15,derived,DERIVED-import-volume,2025,Angolan Cabinda via Cape/Atlantic

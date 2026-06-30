@@ -19,10 +19,12 @@ from knowledge.context.loader import (
     load_bundle,
     validate_bundle,
 )
+from knowledge.context.dedup import canonicalize_graph
 
 __all__ = [
     "ContextBundle",
     "BundleValidationError",
     "load_bundle",
     "validate_bundle",
+    "canonicalize_graph",
 ]

@@ -33,9 +33,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 _SPIN = itertools.cycle("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏")
 _PHASE_LABEL = {
-    "facts":        "facts    ",
-    "synthesizing": "Nova Pro ",
-    "narrative":    "wiki     ",
+    "facts":          "facts    ",
+    "synthesizing":   "Nova Pro ",
+    "narrative":      "wiki     ",
+    "canonicalizing": "dedup    ",
 }
 
 
@@ -111,6 +112,9 @@ async def main() -> int:
     print(f"  ✓ instantiated in {dt:.1f}s")
     print(f"    facts episodes   : {counts['facts']}")
     print(f"    narrative pages  : {counts['narratives']}  (wiki store + reconciled episodes)")
+    if counts.get("edges_removed") or counts.get("nodes_merged"):
+        print(f"    canonicalized    : −{counts.get('edges_removed',0)} dup edges, "
+              f"−{counts.get('nodes_merged',0)} alias nodes merged")
     print("─" * 72)
 
     # Quick read-back so the user sees the growing memory

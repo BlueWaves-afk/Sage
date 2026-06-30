@@ -4,3 +4,4 @@ event_2019_hormuz_attacks,2019 Tanker Attacks,Iran (attributed),limpet-mine atta
 event_2024_red_sea,2024 Red Sea Crisis,Houthi movement,missile and drone attacks on Red Sea shipping diverting trade to the Cape,0.8,2024,real,Wikipedia-events,2024,severity analyst-assigned
 event_ever_given,Ever Given Suez Blockage,Ever Given container ship,grounding that blocked the Suez Canal for six days,0.6,2021-03,real,Wikipedia-events,2021,severity analyst-assigned
 event_2025_iran_israel,2025 Iran-Israel Conflict,Iran and Israel,direct military strikes raising Strait of Hormuz closure risk,0.9,2025-06,real,Wikipedia-events,2025,severity analyst-assigned
+event_russia_ukraine_2022,2022 Russia-Ukraine War,Russia and Ukraine,invasion triggering Western sanctions and a steep Urals discount,0.85,2022-02,real,Wikipedia-events,2022,severity analyst-assigned

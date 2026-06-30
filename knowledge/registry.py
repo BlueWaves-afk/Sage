@@ -299,6 +299,78 @@ REGISTRY: dict[str, EntityRegistryEntry] = {
         aliases=["2025 Iran Israel war", "June 2025 Iran-Israel conflict"],
     ),
 
+    # ── Expansion v2: broader supplier / refinery / port / event coverage ───────
+
+    "supplier_us": EntityRegistryEntry(
+        entity_id="supplier_us", entity_type="Supplier",
+        canonical_name="United States",
+        aliases=["US crude exporters", "USA", "American crude", "US oil"],
+    ),
+    "supplier_petrobras": EntityRegistryEntry(
+        entity_id="supplier_petrobras", entity_type="Supplier",
+        canonical_name="Petrobras",
+        aliases=["Brazil", "Brazilian oil", "Petroleo Brasileiro"],
+    ),
+    "supplier_pdvsa": EntityRegistryEntry(
+        entity_id="supplier_pdvsa", entity_type="Supplier",
+        canonical_name="PDVSA",
+        aliases=["Venezuela", "Petroleos de Venezuela", "Venezuelan oil"],
+    ),
+    "supplier_kazmunaygas": EntityRegistryEntry(
+        entity_id="supplier_kazmunaygas", entity_type="Supplier",
+        canonical_name="KazMunayGas",
+        aliases=["Kazakhstan", "Kazakh oil", "KMG"],
+    ),
+    "supplier_sonangol": EntityRegistryEntry(
+        entity_id="supplier_sonangol", entity_type="Supplier",
+        canonical_name="Sonangol",
+        aliases=["Angola", "Angolan oil"],
+    ),
+
+    "refinery_nayara": EntityRegistryEntry(
+        entity_id="refinery_nayara", entity_type="Refinery",
+        canonical_name="Vadinar Refinery",
+        aliases=["Nayara Energy", "Nayara", "Essar Oil Vadinar", "Vadinar refinery"],
+        coordinates={"lat": 22.28, "lon": 69.73},
+    ),
+    "refinery_visakh": EntityRegistryEntry(
+        entity_id="refinery_visakh", entity_type="Refinery",
+        canonical_name="Visakhapatnam Refinery",
+        aliases=["HPCL Visakhapatnam", "Vizag Refinery", "HPCL Vizag"],
+        coordinates={"lat": 17.69, "lon": 83.22},
+    ),
+    "refinery_chennai": EntityRegistryEntry(
+        entity_id="refinery_chennai", entity_type="Refinery",
+        canonical_name="Chennai Refinery",
+        aliases=["CPCL", "Chennai Petroleum", "Manali Refinery"],
+        coordinates={"lat": 13.16, "lon": 80.26},
+    ),
+
+    "port_mundra": EntityRegistryEntry(
+        entity_id="port_mundra", entity_type="Port",
+        canonical_name="Mundra",
+        aliases=["Mundra Port", "Adani Mundra", "Mundra terminal"],
+        coordinates={"lat": 22.74, "lon": 69.70},
+    ),
+    "port_paradip": EntityRegistryEntry(
+        entity_id="port_paradip", entity_type="Port",
+        canonical_name="Paradip Port",
+        aliases=["Paradip terminal", "Paradip harbour"],
+        coordinates={"lat": 20.26, "lon": 86.67},
+    ),
+
+    "authority_g7": EntityRegistryEntry(
+        entity_id="authority_g7", entity_type="Authority",
+        canonical_name="G7 Price Cap Coalition",
+        aliases=["G7", "G7 price cap", "Price Cap Coalition", "oil price cap"],
+    ),
+
+    "event_russia_ukraine_2022": EntityRegistryEntry(
+        entity_id="event_russia_ukraine_2022", entity_type="GeoEvent",
+        canonical_name="2022 Russia-Ukraine War",
+        aliases=["Russian invasion of Ukraine", "Ukraine war", "2022 Russia sanctions"],
+    ),
+
     # ── Crude Grades ─────────────────────────────────────────────────────────────
     # No H3 cells / instruments — grades are referenced by name in news/sanctions
     # text and configured on refineries via CONFIGURED_FOR edges. Assays in docs/data.md §4.
@@ -378,6 +450,32 @@ REGISTRY: dict[str, EntityRegistryEntry] = {
         entity_type="CrudeGrade",
         canonical_name="Qatar Marine",
         aliases=["Qatar Marine crude", "Marine crude"],
+    ),
+
+    "grade_wti_midland": EntityRegistryEntry(
+        entity_id="grade_wti_midland", entity_type="CrudeGrade",
+        canonical_name="WTI Midland",
+        aliases=["WTI", "West Texas Intermediate", "WTI Midland crude"],
+    ),
+    "grade_tupi": EntityRegistryEntry(
+        entity_id="grade_tupi", entity_type="CrudeGrade",
+        canonical_name="Tupi",
+        aliases=["Lula", "Tupi crude", "Brazilian Tupi"],
+    ),
+    "grade_merey": EntityRegistryEntry(
+        entity_id="grade_merey", entity_type="CrudeGrade",
+        canonical_name="Merey",
+        aliases=["Merey 16", "Venezuelan Merey"],
+    ),
+    "grade_cpc_blend": EntityRegistryEntry(
+        entity_id="grade_cpc_blend", entity_type="CrudeGrade",
+        canonical_name="CPC Blend",
+        aliases=["CPC", "Caspian Pipeline Consortium blend", "Tengiz"],
+    ),
+    "grade_cabinda": EntityRegistryEntry(
+        entity_id="grade_cabinda", entity_type="CrudeGrade",
+        canonical_name="Cabinda",
+        aliases=["Cabinda crude", "Angolan Cabinda"],
     ),
 
     # ── Authorities ────────────────────────────────────────────────────────────

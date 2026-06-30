@@ -1,5 +1,5 @@
 # Source evidence — event_2024_red_sea
-_Fetched 2026-06-30. Provenance for grounded synthesis._
+_Curated from source 2026-06-30. Provenance for grounded synthesis._
 
 ## Source: https://en.wikipedia.org/wiki/Red_Sea_crisis
 _Wikipedia Red Sea crisis_

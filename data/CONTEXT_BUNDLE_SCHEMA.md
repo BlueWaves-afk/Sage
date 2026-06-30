@@ -31,30 +31,28 @@ graph state. Think "checkpoint" or "save file," not "fit."
 
 ## Directory layout
 
-A bundle has **two layers**: `facts/` (structured ground truth, loaded directly) and `narratives/`
-(per-entity prose, routed through the synthesis pipeline).
+A bundle has **three layers**: `facts/` (structured ground truth, loaded directly), `sources/`
+(real fetched evidence text), and `narratives/` (per-entity prose routed through synthesis —
+grounded on the sources when present).
 
 ```
 <name>-<domain>-<year>.context/
 ├── manifest.yaml          # metadata, source registry, estimation methods, contents
 ├── facts/                 # LAYER 1 — structured values → graph attributes (deterministic)
 │   ├── nodes/
-│   │   ├── corridors.csv
-│   │   ├── suppliers.csv
-│   │   ├── refineries.csv
-│   │   ├── crude_grades.csv
-│   │   ├── ports.csv
-│   │   └── spr_caverns.csv
+│   │   ├── corridors.csv      ports.csv        authorities.csv
+│   │   ├── suppliers.csv      spr_caverns.csv  geo_events.csv      (historical events)
+│   │   ├── refineries.csv     crude_grades.csv
 │   └── edges/
-│       ├── exports_via.csv
-│       ├── feeds.csv
-│       ├── supplies.csv
-│       ├── configured_for.csv
-│       └── bypass_routes.csv
-└── narratives/            # LAYER 2 — prose with [[wikilinks]] → synthesis path → wiki store
-    ├── corridor_hormuz.md   #   filename = entity_id
-    ├── supplier_aramco.md
-    └── ...                   #   entities without a file get an auto-generated foundational stub
+│       ├── exports_via.csv    supplies.csv     bypass_routes.csv
+│       ├── feeds.csv          configured_for.csv
+├── sources_index.csv      # entity_id, url, note  → which URLs to fetch per entity
+├── sources/               # LAYER 2 — real fetched evidence (the grounding text, RAG)
+│   ├── event_2024_red_sea.md   #   fetched by scripts/fetch_sources.py (or curated)
+│   └── ...
+└── narratives/            # LAYER 3 — prose with [[wikilinks]] → synthesis path → wiki store
+    ├── corridor_hormuz.md   #   filename = entity_id; optional hand-authored override
+    └── ...
 ```
 
 The bundle carries the **graph values + narrative context**. Entity **identity** (ids, aliases, H3
@@ -68,9 +66,32 @@ cells, price instruments) lives in `knowledge/registry.py` — keep the two in s
 | **Narratives** | `narratives/*.md` → `render_wiki_page()` → `write_wiki_page()` + `add_episode()` | Wiki + episodic + semantic + vector (with `[[wikilinks]]` → `links_out` relations) |
 
 Facts are deterministic (you don't reconcile a known number through an LLM). Narratives go through the
-**same synthesis path System 1 uses** — they get reconciled prose, wikilinks, and relations. Any
-entity with facts but no `narratives/<entity_id>.md` gets a foundational stub built from its facts +
-graph relationships, so the wiki store is always fully covered.
+**same synthesis path System 1 uses** — they get reconciled prose, wikilinks, and relations.
+
+**Narrative authoring precedence (per entity), highest first:**
+1. **Hand-authored** `narratives/<entity_id>.md` — curated prose.
+2. **Source-grounded** — if `sources/<entity_id>.md` exists, Nova Pro writes the page from **that
+   real text + the facts only** (RAG). This is the anti-hallucination path.
+3. **Facts-only LLM** — constrained to the structured facts (no source available).
+4. **Deterministic stub** — facts + relationships, no LLM (`--no-llm-author`).
+
+So the wiki store is always fully covered, and entities with fetched evidence are grounded in real
+source text rather than the model's parametric memory.
+
+### Grounding: `sources_index.csv` + `scripts/fetch_sources.py`
+
+`sources_index.csv` (columns `entity_id, url, note`) lists the authoritative URLs per entity.
+`fetch_sources.py` fetches them into `sources/<entity_id>.md` (cached evidence, kept for
+reproducibility / link-rot). For bot-blocked or messy pages, paste clean text into the file manually —
+the loader treats any text there as the grounding evidence.
+
+### Canonicalization (`canonicalize_graph`) — duplicate handling
+
+LLM extraction can create duplicate edges and alias-variant nodes (e.g. "Abu Dhabi National Oil
+Company" vs "ADNOC"). `instantiate(canonicalize=True)` runs a final pass that (1) keeps one
+`RELATES_TO` per (src, dst, edge-type) and (2) merges any node whose name is a registry **alias** of a
+canonical entity into that canonical node (re-pointing its edges). Distinct concepts (e.g. the country
+"Saudi Arabia" vs the company "Saudi Aramco") are left alone — only registry-alias matches merge.
 
 ### Narrative file format (`narratives/<entity_id>.md`)
 
@@ -139,6 +160,12 @@ Property columns mirror `knowledge/schema/entities.py`. Units are in the column 
 
 **`nodes/spr_caverns.csv`** — `SPRCavern`
 `entity_id, canonical_name, capacity_mmt, current_fill_mmt, location, tier, source, as_of, notes`
+
+**`nodes/authorities.csv`** — `Authority`
+`entity_id, canonical_name, jurisdiction, tier, source, as_of, notes`
+
+**`nodes/geo_events.csv`** — `GeoEvent` (historical / geopolitical events)
+`entity_id, canonical_name, actor, action, severity, event_time, tier, source, as_of, notes`
 
 ## Edge CSV schemas
 

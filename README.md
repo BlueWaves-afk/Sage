@@ -371,44 +371,50 @@ geopolitical entities and the relationships between them. This is to SAGE what p
 to a model: a **load**, not a train (`from_pretrained`, not `fit`). Live signals (System 1) then layer
 continual updates on top.
 
-The knowledge lives in a versioned, provenance-tracked **context bundle** with **two layers**:
+The knowledge lives in a versioned, provenance-tracked **context bundle** with **three layers**
+(61 entities: corridors, suppliers, refineries, crude grades, ports, SPR caverns, authorities, and
+historical geopolitical events):
 
 ```
 data/india-energy-2026.context/        # the bundle ("knowledge2026")
 ├── manifest.yaml                       # metadata, source registry, estimation methods
-├── facts/                              # LAYER 1 — structured ground truth
-│   ├── nodes/*.csv                     #   Corridors, Suppliers, Refineries, CrudeGrades, Ports, SPR
+├── facts/                              # LAYER 1 — structured ground truth (CSVs)
+│   ├── nodes/*.csv                     #   incl. authorities.csv, geo_events.csv (history)
 │   └── edges/*.csv                     #   EXPORTS_VIA, FEEDS, SUPPLIES, CONFIGURED_FOR, BYPASS_ROUTE
-└── narratives/                         # LAYER 2 — per-entity prose with [[wikilinks]]
-    └── <entity_id>.md                  #   strait-of-hormuz, saudi-aramco, jamnagar, …
+├── sources_index.csv                   # entity_id → authoritative URLs
+├── sources/<entity_id>.md              # LAYER 2 — real fetched evidence (grounding text)
+└── narratives/<entity_id>.md           # LAYER 3 — per-entity prose with [[wikilinks]] (optional)
 ```
 
-**Why two layers — facts vs narrative.** They are different kinds of knowledge and load differently:
+**Three kinds of knowledge, loaded differently:**
 
 | Layer | Example | How it loads |
 |---|---|---|
-| **Facts** (CSV) | `Jamnagar capacity = 1.40 mbpd`, `Arab Light API = 32.8` | Written **directly** as graph attributes. Deterministic — the LLM does *not* reconcile a known number. |
-| **Narratives** (Markdown) | "Why Hormuz is critical; its tie to `[[Saudi Aramco]]` and the `[[2019 Tanker Attacks]]`" | Routed through the **synthesis path** — the same one System 1 uses for live signals. |
+| **Facts** (CSV) | `Jamnagar capacity = 1.40 mbpd`, `Arab Light API = 32.8` | Written **directly** as graph attributes. Deterministic — no LLM "reconciles" a known number. |
+| **Sources** (fetched text) | the Wikipedia/EIA article behind an entity | The **grounding evidence** the LLM summarises (RAG) — prevents hallucination. |
+| **Narratives** (Markdown) | "Why Hormuz is critical; its tie to `[[Saudi Aramco]]`" | Routed through the **synthesis path** — the same one System 1 uses for live signals. |
 
 Every facts row carries a `tier` (`real` / `derived` / `estimated`) and a `source` — the loader
 **rejects any unsourced row**, the machine-checked "no simulated data" guarantee.
 
-**How instantiation populates all three stores.** `bundle.instantiate(g)` runs two phases:
+**How instantiation populates all three stores.** `bundle.instantiate(g)` runs three phases:
 
 ```
 Phase 1 — FACTS       facts/*.csv ──► structural episodes ──► add_episode()
                                                               → Store 1 (episodic) + Store 2 (graph attrs)
 
-Phase 2 — NARRATIVES  narratives/*.md ──► render_wiki_page() ──► write_wiki_page()  → Store 3 (wiki)
-                                          (resolves [[wikilinks]],   └─► add_episode(body) → Stores 1 + 2
-                                           builds links_out)              (relations + vector embeddings)
+Phase 2 — NARRATIVES  body = hand-authored | source-grounded (Nova Pro over sources/) | facts-only | stub
+                      render_wiki_page() ──► write_wiki_page()  → Store 3 (wiki)
+                                        └─► add_episode(body)   → Stores 1 + 2 (relations + vectors)
+
+Phase 3 — CANONICALIZE  dedup RELATES_TO edges + merge alias-variant nodes (vs the registry)
 ```
 
-Phase 2 is the key part: narratives go through the **same synthesis machinery System 1 uses**, so the
-foundational pages get reconciled prose, `[[wikilinks]]`, and `links_out` relations — not a flat dump.
-Any entity with facts but no hand-authored narrative gets a **foundational stub** auto-generated from
-its facts + graph relationships, so Store 3 is always fully covered. Enrich it later by dropping a
-`narratives/<entity_id>.md` file.
+Phase 2 narratives go through the **same synthesis machinery System 1 uses** (reconciled prose,
+`[[wikilinks]]`, `links_out` relations). The authoring precedence is **hand-authored → source-grounded
+→ facts-only → stub**, so the wiki store is always fully covered and entities with fetched evidence are
+grounded in real text. Phase 3 removes the duplicate edges / alias-variant nodes that LLM extraction
+otherwise leaves behind.
 
 > **Authoring vs distribution.** The `.context` bundle is the human-authored *source* (facts + prose) —
 > diffable, swappable, easy to contribute to. Instantiation reconciles it through the pipeline. (A

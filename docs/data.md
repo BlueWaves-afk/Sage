@@ -14,15 +14,24 @@
 >
 > All figures below are FY2024-25 / 2024-2026 vintage. Replace with the latest pull at build time.
 >
-> **SEED STATUS (June 2026).** All static nodes and structural edges in this sheet now live in a
-> versioned, provenance-tracked **context bundle** at `data/india-energy-2026.context/` (CSVs +
-> `manifest.yaml`). The bundle is the single source of truth; `scripts/seed_kb.py` loads it via
-> `knowledge.context.load_bundle()` and instantiates it into the graph. Every row carries a `tier`
-> (`real` / `derived` / `estimated`) and a `source` — the loader rejects any unsourced row, which is
-> the machine-checked "no simulated data" guarantee. The 9 CrudeGrade entities are also registered in
-> `knowledge/registry.py`. Format spec: [`data/CONTEXT_BUNDLE_SCHEMA.md`](CONTEXT_BUNDLE_SCHEMA.md).
-> This sheet (`data.md`) is now the **human-readable sourcing rationale**; the bundle is the
-> machine-readable artifact.
+> **STATUS (June 2026).** All static knowledge lives in a versioned, provenance-tracked **context
+> bundle** at `data/india-energy-2026.context/` with three layers: **facts/** (sourced CSVs),
+> **sources/** (real fetched evidence text), **narratives/** (prose). It now covers **61 entities**:
+> 5 corridors, 13 suppliers, 8 refineries, 16 crude grades, 6 ports, 3 SPR caverns, 4 authorities,
+> and **6 historical GeoEvents** (Tanker War, 2019 attacks, 2024 Red Sea, Ever Given, 2025
+> Iran-Israel, 2022 Russia-Ukraine).
+>
+> **How it loads** (`scripts/sage_instantiate.py`): facts → graph attributes; narratives →
+> synthesis → wiki + graph + vectors. Narratives are **source-grounded** — for an entity with cached
+> evidence in `sources/`, Nova Pro writes the page from that real text + facts only (RAG,
+> anti-hallucination), not parametric memory. A final **canonicalization** pass dedups edges and
+> merges alias-variant nodes. Stores persist under `knowledge/` (`knowledge/wiki/`,
+> `knowledge/graph_store/`).
+>
+> Every facts row carries a `tier` (`real`/`derived`/`estimated`) + `source`; the loader rejects any
+> unsourced row — the machine-checked "no simulated data" guarantee. Format spec:
+> [`data/CONTEXT_BUNDLE_SCHEMA.md`](CONTEXT_BUNDLE_SCHEMA.md). This sheet is the human-readable
+> sourcing rationale; the bundle is the machine-readable artifact.
 
 ---
 

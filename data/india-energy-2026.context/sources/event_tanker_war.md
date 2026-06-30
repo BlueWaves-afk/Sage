@@ -1,5 +1,5 @@
 # Source evidence — event_tanker_war
-_Fetched 2026-06-30. Provenance for grounded synthesis._
+_Curated from source 2026-06-30. Provenance for grounded synthesis._
 
 ## Source: https://en.wikipedia.org/wiki/Tanker_War
 _Wikipedia Tanker War_

@@ -1,5 +1,5 @@
 # Source evidence — event_2019_hormuz_attacks
-_Fetched 2026-06-30. Provenance for grounded synthesis._
+_Curated from source 2026-06-30. Provenance for grounded synthesis._
 
 ## Source: https://en.wikipedia.org/wiki/June_2019_Gulf_of_Oman_incident
 _Wikipedia June 2019 Gulf of Oman incident_
