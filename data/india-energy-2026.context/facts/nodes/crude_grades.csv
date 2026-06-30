@@ -8,3 +8,5 @@ grade_basrah_heavy,Basrah Heavy,24.0,4.05,Iraq,13,10,16,21,40,real,SP-Global-Ira
 grade_urals,Urals,31.3,1.30,Russia,19,12,20,22,27,real,Petrosolutions-urals,2024,api/sulfur real; yield_* representative
 grade_murban,Murban,40.2,0.79,United Arab Emirates,28,15,22,20,15,real,BP-assay,2024,api/sulfur real; yield_* representative
 grade_bonny_light,Bonny Light,38.0,0.37,Nigeria,26,14,23,20,17,real,BP-assay,2024,api/sulfur real; total distillate ~61% (comparative assay)
+grade_kuwait_export,Kuwait Export Crude,31.0,2.55,Kuwait,18,12,19,21,30,real,BP-assay,2024,api/sulfur real; yield_* representative
+grade_qatar_marine,Qatar Marine,36.0,1.40,Qatar,24,14,21,21,20,real,BP-assay,2024,api/sulfur real; yield_* representative

@@ -1,0 +1,28 @@
+entity_id,url,note
+corridor_hormuz,https://www.eia.gov/todayinenergy/detail.php?id=65504,EIA Strait of Hormuz chokepoint
+corridor_hormuz,https://en.wikipedia.org/wiki/Strait_of_Hormuz,Wikipedia Strait of Hormuz
+corridor_bab_el_mandeb,https://en.wikipedia.org/wiki/Bab-el-Mandeb,Wikipedia Bab-el-Mandeb
+corridor_suez,https://en.wikipedia.org/wiki/Suez_Canal,Wikipedia Suez Canal
+corridor_malacca,https://en.wikipedia.org/wiki/Strait_of_Malacca,Wikipedia Strait of Malacca
+corridor_cape,https://en.wikipedia.org/wiki/Cape_of_Good_Hope,Wikipedia Cape of Good Hope
+supplier_aramco,https://en.wikipedia.org/wiki/Saudi_Aramco,Wikipedia Saudi Aramco
+supplier_iraqoil,https://en.wikipedia.org/wiki/SOMO_(Iraq),Wikipedia Iraq SOMO
+supplier_adnoc,https://en.wikipedia.org/wiki/Abu_Dhabi_National_Oil_Company,Wikipedia ADNOC
+supplier_rosneft,https://en.wikipedia.org/wiki/Rosneft,Wikipedia Rosneft
+supplier_nioc,https://en.wikipedia.org/wiki/National_Iranian_Oil_Company,Wikipedia NIOC
+supplier_kpc,https://en.wikipedia.org/wiki/Kuwait_Petroleum_Corporation,Wikipedia KPC
+supplier_qatarenergy,https://en.wikipedia.org/wiki/QatarEnergy,Wikipedia QatarEnergy
+supplier_nnpc,https://en.wikipedia.org/wiki/Nigerian_National_Petroleum_Company,Wikipedia NNPC
+refinery_jamnagar,https://en.wikipedia.org/wiki/Jamnagar_Refinery,Wikipedia Jamnagar Refinery
+refinery_mangaluru,https://en.wikipedia.org/wiki/Mangalore_Refinery_and_Petrochemicals,Wikipedia MRPL
+refinery_paradip,https://en.wikipedia.org/wiki/Paradip_Refinery,Wikipedia Paradip Refinery
+spr_vizag,https://isprlindia.com/,ISPRL official
+spr_vizag,https://en.wikipedia.org/wiki/Strategic_Petroleum_Reserve_(India),Wikipedia India SPR
+event_tanker_war,https://en.wikipedia.org/wiki/Tanker_War,Wikipedia Tanker War
+event_2019_hormuz_attacks,https://en.wikipedia.org/wiki/2019_Gulf_of_Oman_incident,Wikipedia 2019 Gulf of Oman incident
+event_2024_red_sea,https://en.wikipedia.org/wiki/Red_Sea_crisis,Wikipedia Red Sea crisis
+event_ever_given,https://en.wikipedia.org/wiki/2021_Suez_Canal_obstruction,Wikipedia Ever Given Suez obstruction
+event_2025_iran_israel,https://en.wikipedia.org/wiki/Iran%E2%80%93Israel_war,Wikipedia Iran-Israel war
+authority_ofac,https://en.wikipedia.org/wiki/Office_of_Foreign_Assets_Control,Wikipedia OFAC
+authority_eu,https://en.wikipedia.org/wiki/European_Union_sanctions,Wikipedia EU sanctions
+authority_un,https://en.wikipedia.org/wiki/United_Nations_Security_Council_sanctions,Wikipedia UN sanctions

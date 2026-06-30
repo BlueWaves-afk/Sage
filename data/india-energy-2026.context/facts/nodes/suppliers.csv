@@ -4,3 +4,6 @@ supplier_iraqoil,Iraqi Oil Ministry,Iraq,3.4,false,real,PPAC-imports,2025,SOMO t
 supplier_adnoc,ADNOC,United Arab Emirates,3.0,false,real,PPAC-imports,2025,total crude exports
 supplier_rosneft,Rosneft,Russia,4.5,false,real,PPAC-imports,2025,seaborne export proxy for all Russian suppliers
 supplier_nioc,NIOC,Iran,1.4,true,real,OFAC-sdn,2025,sanctioned default; authoritative value set live by System 1
+supplier_kpc,Kuwait Petroleum Corporation,Kuwait,2.0,false,real,PPAC-imports,2025,Kuwait crude exports; ~3% of India imports
+supplier_qatarenergy,QatarEnergy,Qatar,0.6,false,real,PPAC-imports,2025,mostly condensate/LNG; smaller crude flows to India
+supplier_nnpc,NNPC,Nigeria,1.4,false,real,PPAC-imports,2025,Nigerian crude exports; Bonny Light source for India

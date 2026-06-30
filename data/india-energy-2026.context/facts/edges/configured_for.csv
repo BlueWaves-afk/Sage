@@ -7,3 +7,7 @@ refinery_mangaluru,grade_arab_medium,0.92,84,derived,DERIVED-compat,2025,medium-
 refinery_mangaluru,grade_basrah_medium,0.88,83,derived,DERIVED-compat,2025,medium-sour config
 refinery_paradip,grade_arab_heavy,0.90,80,derived,DERIVED-compat,2025,heavy config
 refinery_paradip,grade_basrah_heavy,0.91,81,derived,DERIVED-compat,2025,heavy config
+refinery_jamnagar,grade_kuwait_export,0.90,84,derived,DERIVED-compat,2025,medium-sour capable
+refinery_panipat,grade_arab_light,0.92,86,derived,DERIVED-compat,2025,light-sour config
+refinery_kochi,grade_qatar_marine,0.88,83,derived,DERIVED-compat,2025,light config
+refinery_kochi,grade_bonny_light,0.90,85,derived,DERIVED-compat,2025,light-sweet config

@@ -102,11 +102,47 @@ class ContextBundle:
                     return ", ".join(f"{k}={v}" for k, v in r.items() if k not in meta and v)
         return ""
 
+    def _read_source(self, entity_id: str) -> str:
+        """Cached source evidence for an entity (sources/<entity_id>.md), if present."""
+        src_dir = self.path / self.manifest.get("sources_dir", "sources")
+        f = src_dir / f"{entity_id}.md"
+        if f.is_file():
+            return f.read_text(encoding="utf-8").strip()
+        return ""
+
+    async def _grounded_author(self, entity_id: str, canonical: str, etype: str) -> str:
+        """
+        Write a SOURCE-GROUNDED narrative: Nova Pro summarises the cached source
+        material (sources/<entity_id>.md, fetched from real URLs) + the structured
+        facts into a factual page with [[wikilinks]]. Strictly RAG — the model is
+        told to use ONLY the provided material, which prevents hallucination.
+        """
+        from knowledge.synthesis import _call_nova_pro
+        rels = self._connected_names(entity_id)
+        facts = self._entity_facts(entity_id)
+        source_text = self._read_source(entity_id)
+        rel_hint = ", ".join(rels) if rels else "(none in this bundle)"
+
+        prompt = (
+            f"You are writing a factual foundational intelligence page for the {etype} "
+            f'"{canonical}" in an oil supply-chain knowledge base.\n\n'
+            f"STRICT GROUNDING RULES:\n"
+            f"- Use ONLY the SOURCE MATERIAL and STRUCTURED FACTS below.\n"
+            f"- Do NOT add any figure, date, name, or claim that is not present in them.\n"
+            f"- If the material is thin, keep the page short. Never speculate.\n"
+            f"- Reference related tracked entities as [[Canonical Name]] wikilinks where the "
+            f"material supports it. Candidates: {rel_hint}.\n"
+            f"- 2-4 short sections with ## headers. No preamble — start at the first ## header.\n\n"
+            f"STRUCTURED FACTS: {facts or 'n/a'}\n\n"
+            f"SOURCE MATERIAL:\n{source_text}\n"
+        )
+        return await _call_nova_pro(prompt, canonical)
+
     async def _llm_author(self, entity_id: str, canonical: str, etype: str) -> str:
         """
-        Ask Nova Pro to write a factual foundational narrative with [[wikilinks]].
-        Used for entities with no hand-authored narrative when author_missing_with_llm=True.
-        Grounded on the entity's facts + graph relationships so it cannot drift.
+        Facts-only authoring (no source material). Lower-grounding fallback used when
+        no sources/<entity_id>.md exists. Constrained to the structured facts so it
+        cannot invent figures, but prose framing comes from the model.
         """
         from knowledge.synthesis import _call_nova_pro
         rels = self._connected_names(entity_id)
@@ -118,7 +154,8 @@ class ContextBundle:
             f"Reference these related tracked entities as [[Canonical Name]] wikilinks where "
             f"relevant: {', '.join(rels) if rels else '(none in this bundle)'}.\n"
             f"Known structured facts (do not contradict, do not invent new figures): {facts or 'n/a'}.\n"
-            f"Be specific to real-world energy geopolitics. No preamble — start with the first ## header."
+            f"Do not introduce specific figures or dates beyond the facts above. "
+            f"No preamble — start with the first ## header."
         )
         return await _call_nova_pro(prompt, canonical)
 
@@ -219,12 +256,19 @@ class ContextBundle:
             canonical = entry.canonical_name if entry else entity_id
             etype = entry.entity_type if entry else "Unknown"
 
+            # Precedence: hand-authored prose > source-grounded synthesis >
+            #             facts-only LLM > deterministic stub.
             authored = self.narratives.get(entity_id)
+            has_source = bool(self._read_source(entity_id))
             if authored:
                 body, authored_flag = authored["body"], "authored"
+            elif author_missing_with_llm and has_source:
+                if on_progress:
+                    on_progress("synthesizing", f"{canonical} (grounded)", i, len(eids))
+                body, authored_flag = await self._grounded_author(entity_id, canonical, etype), "grounded"
             elif author_missing_with_llm:
                 if on_progress:
-                    on_progress("synthesizing", canonical, i, len(eids))
+                    on_progress("synthesizing", f"{canonical} (facts-only)", i, len(eids))
                 body, authored_flag = await self._llm_author(entity_id, canonical, etype), "llm-authored"
             else:
                 body, authored_flag = self._foundational_stub(entity_id, canonical, etype), "stub"
@@ -298,6 +342,12 @@ def _fmt_authority(r: dict) -> str:
     return f"{r['canonical_name']} (Authority) has jurisdiction {r['jurisdiction']}."
 
 
+def _fmt_geoevent(r: dict) -> str:
+    return (f"{r['canonical_name']} (GeoEvent): actor {r.get('actor','')}, "
+            f"action {r.get('action','')}, severity {r.get('severity','')}, "
+            f"event_time {r.get('event_time','')}.")
+
+
 def _fmt_exports_via(r: dict) -> str:
     return (f"{_cname(r['src_entity_id'])} (Supplier) EXPORTS_VIA {_cname(r['dst_entity_id'])} "
             f"(Corridor) at volume_mbpd {r['volume_mbpd']}.")
@@ -331,6 +381,7 @@ _NODE_FORMATTERS = {
     "Port":       _fmt_port,
     "SPRCavern":  _fmt_spr,
     "Authority":  _fmt_authority,
+    "GeoEvent":   _fmt_geoevent,
 }
 
 _EDGE_FORMATTERS = {

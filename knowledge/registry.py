@@ -229,6 +229,76 @@ REGISTRY: dict[str, EntityRegistryEntry] = {
         coordinates={"lat": 13.06, "lon": 74.68},
     ),
 
+    # ── Expansion: additional suppliers (India's wider sourcing) ─────────────────
+
+    "supplier_kpc": EntityRegistryEntry(
+        entity_id="supplier_kpc", entity_type="Supplier",
+        canonical_name="Kuwait Petroleum Corporation",
+        aliases=["KPC", "Kuwait Petroleum", "Kuwait", "KOC"],
+    ),
+    "supplier_qatarenergy": EntityRegistryEntry(
+        entity_id="supplier_qatarenergy", entity_type="Supplier",
+        canonical_name="QatarEnergy",
+        aliases=["Qatar Petroleum", "QatarEnergy", "Qatar", "QP"],
+    ),
+    "supplier_nnpc": EntityRegistryEntry(
+        entity_id="supplier_nnpc", entity_type="Supplier",
+        canonical_name="NNPC",
+        aliases=["Nigerian National Petroleum", "Nigeria", "NNPC Limited"],
+    ),
+
+    # ── Expansion: additional Indian refineries ──────────────────────────────────
+
+    "refinery_panipat": EntityRegistryEntry(
+        entity_id="refinery_panipat", entity_type="Refinery",
+        canonical_name="Panipat",
+        aliases=["IOCL Panipat", "Panipat Refinery", "Indian Oil Panipat"],
+        coordinates={"lat": 29.39, "lon": 76.97},
+    ),
+    "refinery_kochi": EntityRegistryEntry(
+        entity_id="refinery_kochi", entity_type="Refinery",
+        canonical_name="Kochi",
+        aliases=["BPCL Kochi", "Kochi Refinery", "Cochin Refinery", "BPCL Kochi Refinery"],
+        coordinates={"lat": 9.97, "lon": 76.28},
+    ),
+
+    # ── Expansion: additional corridor ───────────────────────────────────────────
+
+    "corridor_cape": EntityRegistryEntry(
+        entity_id="corridor_cape", entity_type="Corridor",
+        canonical_name="Cape of Good Hope",
+        aliases=["Cape route", "Cape of Good Hope", "Cape passage", "around Africa"],
+        coordinates={"lat": -34.36, "lon": 18.47},
+    ),
+
+    # ── Historical / geopolitical events (GeoEvent nodes) ────────────────────────
+
+    "event_tanker_war": EntityRegistryEntry(
+        entity_id="event_tanker_war", entity_type="GeoEvent",
+        canonical_name="Tanker War",
+        aliases=["Iran-Iraq Tanker War", "1980s Tanker War"],
+    ),
+    "event_2019_hormuz_attacks": EntityRegistryEntry(
+        entity_id="event_2019_hormuz_attacks", entity_type="GeoEvent",
+        canonical_name="2019 Tanker Attacks",
+        aliases=["2019 Gulf of Oman attacks", "2019 tanker attacks", "Fujairah attacks"],
+    ),
+    "event_2024_red_sea": EntityRegistryEntry(
+        entity_id="event_2024_red_sea", entity_type="GeoEvent",
+        canonical_name="2024 Red Sea Crisis",
+        aliases=["Houthi Red Sea attacks", "Red Sea shipping crisis", "Bab-el-Mandeb crisis"],
+    ),
+    "event_ever_given": EntityRegistryEntry(
+        entity_id="event_ever_given", entity_type="GeoEvent",
+        canonical_name="Ever Given Suez Blockage",
+        aliases=["Ever Given", "Suez Canal blockage 2021", "Ever Given grounding"],
+    ),
+    "event_2025_iran_israel": EntityRegistryEntry(
+        entity_id="event_2025_iran_israel", entity_type="GeoEvent",
+        canonical_name="2025 Iran-Israel Conflict",
+        aliases=["2025 Iran Israel war", "June 2025 Iran-Israel conflict"],
+    ),
+
     # ── Crude Grades ─────────────────────────────────────────────────────────────
     # No H3 cells / instruments — grades are referenced by name in news/sanctions
     # text and configured on refineries via CONFIGURED_FOR edges. Assays in docs/data.md §4.
@@ -294,6 +364,20 @@ REGISTRY: dict[str, EntityRegistryEntry] = {
         entity_type="CrudeGrade",
         canonical_name="Bonny Light",
         aliases=["Nigerian Bonny Light", "Bonny"],
+    ),
+
+    "grade_kuwait_export": EntityRegistryEntry(
+        entity_id="grade_kuwait_export",
+        entity_type="CrudeGrade",
+        canonical_name="Kuwait Export Crude",
+        aliases=["KEC", "Kuwait Export", "Kuwait Blend"],
+    ),
+
+    "grade_qatar_marine": EntityRegistryEntry(
+        entity_id="grade_qatar_marine",
+        entity_type="CrudeGrade",
+        canonical_name="Qatar Marine",
+        aliases=["Qatar Marine crude", "Marine crude"],
     ),
 
     # ── Authorities ────────────────────────────────────────────────────────────

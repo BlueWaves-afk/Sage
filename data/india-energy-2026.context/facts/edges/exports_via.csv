@@ -3,3 +3,6 @@ supplier_aramco,corridor_hormuz,0.69,derived,DERIVED-import-volume,2025,PPAC ~14
 supplier_iraqoil,corridor_hormuz,0.98,derived,DERIVED-import-volume,2025,PPAC ~20% share
 supplier_adnoc,corridor_hormuz,0.47,derived,DERIVED-import-volume,2025,PPAC ~9.5% share
 supplier_rosneft,corridor_malacca,1.75,derived,DERIVED-import-volume,2025,PPAC ~35.8% share; routed via Malacca/Cape not Hormuz
+supplier_kpc,corridor_hormuz,0.45,derived,DERIVED-import-volume,2025,Kuwait ~3% share via Hormuz
+supplier_qatarenergy,corridor_hormuz,0.15,derived,DERIVED-import-volume,2025,Qatar crude via Hormuz
+supplier_nnpc,corridor_cape,0.20,derived,DERIVED-import-volume,2025,Nigerian Bonny Light routed via Cape/Atlantic to India
