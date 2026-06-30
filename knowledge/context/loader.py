@@ -42,6 +42,7 @@ class ContextBundle:
     node_rows:   dict[str, list[dict]] = field(default_factory=dict)   # type -> rows
     edge_rows:   dict[str, list[dict]] = field(default_factory=dict)   # type -> rows
     narratives:  dict[str, dict] = field(default_factory=dict)         # entity_id -> {body, frontmatter}
+    model_params: dict[str, dict] = field(default_factory=dict)        # param -> {value, unit, tier, source, notes}
 
     # ── metadata ──────────────────────────────────────────────────────────────
     @property
@@ -299,10 +300,14 @@ class ContextBundle:
         if canonicalize:
             if on_progress:
                 on_progress("canonicalizing", "dedup edges + merge alias nodes", len(eids), len(eids))
-            from knowledge.context.dedup import canonicalize_graph, reconcile_edge_attributes
+            from knowledge.context.dedup import (
+                canonicalize_graph, reconcile_edge_attributes, derive_exposures,
+            )
             dedup = await canonicalize_graph(graphiti)
             # Overwrite LLM-extracted edge numerics with exact facts values (ARIO needs these).
             dedup["edges_reconciled"] = await reconcile_edge_attributes(self)
+            # Materialise per-refinery corridor exposure (derived-attributes pass).
+            dedup["exposures_derived"] = await derive_exposures()
 
         return {"facts": facts_written, "narratives": narr_written, **dedup}
 
@@ -450,6 +455,12 @@ def load_bundle(bundle_path: str | Path) -> ContextBundle:
     for spec in manifest.get("edges", []):
         bundle.edge_rows[spec["type"]] = _read_csv(path / spec["file"])
 
+    # Model params (ARIO economic coefficients) — param -> {value, unit, tier, source, notes}
+    pf = manifest.get("params_file")
+    if pf and (path / pf).exists():
+        for row in _read_csv(path / pf):
+            bundle.model_params[row["param"]] = row
+
     # Narratives — auto-discovered from narratives_dir/*.md (filename = entity_id)
     narr_dir = path / manifest.get("narratives_dir", "narratives")
     if narr_dir.is_dir():
@@ -487,6 +498,8 @@ def validate_bundle(bundle: ContextBundle) -> None:
         _check(f"node:{ntype}", rows)
     for etype, rows in bundle.edge_rows.items():
         _check(f"edge:{etype}", rows)
+    if bundle.model_params:
+        _check("params", list(bundle.model_params.values()))
 
     if errors:
         raise BundleValidationError(

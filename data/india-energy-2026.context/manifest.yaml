@@ -82,6 +82,12 @@ sources:
   G7-pricecap:
     label: G7 / EU Russian oil price cap coalition
     url:   https://home.treasury.gov/policy-issues/financial-sanctions/sanctions-programs-and-country-information/russian-harmful-foreign-activities-sanctions
+  Inoue-Todo:
+    label: Inoue & Todo 2019, Nature Sustainability — supply-chain GDP indirect/direct ratio
+    url:   https://www.nature.com/articles/s41893-019-0351-x
+  EIA-spare:
+    label: EIA — OPEC effective spare capacity
+    url:   https://www.eia.gov/outlooks/steo/report/global_oil.php
 
 # ── Estimation methods ───────────────────────────────────────────────────────
 # Rows with tier=derived or estimated reference one of these as their `source`.
@@ -109,6 +115,18 @@ estimation_methods:
   EST-congestion:
     method: Static baseline 0.0; live value derived from AIS vessel density at runtime
     tier:   estimated
+  DERIVED-price-elasticity:
+    method: >
+      $/bbl per mbpd of NET global shortfall, from historical elasticity (≈10% global
+      supply loss → Brent ~$120, i.e. ~$4.5/bbl/mbpd); convex band 3.5–6.0. Refs: Fed
+      IFDP 1173, IMF WP/17-15.
+    tier:   derived
+  EST-spr-draw:
+    method: ISPRL emergency SPR pumping-rate estimate (no published per-cavern rate)
+    tier:   estimated
+  EST-bypass-ramp:
+    method: Aramco operations estimate for time to ramp Petroline/ADCOP to capacity
+    tier:   estimated
 
 # ── Bundle contents ──────────────────────────────────────────────────────────
 # Two layers:
@@ -132,6 +150,10 @@ edges:
   - {type: SUPPLIES,       file: facts/edges/supplies.csv}
   - {type: CONFIGURED_FOR, file: facts/edges/configured_for.csv}
   - {type: BYPASS_ROUTE,   file: facts/edges/bypass_routes.csv}
+
+# Model parameters (ARIO economic coefficients) — sourced, provenance-tracked, swappable.
+# System 2 reads these instead of hardcoding constants. Same tier+source contract.
+params_file: params/ario_params.csv
 
 # Narratives are auto-discovered from narratives/*.md (filename = entity_id).
 # Each carries frontmatter: entity_id, source_url, as_of, tier.

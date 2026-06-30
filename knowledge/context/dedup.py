@@ -157,6 +157,41 @@ async def reconcile_edge_attributes(bundle) -> int:
     return updated
 
 
+async def derive_exposures() -> int:
+    """
+    Materialise per-refinery corridor exposure at ingestion (a derived-attributes pass).
+
+    exposure(corridor, refinery) = Σ_port  FEEDS(corridor→port).share × SUPPLIES(port→refinery).share
+
+    Written as a derived  (Corridor)-[RELATES_TO {name:'EXPOSES', exposure_pct}]->(Refinery)
+    edge so System 2 reads each refinery's exposure to the disrupted corridor directly
+    (no query-time traversal). Recompute by calling this again whenever the share edges
+    change (e.g. System 1 mutates topology). Returns edges written.
+    """
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc).isoformat()
+
+    # Fresh recompute: drop the old derived layer.
+    await _cy("MATCH ()-[r:RELATES_TO]->() WHERE r.name='EXPOSES' DELETE r")
+
+    # Aggregate the two-hop share product, then create one EXPOSES edge per (corridor, refinery).
+    await _cy(
+        """
+        MATCH (c:Entity)-[f:RELATES_TO]->(p:Entity)-[s:RELATES_TO]->(r:Entity)
+        WHERE f.name='FEEDS' AND s.name='SUPPLIES'
+          AND 'Corridor' IN c.labels AND 'Refinery' IN r.labels
+        WITH c, r, sum(coalesce(f.throughput_share_pct,0.0) * coalesce(s.throughput_share_pct,0.0)) AS exposure
+        WHERE exposure > 0.0001
+        CREATE (c)-[:RELATES_TO {name:'EXPOSES', exposure_pct: exposure, valid_at: $now}]->(r)
+        """,
+        {"now": now},
+    )
+    rows = await _cy("MATCH ()-[r:RELATES_TO]->() WHERE r.name='EXPOSES' RETURN count(r) AS c")
+    n = rows[0]["c"] if rows else 0
+    log.info("derive_exposures: wrote %d corridor→refinery EXPOSES edges", n)
+    return n
+
+
 async def canonicalize_graph(graphiti=None) -> dict[str, int]:
     """
     Full canonicalization pass. Safe to run repeatedly (idempotent).

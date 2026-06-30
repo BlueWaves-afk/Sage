@@ -41,8 +41,14 @@ class ARIOParams:
     refinery_inventory_days: float = 22.0     # PPAC national avg crude inventory
     # ── Economic ─────────────────────────────────────────────────────────────
     indirect_multiplier:    float = 10.6      # Inoue & Todo 2019 (GDP indirect/direct)
-    price_per_mbpd_low:     float = 0.45      # $/bbl per mbpd of GLOBAL shortfall (low band)
-    price_per_mbpd_high:    float = 1.20      # high band
+    # Price response to a GLOBAL supply shock, NET of global mitigations.
+    # Sourced: historical elasticity implies ~10% global supply loss → Brent ~$120
+    # (≈ $4.5/bbl per mbpd lost); response is convex, hence a band. Refs: Fed IFDP
+    # 1173, IMF WP/17/15. Global spare + rerouting absorb the first few mbpd.
+    price_per_mbpd_low:     float = 3.5       # $/bbl per mbpd of NET global shortfall (low)
+    price_per_mbpd_high:    float = 6.0       # high band (convexity)
+    global_spare_mbpd:      float = 3.5       # OPEC effective spare capacity (EIA/IEA)
+    global_bypass_mbpd:     float = 4.0       # Petroline+ADCOP global rerouting (IEA 3.5–5.5)
     # ── Scenario inputs ──────────────────────────────────────────────────────
     disruption_fraction:    float = 1.0       # 0=none, 1=full Hormuz closure
     disruption_days:        int   = 30
@@ -58,6 +64,10 @@ class ARIOParams:
             "bypass_capacity_mbpd":  {"value": self.bypass_capacity_mbpd, "unit": "mbpd", "source": "IEA"},
             "bypass_ramp_days":      {"value": self.bypass_ramp_days, "unit": "days", "source": "Aramco ops est."},
             "indirect_multiplier":   {"value": self.indirect_multiplier, "unit": "x", "source": "Inoue & Todo 2019"},
+            "price_per_mbpd_low":    {"value": self.price_per_mbpd_low, "unit": "$/bbl/mbpd", "source": "Fed IFDP 1173 / IMF WP17-15 elasticity"},
+            "price_per_mbpd_high":   {"value": self.price_per_mbpd_high, "unit": "$/bbl/mbpd", "source": "Fed IFDP 1173 / IMF WP17-15 (convex)"},
+            "global_spare_mbpd":     {"value": self.global_spare_mbpd, "unit": "mbpd", "source": "EIA/IEA OPEC spare"},
+            "global_bypass_mbpd":    {"value": self.global_bypass_mbpd, "unit": "mbpd", "source": "IEA Petroline+ADCOP"},
             "disruption_fraction":   {"value": self.disruption_fraction, "unit": "frac", "source": "scenario input"},
             "disruption_days":       {"value": self.disruption_days, "unit": "days", "source": "scenario input"},
         }
@@ -109,10 +119,12 @@ def run(params: ARIOParams) -> ARIOResult:
         if not prod_hit and cumulative_gap >= refinery_buffer and feedstock_gap > 0:
             product_shortfall_day, prod_hit = float(t), True
 
-    # Price impact: global Hormuz shortfall drives Brent (band from elasticity range).
-    global_shortfall = HORMUZ_GLOBAL_MBPD * p.disruption_fraction
-    price_low  = round(p.price_per_mbpd_low  * global_shortfall, 2)
-    price_high = round(p.price_per_mbpd_high * global_shortfall, 2)
+    # Price impact: the GLOBAL Hormuz shortfall drives Brent, but global spare capacity
+    # and pipeline rerouting absorb the first few mbpd. Price responds to what's left.
+    gross_global = HORMUZ_GLOBAL_MBPD * p.disruption_fraction
+    net_global   = max(0.0, gross_global - p.global_spare_mbpd - p.global_bypass_mbpd)
+    price_low  = round(p.price_per_mbpd_low  * net_global, 2)
+    price_high = round(p.price_per_mbpd_high * net_global, 2)
 
     peak_gap = max(timeline) if timeline else 0.0
     gap_days = sum(1 for g in timeline if g > 0.01)

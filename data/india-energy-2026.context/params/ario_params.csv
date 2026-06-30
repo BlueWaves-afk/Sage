@@ -1,0 +1,13 @@
+param,value,unit,tier,source,notes
+daily_consumption_mbpd,5.15,mbpd,real,PPAC-imports,India crude processing
+import_dependence_pct,88.2,%,real,PPAC-imports,India import dependence
+hormuz_share_pct,42.5,%,real,PPAC-imports,India imports routed via Hormuz
+spr_max_draw_mbpd,2.5,mbpd,estimated,EST-spr-draw,ISPRL emergency pumping limit
+bypass_capacity_mbpd,4.0,mbpd,real,IEA-hormuz,Petroline+ADCOP available to India
+bypass_ramp_days,5.0,days,estimated,EST-bypass-ramp,time for bypass to reach capacity
+refinery_inventory_days,22.0,days,estimated,EST-inventory,national avg crude inventory
+indirect_multiplier,10.6,x,real,Inoue-Todo,GDP indirect/direct effect ratio
+price_per_mbpd_low,3.5,usd_per_bbl_per_mbpd,derived,DERIVED-price-elasticity,low band of price response to net global shortfall
+price_per_mbpd_high,6.0,usd_per_bbl_per_mbpd,derived,DERIVED-price-elasticity,high band (convex response)
+global_spare_mbpd,3.5,mbpd,real,EIA-spare,OPEC effective spare capacity
+global_bypass_mbpd,4.0,mbpd,real,IEA-hormuz,global pipeline rerouting around Hormuz

@@ -64,11 +64,38 @@ async def run(
     return scenario_id
 
 
+import os
+
+_PARAM_CACHE: dict | None = None
+
+
+def _bundle_params() -> dict:
+    """Load the ARIO economic coefficients from the context bundle (sourced, cached)."""
+    global _PARAM_CACHE
+    if _PARAM_CACHE is None:
+        try:
+            from knowledge.context import load_bundle
+            bundle = load_bundle(os.environ.get("SAGE_CONTEXT_BUNDLE", "data/india-energy-2026.context"))
+            _PARAM_CACHE = {k: float(v["value"]) for k, v in bundle.model_params.items()}
+        except Exception:
+            _PARAM_CACHE = {}
+    return _PARAM_CACHE
+
+
 async def _extract_ario_params(
     subgraph, spr_caverns, disruption_fraction: float, disruption_days: int,
 ) -> ARIOParams:
-    """Build ARIO params from live KB state. India macro constants stay defaulted."""
+    """
+    Build ARIO params from (1) the sourced bundle params, (2) live KB state (SPR fill,
+    refinery inventory), (3) the scenario inputs. No hardcoded economic constants —
+    every coefficient is provenance-tracked in data/<bundle>.context/params/.
+    """
     p = ARIOParams(disruption_fraction=disruption_fraction, disruption_days=disruption_days)
+
+    # (1) Override defaults with the sourced bundle coefficients.
+    for k, v in _bundle_params().items():
+        if hasattr(p, k):
+            setattr(p, k, v)
 
     # SPR fill from live cavern state
     total_cap  = sum((c.capacity_mmt or 0.0) for c in spr_caverns)
