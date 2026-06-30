@@ -11,7 +11,7 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
-SignalSource = Literal["ais", "gdelt", "news", "sanctions", "price"]
+SignalSource = Literal["ais", "gdelt", "news", "sanctions", "price", "scenario"]
 Priority = Literal["HIGH", "MED", "LOW"]
 
 

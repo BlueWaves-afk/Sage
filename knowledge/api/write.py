@@ -375,8 +375,12 @@ async def write_risk_state(
 
 async def write_scenario(data: ScenarioOutputData) -> EpisodeRef:
     """
-    scenario_agent calls this after ARIO + GNN cascade completes.
-    Creates a linked ScenarioOutput episode + AFFECTS_SCENARIO edge back to trigger entity.
+    scenario_agent calls this after ARIO + IO + ABM cascade completes.
+    Creates a linked ScenarioOutput episode + AFFECTS_SCENARIO edge back to trigger entity,
+    AND (for confirmed/speculative scenarios) reconciles the result into the trigger
+    entity's wiki page (Store 3), so the narrative reflects the latest modelled impact —
+    not just System 1 news. Counterfactual sandbox forks never touch the live wiki
+    (isolation rule — same as write_pending).
     """
     from graphiti_core.nodes import EpisodeType
     from knowledge.connection import _get_graphiti
@@ -417,7 +421,104 @@ async def write_scenario(data: ScenarioOutputData) -> EpisodeRef:
     )
 
     episode_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"scenario_{data.scenario_id}"))
+
+    # ── Wiki reconciliation (Store 3) ───────────────────────────────────────
+    # Graph episode committed above — now fold the scenario result into the
+    # narrative, same consistency-gate pattern as ingest_signal/write_risk_state:
+    # never write the wiki ahead of a graph write that might have failed.
+    # Skipped for counterfactual sandbox forks (isolation rule).
+    if data.status != "counterfactual":
+        try:
+            await _reconcile_scenario_into_wiki(data, now)
+        except Exception as exc:
+            log.warning(
+                "Wiki reconciliation failed for scenario %s (graph episode still committed): %s",
+                data.scenario_id, exc,
+            )
+
     return EpisodeRef(episode_uuid=episode_uuid, scenario_id=data.scenario_id)
+
+
+async def _reconcile_scenario_into_wiki(data: ScenarioOutputData, now: datetime) -> None:
+    """
+    Builds a synthetic NormalizedSignal describing the scenario result and runs it
+    through the same synthesize() reconciliation System 1 uses for news — so a
+    second scenario run that supersedes/contradicts an earlier one produces a
+    visible "## Contradiction Note", not a silent overwrite. Existing risk-score
+    frontmatter is preserved (read from the current page) since this is a
+    structural-cascade update, not a fusion-model risk re-score.
+    """
+    from contracts.signal import NormalizedSignal
+    from knowledge.synthesis import synthesize, write_wiki_page, load_wiki_page
+    from knowledge.wikilink_processor import parse_frontmatter, validate_page
+
+    timeline_summary = ", ".join(
+        f"day{i+1}:{v:.1f}" for i, v in enumerate(data.feedstock_gap_timeline[:7])
+    )
+    top_assumptions = "; ".join(
+        f"{k}={v.get('value', v)}{v.get('unit','')}"
+        if isinstance(v, dict) else f"{k}={v}"
+        for k, v in list(data.assumptions.items())[:4]
+    )
+    top_nodes = sorted(
+        data.node_impacts, key=lambda n: n.get("peak_gap_mbpd", 0), reverse=True
+    )[:3]
+    nodes_text = "; ".join(
+        f"{n.get('node')} peak gap {n.get('peak_gap_mbpd', 0):.2f} mbpd from day {n.get('onset_day', '?')}"
+        for n in top_nodes
+    )
+
+    summary = (
+        f"System 2 scenario modelling ({data.status}) for {data.trigger_entity}: "
+        f"projected supply gap {data.gap_mbpd:.2f} mbpd over {data.gap_duration_days:.0f} days "
+        f"(timeline: {timeline_summary}). "
+        f"Projected price impact ${data.price_impact_low:.0f}-${data.price_impact_high:.0f}/bbl, "
+        f"SPR cover would last {data.spr_depletion_days:.1f} days at the projected draw rate"
+        + (f", GDP impact {data.gdp_proxy_impact_pct:.2f}%" if data.gdp_proxy_impact_pct else "")
+        + (f", inflation impact {data.inflation_impact_pct:.2f}%" if data.inflation_impact_pct else "")
+        + f". Most-exposed nodes: {nodes_text}." if nodes_text else "."
+    ) + f" Key assumptions: {top_assumptions}. Model confidence {data.confidence:.0%}."
+
+    signal = NormalizedSignal(
+        signal_id=f"scenario_{data.scenario_id}",
+        source="scenario",
+        observed_at=now,
+        ingested_at=now,
+        priority_hint="HIGH" if data.status == "confirmed" else "MED",
+        force_synthesis=True,
+        entity_refs=[data.trigger_entity],
+        summary=summary,
+        payload={"scenario_id": data.scenario_id, "status": data.status},
+    )
+
+    # Preserve the entity's existing risk-score frontmatter (this is a structural
+    # cascade update, not a re-score) — read it back rather than reset to 0/calm.
+    current_fm = parse_frontmatter(load_wiki_page(data.trigger_entity))
+    risk = current_fm.get("risk") or {}
+    factors = risk.get("factors") or {}
+
+    page = await synthesize(
+        signal=signal,
+        entity=data.trigger_entity,
+        risk_score=risk.get("score"),
+        risk_band=risk.get("band"),
+        factor_ais=factors.get("ais", 0.0),
+        factor_gdelt=factors.get("gdelt", 0.0),
+        factor_price=factors.get("price", 0.0),
+        factor_sanctions=factors.get("sanctions", 0.0),
+        rationale=f"System 2 scenario {data.scenario_id}",
+        model_version="ario-io-abm",
+        persist=False,
+    )
+
+    errors = validate_page(page)
+    if errors:
+        log.warning(
+            "Scenario wiki page for '%s' failed validation (keeping old page): %s",
+            data.trigger_entity, errors,
+        )
+        return
+    write_wiki_page(data.trigger_entity, page)
 
 
 # ---------------------------------------------------------------------------
