@@ -242,6 +242,9 @@ def render_wiki_page(
 
     fm = {
         "entity_id":       entity_id,
+        # Obsidian resolves [[Display Name]] wikilinks to this file via aliases,
+        # even though the filename is the entity_id (e.g. corridor_hormuz.md).
+        "aliases":         [entity],
         "entity_type":     entity_type,
         "risk_score":      round(risk_score, 4),
         "risk_band":       risk_band.upper(),
