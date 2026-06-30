@@ -64,6 +64,7 @@ services:
     environment:
       FALKORDB_HOST: falkordb
       REDIS_URL: redis://redis:6379/0
+      WIKI_DIR: /app/wiki   # bind-mounted to ./knowledge/wiki (single source on host)
     volumes:
       - ./knowledge/wiki:/app/wiki
     depends_on:
@@ -82,6 +83,7 @@ services:
     environment:
       FALKORDB_HOST: falkordb
       REDIS_URL: redis://redis:6379/0
+      WIKI_DIR: /app/wiki
     volumes:
       - ./knowledge/wiki:/app/wiki   # shares wiki dir with sage-core
     depends_on:
