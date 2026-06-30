@@ -415,19 +415,34 @@ its facts + graph relationships, so Store 3 is always fully covered. Enrich it l
 > future `export_baked()` can snapshot the reconciled state for deterministic fast loading — the true
 > "frozen weights" — but the source bundle stays the canonical, editable artifact.)
 
-**Load + validate a bundle:**
+### Instantiate (the two-command workflow)
+
+```bash
+# 1. Infrastructure up (FalkorDB stores the graph+vectors under knowledge/graph_store)
+docker compose up falkordb redis -d
+
+# 2. Fetch the bundle's source evidence → sources/<entity_id>.md  (real text for RAG grounding)
+python scripts/fetch_sources.py data/india-energy-2026.context
+
+# 3. Instantiate: facts → graph attributes; narratives → synthesis → wiki + graph + vectors.
+#    Run against LIVE Bedrock — the stub LLM neither extracts typed fields nor synthesises prose.
+FALKORDB_HOST=localhost LLM_PROVIDER=bedrock \
+  python scripts/sage_instantiate.py data/india-energy-2026.context
+```
+
+The CLI shows a live loader (phase · entity · progress bar) and a read-back of the wiki page count
+and graph risk states. Flags: `--no-llm-author` (deterministic stubs instead of LLM narratives),
+`--facts-only` (skip narratives/wiki).
+
+**Grounding (anti-hallucination):** for an entity with cached source text in `sources/`, the LLM
+writes the narrative **only from that text + the structured facts** — it does not draw on parametric
+memory. Precedence per entity: hand-authored `narratives/*.md` → source-grounded → facts-only → stub.
+
+**Library API** (what the CLI calls under the hood):
 ```python
 from knowledge.context import load_bundle
 bundle = load_bundle("data/india-energy-2026.context")   # parses + validates provenance
-print(bundle.summary())                                   # counts by type, tier, narratives
-counts = await bundle.instantiate(g)                      # {facts: N, narratives: M}
-```
-
-`scripts/seed_kb.py` does this automatically (controlled by `SAGE_CONTEXT_BUNDLE`):
-```bash
-# Run against LIVE Bedrock — the stub LLM does not extract typed fields or synthesise wiki prose
-LLM_PROVIDER=bedrock SAGE_CONTEXT_BUNDLE=data/india-energy-2026.context \
-  python scripts/seed_kb.py
+counts = await bundle.instantiate(g, author_missing_with_llm=True)   # {facts, narratives}
 ```
 
 **Swap the worldview** by pointing at a different bundle — by year (`india-energy-2027.context`),
