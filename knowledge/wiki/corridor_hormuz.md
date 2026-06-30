@@ -3,15 +3,15 @@ entity_id: corridor_hormuz
 aliases:
 - Strait of Hormuz
 entity_type: Corridor
-risk_score: 0.0
-risk_band: CALM
+risk_score: 0.74
+risk_band: ACTION
 factors:
-  ais: 0.0
-  gdelt: 0.0
-  price: 0.0
-  sanctions: 0.0
-last_updated: '2026-06-30T18:01:11.095851+00:00'
-valid_at: '2026-06-30T18:01:03.178992+00:00'
+  ais: 0.6
+  gdelt: 0.68
+  price: 0.45
+  sanctions: 0.15
+last_updated: '2026-06-30T18:01:28.748578+00:00'
+valid_at: '2026-06-30T18:01:28.748578+00:00'
 source_episodes: []
 links_out:
 - event_2019_hormuz_attacks
@@ -21,6 +21,7 @@ coordinates:
   lat: 26.5
   lon: 56.4
 ---
+
 
 
 ## Current Assessment
