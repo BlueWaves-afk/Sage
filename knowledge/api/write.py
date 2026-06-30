@@ -239,6 +239,41 @@ async def ingest_signal(signal: NormalizedSignal) -> IngestResult:
 # C7.1 — Risk state write (called by sensory_agent after fusion aggregation)
 # ---------------------------------------------------------------------------
 
+async def _exec_cypher(g, query: str, params: dict) -> None:
+    """Execute a write Cypher against FalkorDB via the Graphiti driver."""
+    try:
+        await g.driver.execute_query(query, **params)
+    except Exception as exc:
+        log.warning("RISK_STATE cypher failed: %s", exc)
+
+
+async def _write_risk_edge(g, entity, score, band, f_ais, f_gdelt, f_price,
+                           f_sanctions, rationale, model_version, now, uuid_str) -> None:
+    """
+    Write the RISK_STATE edge deterministically as a RELATES_TO self-edge —
+    the exact shape get_risk_scores() reads. Bitemporal: invalidate the prior
+    current edge, then create the new one with invalid_at absent (= NULL = current).
+    """
+    now_iso = now.isoformat()
+    # 1. Invalidate the previous current RISK_STATE edge for this entity.
+    await _exec_cypher(g,
+        "MATCH (e:Entity {name:$n})-[old:RELATES_TO]->(e) "
+        "WHERE old.name='RISK_STATE' AND old.invalid_at IS NULL "
+        "SET old.invalid_at=$now",
+        {"n": entity, "now": now_iso})
+    # 2. Create the new current RISK_STATE self-edge.
+    await _exec_cypher(g,
+        "MATCH (e:Entity {name:$n}) WITH e LIMIT 1 "
+        "CREATE (e)-[r:RELATES_TO {name:'RISK_STATE', score:$score, band:$band, "
+        "factor_ais:$ais, factor_gdelt:$gdelt, factor_price:$price, "
+        "factor_sanctions:$sanctions, rationale:$rat, model_version:$mv, "
+        "valid_at:$now, created_at:$now, uuid:$uuid}]->(e)",
+        {"n": entity, "score": float(score), "band": band,
+         "ais": float(f_ais), "gdelt": float(f_gdelt), "price": float(f_price),
+         "sanctions": float(f_sanctions), "rat": rationale or "",
+         "mv": model_version or "", "now": now_iso, "uuid": uuid_str})
+
+
 async def write_risk_state(
     entity: str,
     score: float,
@@ -300,6 +335,16 @@ async def write_risk_state(
         entity_types=ENTITY_TYPES,
         edge_types=EDGE_TYPES,
         edge_type_map=EDGE_TYPE_MAP,
+    )
+
+    # Deterministic RISK_STATE edge — DO NOT rely on LLM extraction for this.
+    # RISK_STATE is a self-property (score/band/factors) with exact numeric values;
+    # the extractor will not reliably produce a self-loop edge from prose. We write
+    # it directly as a RELATES_TO self-edge (the shape get_risk_scores() reads), and
+    # bitemporally invalidate the previous current edge.
+    await _write_risk_edge(
+        g, entity, score, band, factor_ais, factor_gdelt, factor_price,
+        factor_sanctions, rationale, model_version, now, episode_uuid,
     )
 
     # Graph committed — update only the risk frontmatter fields in place.
