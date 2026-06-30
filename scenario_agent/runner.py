@@ -1,63 +1,98 @@
 """
 scenario_agent entry point.
 
-Triggered by LangGraph (Path A: sandbox, Path B: confirmed threshold crossing).
-Reads subgraph, runs ARIO cascade, optionally runs GNN surrogate, writes result.
+Triggered by LangGraph (Path A: sandbox/speculative, Path B: confirmed threshold crossing).
+Reads the supply-chain subgraph + SPR state from the KB, runs the ARIO cascade
+(Monte-Carlo for bands), and writes a ScenarioOutputData back to the KB.
+
+See .claude/design/system2_design.md.
 """
 from __future__ import annotations
 
 import uuid
-from typing import Literal
+from typing import Literal, Optional
 
 from contracts.outputs import ScenarioOutputData
-from knowledge.api.read import get_subgraph
+from knowledge.api.read import get_subgraph, get_spr_state
 from knowledge.api.write import write_scenario
-from scenario_agent.ario import ARIOParams, run as run_ario
+from scenario_agent.ario import ARIOParams, run as run_ario, run_monte_carlo
 
 Status = Literal["speculative", "confirmed"]
 
 
-async def run(trigger_entity: str, status: Status = "confirmed") -> str:
+async def run(
+    trigger_entity: str,
+    status: Status = "confirmed",
+    disruption_fraction: float = 1.0,
+    disruption_days: int = 30,
+) -> str:
     """
     Full scenario run. Returns scenario_id.
-    Uses ARIO for confirmed scenarios; GNN surrogate for speculative (sandbox) runs.
+    Confirmed → full ARIO + Monte-Carlo bands. Speculative → GNN surrogate (sandbox speed).
     """
     scenario_id = f"scenario-{uuid.uuid4().hex[:8]}"
     subgraph = await get_subgraph(trigger_entity, hops=2)
+    spr      = await get_spr_state()
+
+    params = await _extract_ario_params(subgraph, spr, disruption_fraction, disruption_days)
 
     if status == "speculative":
-        result = await _run_gnn(subgraph)
+        result, bands = await _run_gnn(subgraph, params), None
     else:
-        params = _extract_ario_params(subgraph)
         result = run_ario(params)
+        bands  = run_monte_carlo(params, n=300)
+
+    assumptions = dict(result.assumptions)
+    if bands:
+        assumptions["monte_carlo"] = bands   # p10/p50/p90 ranges for the UI uncertainty bands
 
     data = ScenarioOutputData(
         scenario_id=scenario_id,
         trigger_entity=trigger_entity,
         status=status,
-        confidence=1.0 if status == "confirmed" else 0.0,  # TODO: real confidence
-        gap_mbpd=0.0,              # TODO: from result
-        gap_duration_days=0.0,
+        confidence=1.0 if status == "confirmed" else 0.6,
+        gap_mbpd=result.gap_mbpd,
+        gap_duration_days=result.gap_duration_days,
         feedstock_gap_timeline=result.feedstock_gap_timeline,
         price_impact_low=result.price_impact_low,
         price_impact_high=result.price_impact_high,
         spr_depletion_days=result.spr_depletion_days,
         gdp_proxy_impact_pct=result.gdp_proxy_impact_pct,
-        assumptions=result.assumptions,
+        assumptions=assumptions,
     )
     await write_scenario(data)
     return scenario_id
 
 
-def _extract_ario_params(subgraph: object) -> ARIOParams:
-    """Build ARIO params from live subgraph node properties. Stub."""
-    # TODO: read inventory_days, throughput_mbpd from subgraph nodes
-    return ARIOParams()
+async def _extract_ario_params(
+    subgraph, spr_caverns, disruption_fraction: float, disruption_days: int,
+) -> ARIOParams:
+    """Build ARIO params from live KB state. India macro constants stay defaulted."""
+    p = ARIOParams(disruption_fraction=disruption_fraction, disruption_days=disruption_days)
+
+    # SPR fill from live cavern state
+    total_cap  = sum((c.capacity_mmt or 0.0) for c in spr_caverns)
+    total_fill = sum((c.current_fill_mmt or 0.0) for c in spr_caverns)
+    if total_cap > 0:
+        p.spr_total_mmt = round(total_cap, 3)
+        p.spr_fill_frac = round(total_fill / total_cap, 3)
+
+    # Average refinery crude inventory from the subgraph
+    inv = [
+        float(n["attributes"]["inventory_days"])
+        for n in subgraph.nodes
+        if "Refinery" in (n.get("labels") or []) and n["attributes"].get("inventory_days")
+    ]
+    if inv:
+        p.refinery_inventory_days = round(sum(inv) / len(inv), 1)
+
+    return p
 
 
-async def _run_gnn(subgraph: object) -> object:
-    """Run GNN surrogate for sandbox speed. Stub."""
-    # TODO: load CascadeGNN from checkpoint, run forward()
-    return type("R", (), {"feedstock_gap_timeline": [], "price_impact_low": 0,
-                          "price_impact_high": 0, "spr_depletion_days": 0,
-                          "gdp_proxy_impact_pct": 0, "assumptions": {}})()
+async def _run_gnn(subgraph, params: ARIOParams):
+    """
+    GNN surrogate for sandbox speed (<150ms). Falls back to ARIO until the model
+    is trained (gnn/train.py). Stub returns the analytic ARIO result for now.
+    """
+    # TODO: load CascadeGNN from checkpoint, run forward() on subgraph features
+    return run_ario(params)

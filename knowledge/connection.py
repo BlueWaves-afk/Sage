@@ -88,8 +88,10 @@ async def bootstrap(g: Graphiti) -> None:
 
     log.info("Building FalkorDB indices and constraints…")
     await g.build_indices_and_constraints()
-    log.info("Seeding edge types…")
-    await _seed_edge_types(g, ENTITY_TYPES, EDGE_TYPES, EDGE_TYPE_MAP)
+    # NOTE: _seed_edge_types() (placeholder SeedX entities) is intentionally NOT called.
+    # The context bundle's structural episodes exercise every custom edge type with real
+    # data, so the seed is redundant — and its SeedX placeholders leaked into reads
+    # (e.g. a phantom SeedReserveX SPRCavern polluting get_spr_state). Left for reference.
     log.info("Knowledge base bootstrap complete.")
 
 
