@@ -43,6 +43,14 @@ class ScenarioOutputData(BaseModel):
     spr_depletion_days: float = Field(..., description="Days of SPR cover remaining at projected draw rate")
     gdp_proxy_impact_pct: Optional[float] = None
 
+    # Per-node propagation — how the shock spreads through the graph (powers the System 5
+    # digital-twin animation: which refinery/port is hit, when, how much).
+    node_impacts: list[dict] = Field(default_factory=list, description=(
+        "Per-node cascade impact. Each: {node, node_type, exposure, peak_gap_mbpd, "
+        "onset_day, gap_timeline}. Distributes the national gap across nodes by exposure "
+        "to the disrupted corridor (Jamnagar hit hard, Paradip barely)."
+    ))
+
     # Explainability — every parameter labelled and sourced (judging criterion)
     assumptions: dict = Field(default_factory=dict, description=(
         "Labelled, sourced, editable ARIO parameters. "

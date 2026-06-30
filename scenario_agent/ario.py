@@ -74,8 +74,19 @@ class ARIOParams:
 
 
 @dataclass
+class NodeImpact:
+    """How the shock lands on one graph node (refinery/port) — for the System 5 twin."""
+    node:          str
+    node_type:     str
+    exposure:      float            # fraction of this node's throughput via the disrupted corridor
+    peak_gap_mbpd: float
+    onset_day:     float            # day the gap first bites (after buffers)
+    gap_timeline:  list[float] = field(default_factory=list)
+
+
+@dataclass
 class ARIOResult:
-    feedstock_gap_timeline: list[float] = field(default_factory=list)   # mbpd per day
+    feedstock_gap_timeline: list[float] = field(default_factory=list)   # mbpd per day (national)
     gap_mbpd:               float = 0.0     # peak daily feedstock gap
     gap_duration_days:      float = 0.0     # days with gap > 0
     spr_depletion_days:     float = 0.0     # day SPR reaches the floor
@@ -83,11 +94,19 @@ class ARIOResult:
     price_impact_low:       float = 0.0     # USD/bbl
     price_impact_high:      float = 0.0
     gdp_proxy_impact_pct:   float = 0.0
+    node_impacts:           list[NodeImpact] = field(default_factory=list)   # per-node propagation
     assumptions:            dict = field(default_factory=dict)
 
 
-def run(params: ARIOParams) -> ARIOResult:
-    """Day-by-day ARIO cascade. Deterministic; see run_monte_carlo for uncertainty bands."""
+def run(params: ARIOParams, refineries: list[dict] | None = None) -> ARIOResult:
+    """
+    Day-by-day ARIO cascade. Deterministic; see run_monte_carlo for uncertainty bands.
+
+    If `refineries` is given (each {name, capacity_mbpd, exposure} — exposure = fraction of
+    that refinery's feed via the disrupted corridor, from the EXPOSES edges), the national
+    feedstock gap is PROPAGATED across nodes: each refinery's gap is its exposure-weighted
+    share. This is the node-to-node spread the digital twin animates.
+    """
     p = params
     hormuz_dep_mbpd = p.daily_consumption_mbpd * p.hormuz_share_pct / 100.0
 
@@ -131,6 +150,25 @@ def run(params: ARIOParams) -> ARIOResult:
     direct_pct = (peak_gap / p.daily_consumption_mbpd) * 100.0 if p.daily_consumption_mbpd else 0.0
     gdp_proxy = round(direct_pct * p.indirect_multiplier / 100.0, 3)   # % GDP proxy
 
+    # ── Node-to-node propagation: distribute the national gap across refineries ───
+    node_impacts: list[NodeImpact] = []
+    if refineries:
+        # exposure-weighted crude-at-risk per refinery = capacity × exposure
+        weights = {r["name"]: float(r.get("capacity_mbpd", 0)) * float(r.get("exposure", 0)) for r in refineries}
+        total_w = sum(weights.values())
+        for r in refineries:
+            w = weights[r["name"]]
+            share = (w / total_w) if total_w > 0 else 0.0
+            r_timeline = [round(g * share, 4) for g in timeline]
+            r_peak = max(r_timeline) if r_timeline else 0.0
+            r_onset = next((float(i) for i, g in enumerate(r_timeline) if g > 0.001), float(p.horizon_days))
+            node_impacts.append(NodeImpact(
+                node=r["name"], node_type="Refinery",
+                exposure=round(float(r.get("exposure", 0)), 4),
+                peak_gap_mbpd=round(r_peak, 4), onset_day=r_onset, gap_timeline=r_timeline,
+            ))
+        node_impacts.sort(key=lambda n: -n.peak_gap_mbpd)
+
     return ARIOResult(
         feedstock_gap_timeline=timeline,
         gap_mbpd=round(peak_gap, 4),
@@ -140,6 +178,7 @@ def run(params: ARIOParams) -> ARIOResult:
         price_impact_low=price_low,
         price_impact_high=price_high,
         gdp_proxy_impact_pct=gdp_proxy,
+        node_impacts=node_impacts,
         assumptions=p.sources(),
     )
 
