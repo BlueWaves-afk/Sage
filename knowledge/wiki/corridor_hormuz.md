@@ -3,15 +3,15 @@ entity_id: corridor_hormuz
 aliases:
 - Strait of Hormuz
 entity_type: Corridor
-risk_score: 0.0
-risk_band: CALM
+risk_score: 0.68
+risk_band: ELEVATED
 factors:
-  ais: 0.0
-  gdelt: 0.0
-  price: 0.0
-  sanctions: 0.0
-last_updated: '2026-06-30T09:18:40.970720+00:00'
-valid_at: '2026-06-30T09:18:40.970720+00:00'
+  ais: 0.55
+  gdelt: 0.62
+  price: 0.4
+  sanctions: 0.1
+last_updated: '2026-06-30T17:47:06.317254+00:00'
+valid_at: '2026-06-30T17:47:06.317254+00:00'
 source_episodes: []
 links_out:
 - supplier_aramco
@@ -26,6 +26,7 @@ coordinates:
   lat: 26.5
   lon: 56.4
 ---
+
 
 
 ## Strategic Role
