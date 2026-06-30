@@ -1,0 +1,131 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# SAGE Context Bundle Manifest
+#
+# A context bundle is SAGE's foundational knowledge snapshot — the geopolitical
+# relationships and graph values the system is instantiated with, BEFORE any live
+# signals arrive. Analogous to loading pretrained weights: SAGE.instantiate(bundle).
+#
+# Swap this bundle for a newer/region-specific one to re-base the system's worldview.
+# ─────────────────────────────────────────────────────────────────────────────
+
+bundle_id:      india-energy-2026
+name:           India Energy Supply Chain — 2026
+schema_version: 1.0.0
+domain:         oil-supply-chain
+region:         India
+vintage:        2026
+created:        2026-06-30
+description: >
+  Foundational static knowledge for India's crude oil supply chain: maritime
+  corridors, suppliers, refineries, crude grades, ports, strategic reserves, and
+  the structural relationships between them. All values sourced from public data;
+  fields with no public source are tagged with an estimation_method.
+
+# ── Provenance tiers ─────────────────────────────────────────────────────────
+# Every node/edge row carries a `tier` and a `source` key (resolved below).
+#   real      — exact published value from an authoritative source
+#   derived   — computed from real aggregates via a documented method
+#   estimated — no public source exists; documented estimate (see estimation_methods)
+tiers: [real, derived, estimated]
+
+# ── Source registry ──────────────────────────────────────────────────────────
+# `source` column in every CSV references one of these keys.
+sources:
+  EIA-chokepoints:
+    label: EIA World Oil Transit Chokepoints
+    url:   https://www.eia.gov/international/analysis/special-topics/world_oil_transit_Chokepoints
+  PPAC-imports:
+    label: PPAC — India crude imports by country (FY2024-25, 244.5 MT total)
+    url:   https://ppac.gov.in
+  PPAC-refinery:
+    label: PPAC — Installed Refinery Capacity
+    url:   https://ppac.gov.in/infrastructure/installed-refinery-capacity
+  ISPRL:
+    label: Indian Strategic Petroleum Reserves Ltd
+    url:   https://isprlindia.com
+  Aramco-assay:
+    label: Saudi Aramco crude oil assay (Arab grades)
+    url:   https://china.aramco.com/en/news-media/global-news/2021/aramco-crude-oil-assay
+  BP-assay:
+    label: BP crude assays — downloadable yield tables
+    url:   https://www.bp.com/en/global/bp-supply-trading-and-shipping/documents-and-downloads/technical-downloads/crudes-assays.html
+  SP-Global-Iraq:
+    label: S&P Global — Iraq export grade specs (Basrah)
+    url:   https://www.spglobal.com/commodityinsights/en/market-insights/latest-news/oil/111820-iraq-outlines-new-specs-of-crude-export-grades
+  Petrosolutions-urals:
+    label: Urals crude assay
+    url:   https://thepetrosolutions.com/specifications-of-russian-crude-oil-urals/
+  Deendayal-port:
+    label: Deendayal Port Authority — Vadinar Offshore Oil Terminal
+    url:   https://www.deendayalport.gov.in/en/about-us/off-shore-oil-terminal-oot-vadinar/
+  Shipnext-ports:
+    label: Shipnext port data (draft, VLCC capability)
+    url:   https://shipnext.com/
+  Petroline-wiki:
+    label: East–West Crude Oil Pipeline (Petroline)
+    url:   https://en.wikipedia.org/wiki/East%E2%80%93West_Crude_Oil_Pipeline
+  IEA-hormuz:
+    label: IEA — Strait of Hormuz oil security
+    url:   https://www.iea.org/about/oil-security-and-emergency-response/strait-of-hormuz
+  OFAC-sdn:
+    label: OFAC SDN list
+    url:   https://www.treasury.gov/ofac/downloads/sdn.xml
+  EU-sanctions:
+    label: EU consolidated financial sanctions list (CFSP)
+    url:   https://data.europa.eu/data/datasets/consolidated-list-of-persons-groups-and-entities-subject-to-eu-financial-sanctions
+  UN-sanctions:
+    label: UN Security Council consolidated sanctions list
+    url:   https://www.un.org/securitycouncil/content/un-sc-consolidated-list
+
+# ── Estimation methods ───────────────────────────────────────────────────────
+# Rows with tier=derived or estimated reference one of these as their `source`.
+# This is what makes "no simulated data" auditable: every non-real value states
+# exactly how it was produced.
+estimation_methods:
+  DERIVED-import-volume:
+    method: PPAC national import share × 244.5 MT total ÷ 7.33 bbl/tonne ÷ 365 days = mbpd
+    tier:   derived
+  DERIVED-share:
+    method: India ~42% Hormuz dependence (PPAC import-by-source × maritime geography)
+    tier:   derived
+  DERIVED-compat:
+    method: Refinery Nelson Complexity Index × crude assay API/sulfur match (Peng-Robinson proxy)
+    tier:   derived
+  EST-allocation:
+    method: Port→refinery share estimated from co-location; operator allocation not published
+    tier:   estimated
+  EST-inventory:
+    method: India national average crude inventory ~22 days (PPAC) applied uniformly; per-refinery not published
+    tier:   estimated
+  EST-spr:
+    method: National SPR fill ~40% (ISPRL Mar 2025) distributed proportionally; per-site not published
+    tier:   estimated
+  EST-congestion:
+    method: Static baseline 0.0; live value derived from AIS vessel density at runtime
+    tier:   estimated
+
+# ── Bundle contents ──────────────────────────────────────────────────────────
+# Two layers:
+#   facts/      structured ground-truth values → written directly as graph attributes
+#               (deterministic; not reconciled by the LLM — you don't fuzz known numbers)
+#   narratives/ per-entity prose with [[wikilinks]] → routed through the synthesis path
+#               (render_wiki_page → wiki store + reconciled episode → graph + vector)
+#               Entities without a narrative file get a foundational stub generated from facts.
+nodes:
+  - {type: Corridor,   file: facts/nodes/corridors.csv}
+  - {type: Supplier,   file: facts/nodes/suppliers.csv}
+  - {type: Refinery,   file: facts/nodes/refineries.csv}
+  - {type: CrudeGrade, file: facts/nodes/crude_grades.csv}
+  - {type: Port,       file: facts/nodes/ports.csv}
+  - {type: SPRCavern,  file: facts/nodes/spr_caverns.csv}
+  - {type: Authority,  file: facts/nodes/authorities.csv}
+edges:
+  - {type: EXPORTS_VIA,    file: facts/edges/exports_via.csv}
+  - {type: FEEDS,          file: facts/edges/feeds.csv}
+  - {type: SUPPLIES,       file: facts/edges/supplies.csv}
+  - {type: CONFIGURED_FOR, file: facts/edges/configured_for.csv}
+  - {type: BYPASS_ROUTE,   file: facts/edges/bypass_routes.csv}
+
+# Narratives are auto-discovered from narratives/*.md (filename = entity_id).
+# Each carries frontmatter: entity_id, source_url, as_of, tier.
+narratives_dir: narratives

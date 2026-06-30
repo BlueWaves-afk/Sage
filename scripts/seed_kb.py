@@ -30,202 +30,9 @@ log = logging.getLogger("seed_kb")
 
 # ─── 1. Wiki pages ────────────────────────────────────────────────────────────
 
-WIKI_PAGES: dict[str, str] = {
-    "Strait of Hormuz": """\
-# Strait of Hormuz — Intelligence Page
-
-## Strategic Role
-The Strait of Hormuz is the world's most critical oil chokepoint. Approximately 20–21 million
-barrels per day (mbpd) transit the strait — roughly 20% of global petroleum liquids and 25–30%
-of global LNG trade. For India, it is the single most important maritime corridor: ~88% of
-India's crude oil imports flow through or originate in the Persian Gulf.
-
-## Physical Characteristics
-- Navigable channel: two 3.2 km lanes (inbound/outbound), separated by a 3.2 km median
-- Minimum depth: 27 m (adequate for VLCCs)
-- Iranian territorial waters span the northern edge; Omani waters the southern
-- H3 resolution-4 cells: 8526800bfffffff (central channel)
-
-## Historical Disruption Events
-| Event | Date | Duration | Impact |
-|---|---|---|---|
-| Tanker War (Iran-Iraq) | 1984–1988 | ~4 years | 500+ vessels attacked |
-| Op Praying Mantis | Apr 1988 | 1 day | 2 Iranian frigates sunk |
-| Gulf War I blockade scare | Aug–Nov 1990 | 3 months | Price +150% |
-| 2019 tanker attacks | May–Jun 2019 | 6 weeks | Price +4% |
-| 2024 shadow fleet surge | Jan–Mar 2024 | Ongoing | 15% AIS dark rate |
-
-## Bypass Alternatives
-- **Saudi East-West Pipeline (Petroline):** 5 mbpd capacity; Yanbu Red Sea terminal
-- **UAE Abu Dhabi Crude Oil Pipeline (ADCO):** 1.5 mbpd; Fujairah terminal
-- **Iraq-Turkey Pipeline (ITP):** 1.6 mbpd; Ceyhan Mediterranean terminal (currently offline)
-- Combined bypass capacity: ~8 mbpd vs. 21 mbpd flow — significant gap
-
-## SAGE Risk Profile
-- Primary risk drivers: AIS dark-vessel activity, IRGC naval exercises, US-Iran diplomatic temperature
-- Triage threshold: force_synthesis=True on any AIS gap > 4h in the strait corridor
-- Connected entities: Saudi Aramco, NIOC, ADNOC, Vadinar Port, Paradip Port
-""",
-
-    "Saudi Aramco": """\
-# Saudi Aramco — Intelligence Page
-
-## Profile
-Saudi Aramco (officially Saudi Arabian Oil Company) is the world's largest oil producer and
-India's single largest crude supplier. In FY2024–25, India imported approximately 39.1 MT of
-crude from Saudi Arabia, accounting for ~17% of India's total crude imports.
-
-## Export Grades
-| Grade | API | Sulfur % | Typical Destination |
-|---|---|---|---|
-| Arab Light | 32.8 | 1.96 | Jamnagar, Mangaluru |
-| Arab Medium | 30.4 | 2.59 | Vizag, Paradip |
-| Arab Heavy | 27.4 | 2.89 | Chennai (capacity permitting) |
-| Arab Extra Light | 40.9 | 1.15 | Bina, Panipat |
-
-## Export Terminals
-- **Ras Tanura:** World's largest offshore oil loading facility; capacity ~8.5 mbpd
-- **Yanbu (Red Sea):** Petroline western terminal; 5 mbpd; bypasses Hormuz
-- **Ju'aymah:** Offshore terminal; NGL and crude
-
-## Bypass Capability
-If Hormuz closes, Saudi can shift 5 mbpd through Petroline to Yanbu.
-India could continue receiving Arab Light via Suez/Cape route from Yanbu,
-adding ~7–12 days transit and ~$2–3/bbl freight premium.
-
-## Current Status
-- Active exporter, no sanctions
-- Aramco Margin Compression Program: cost target $2.80/bbl opex
-- OPEC+ quota: 9.0 mbpd production ceiling (as of Q1 2026)
-
-## SAGE Risk Profile
-- Low sanctions risk (score: 0.0)
-- Corridor risk: moderate if Hormuz disrupted; LOW if Yanbu bypass activated
-- Connected entities: Strait of Hormuz, Ras Tanura Port, Jamnagar Refinery
-""",
-
-    "Jamnagar Refinery": """\
-# Jamnagar Refinery — Intelligence Page
-
-## Overview
-Reliance Industries' Jamnagar complex is the world's largest refining hub, comprising:
-- **DTA Refinery:** 668,000 bpd nameplate capacity
-- **SEZ Refinery:** 580,000 bpd nameplate capacity
-- **Combined:** 1.24 mbpd — largest single refinery complex globally
-
-Located in Jamnagar district, Gujarat. Dedicated SPM (Single Point Mooring) infrastructure
-handles VLCCs directly offshore.
-
-## Crude Diet
-Jamnagar is a complex refinery (Nelson Complexity Index ~11.3) capable of processing a wide
-range of crudes. Primary feedstock is medium-sour Gulf crudes:
-- Arab Medium (primary)
-- Iraqi Basra Medium/Heavy
-- Iranian Heavy (historically; currently under sanctions restrictions)
-- Russian Urals/ESPO (increased post-2022 for price advantage)
-
-## API/Sulfur Range
-- Preferred API: 28–35°
-- Sulfur tolerance: up to 3.5% (secondary processing units)
-- Incompatible: ultra-heavy (API < 20) without blending
-
-## Strategic Reserve Link
-- Feeds Vizag SPR Cavern via Vadinar-Vizag crude pipeline (proposed)
-- Currently SPR fill is via Paradip for MRPL crude
-
-## SAGE Risk Profile
-- High exposure to Hormuz disruption (primary supply corridor)
-- Bypass feasibility: HIGH (can absorb Yanbu-routed Arab Light with <5% cost premium)
-- Inventory buffer: ~30 days crude tank capacity on-site
-- Connected entities: Vadinar Port, Arab Medium grade, Vizag SPR Cavern
-""",
-
-    "Vadinar Port": """\
-# Vadinar Port — Intelligence Page
-
-## Overview
-Vadinar (also Sikka) is a deep-water port on the Gulf of Kutch, Gujarat, operated primarily
-by Nayara Energy (formerly Essar Oil). It is the primary crude import terminal for Jamnagar
-and Vadinar refineries.
-
-## Specifications
-- Berth depth: 18.5 m (VLCC capable, fully laden)
-- Throughput capacity: ~36 MT/year (crude)
-- SPM buoys: 2 × 250,000 DWT
-- Tank farm: 4.5 million BBL crude storage
-
-## Traffic (CY2025)
-- VLCCs handled: ~420/year (~35/month)
-- Primary sources: Saudi Arabia (40%), UAE (25%), Iraq (20%), Others (15%)
-- Average discharge time: 36 hours per VLCC
-
-## SAGE Risk Profile
-- Hormuz linkage: DIRECT — all Gulf crude arrives via Hormuz before Vadinar
-- Bypass routing: Yanbu crude can route Suez → Arabian Sea → Vadinar (no port change needed)
-- Congestion risk: LOW (adequate berth capacity)
-- Connected entities: Jamnagar Refinery, Strait of Hormuz, Saudi Aramco
-""",
-
-    "Vizag SPR Cavern": """\
-# Vizag SPR Cavern — Intelligence Page
-
-## Overview
-The Visakhapatnam (Vizag) Strategic Petroleum Reserve is India's first commissioned SPR
-facility, managed by Indian Strategic Petroleum Reserves Limited (ISPRL). Located at
-Visakhapatnam, Andhra Pradesh.
-
-## Specifications
-- Storage type: Underground rock cavern (excavated granite)
-- Total capacity: 1.33 million metric tonnes (MT) ≈ 9.75 million BBL
-- Operational since: 2016
-- Crude grade stored: Iranian Heavy (historically); currently Arab Medium and Basra Heavy
-
-## Current Fill Status (estimated, Q1 2026)
-- Fill level: ~1.15 MT (86% full)
-- Days of cover (at 4.5 mbpd import rate): ~8.9 days
-- Cavern pressure: nominal operational range
-
-## Draw Rates
-- Maximum draw rate: ~0.20 MT/day (≈ 1.46 mbpd)
-- Time to full depletion at max draw: ~5.75 days
-- Typical emergency draw: 0.12–0.18 MT/day
-
-## Policy Context
-India's combined SPR capacity (Vizag + Mangaluru + Padur) = 5.33 MT (~39 MB).
-At 4.5 mbpd import rate, this covers ~11.7 days. The IEA recommends 90 days minimum.
-India's total (SPR + commercial) cover is approximately 60–65 days.
-
-## SAGE Risk Profile
-- Primary response asset for Hormuz disruption
-- Trigger draw policy: activated when gap > 0.5 mbpd sustained > 72h
-- Connected entities: Jamnagar Refinery, Mangaluru SPR Cavern, Padur SPR Cavern
-""",
-
-    "NIOC": """\
-# NIOC — Intelligence Page
-
-## Profile
-National Iranian Oil Company. Prior to 2018 JCPOA withdrawal, Iran supplied ~15–20 MT/year
-of crude to India (primarily to Mangaluru Refinery and Nayara). Currently under comprehensive
-US and EU sanctions; Indian imports effectively zero since 2019.
-
-## Sanctions Status
-- **US OFAC:** SDN-listed entity; secondary sanctions risk for any purchaser
-- **EU:** Comprehensive sanctions including oil sector
-- **UN:** Arms embargo only (not oil)
-
-## Historical Indian Supply (pre-sanctions)
-- Primary grades: Iranian Heavy (31° API, 1.85% S), Iranian Light (34° API, 1.37% S)
-- Destination: Mangaluru (MRPL) — configured for Iranian Heavy
-- Average price: ~$5–7/bbl discount to Arab Light equivalent
-
-## SAGE Risk Profile
-- Sanctions risk: CRITICAL (score: 1.0)
-- Supply status: UNAVAILABLE for Indian importers under US secondary sanction risk
-- Note: Any resumption requires OFAC waiver — currently no waiver active
-- Connected entities: Strait of Hormuz, Mangaluru Refinery, OFAC
-""",
-}
+# Foundational wiki pages are NOT defined here anymore. They live in the context
+# bundle's narratives/ layer (data/<bundle>.context/narratives/*.md) and are written
+# to the wiki store through the synthesis path during bundle.instantiate().
 
 # ─── 2. Episodic signals (written via add_episode with entity types) ──────────
 
@@ -286,6 +93,22 @@ EPISODES: list[dict] = [
         "source_desc": "OFAC SDN delta monitor",
     },
 ]
+
+# ─── 2b. Structural reference data — loaded from a context bundle ──────────────
+#
+# The foundational static knowledge (corridors, suppliers, refineries, crude grades,
+# ports, SPR, and their structural edges) now lives in a versioned, provenance-tracked
+# CONTEXT BUNDLE at data/india-energy-2026.context — NOT hardcoded here.
+#
+# This is SAGE's "load pretrained knowledge" step: knowledge.context.load_bundle()
+# parses the bundle, validates that every row is sourced (real | derived | estimated),
+# and renders structural episodes that the standard add_episode() path extracts.
+#
+# Swap CONTEXT_BUNDLE for a newer/region-specific bundle to re-base the worldview.
+# See data/CONTEXT_BUNDLE_SCHEMA.md for the format.
+
+CONTEXT_BUNDLE = os.environ.get("SAGE_CONTEXT_BUNDLE", "data/india-energy-2026.context")
+
 
 # ─── 3. Risk state writes ─────────────────────────────────────────────────────
 
@@ -478,12 +301,8 @@ async def main() -> None:
     await kb_init()
     log.info("KB initialised.")
 
-    # ── 1. Write wiki pages ────────────────────────────────────────────────────
-    from knowledge.synthesis import write_wiki_page
-    log.info("Writing %d wiki pages…", len(WIKI_PAGES))
-    for entity, content in WIKI_PAGES.items():
-        write_wiki_page(entity, content)
-        log.info("  wiki: %s", entity)
+    # ── 1. Foundational wiki pages now come from the context bundle's narratives
+    #       layer (instantiated in step 2b below), NOT hardcoded here. ───────────
 
     # ── 2. Write episodic signals ──────────────────────────────────────────────
     from graphiti_core.nodes import EpisodeType
@@ -509,6 +328,19 @@ async def main() -> None:
             log.info("  episode: %s", ep["name"])
         except Exception as exc:
             log.warning("  episode FAILED (%s): %s", ep["name"], exc)
+
+    # ── 2b. Instantiate the context bundle (foundational static knowledge) ──────
+    # Loads + validates the provenance-tracked bundle, then writes its structural
+    # episodes BEFORE risk states so the typed entity nodes and structural edges
+    # exist first. This is the SAGE.instantiate(bundle) step.
+    from knowledge.context import load_bundle
+    bundle = load_bundle(CONTEXT_BUNDLE)
+    bsum = bundle.summary()
+    log.info("Context bundle '%s' (schema %s): nodes=%s edges=%s by_tier=%s",
+             bsum["bundle_id"], bsum["schema"], bsum["nodes"], bsum["edges"], bsum["by_tier"])
+    counts = await bundle.instantiate(g, reference_time=now)
+    log.info("Instantiated bundle: %d fact episodes + %d narrative pages "
+             "(wiki store + reconciled episodes).", counts["facts"], counts["narratives"])
 
     # ── 3. Write risk states ───────────────────────────────────────────────────
     from knowledge.api.write import write_risk_state
@@ -558,6 +390,19 @@ async def main() -> None:
 
     page = await get_wiki_page("Strait of Hormuz")
     log.info("Wiki page retrieved: %s (length=%d chars)", page.entity, len(page.content))
+
+    # Verify structural data landed (the values Systems 2/3/4 read)
+    from knowledge.api.read import get_subgraph, get_grade_specs, get_routes, get_spr_state
+    suppliers = await get_available_suppliers(risk_max=1.0)
+    log.info("Suppliers queryable: %d (with daily_export_mbpd populated)", len(suppliers))
+    grades = await get_grade_specs("Jamnagar Refinery")
+    log.info("Jamnagar CONFIGURED_FOR grades: %d (api_gravity/compatibility populated)", len(grades))
+    routes = await get_routes(risk_max=1.0)
+    log.info("Corridors queryable: %d (with throughput_mbpd)", len(routes))
+    caverns = await get_spr_state()
+    log.info("SPR caverns queryable: %d (with capacity_mmt/current_fill_mmt)", len(caverns))
+    sub = await get_subgraph("Strait of Hormuz", hops=2)
+    log.info("Hormuz 2-hop subgraph: %d nodes, %d edges (ARIO input)", len(sub.nodes), len(sub.edges))
 
     log.info("─── Seed complete ────────────────────────────────────────────────")
     log.info("  FalkorDB browser: http://localhost:3000")

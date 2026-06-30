@@ -1,0 +1,3 @@
+src_entity_id,dst_entity_id,throughput_share_pct,tier,source,as_of,notes
+corridor_hormuz,port_vadinar,0.42,derived,DERIVED-share,2025,India ~42% Hormuz dependence applied to west-coast port
+corridor_hormuz,port_sikka,0.45,derived,DERIVED-share,2025,west-coast port Hormuz share

@@ -29,7 +29,8 @@ services:
     image: falkordb/falkordb:latest
     restart: unless-stopped
     volumes:
-      - falkordb_data:/data
+      # Graph + vector store persisted under knowledge/ so the system's memory is co-located.
+      - ./knowledge/graph_store:/var/lib/falkordb/data
     ports:
       - "6379:6379"
       - "3000:3000"     # FalkorDB browser — inspect graph at http://localhost:3000
@@ -64,7 +65,7 @@ services:
       FALKORDB_HOST: falkordb
       REDIS_URL: redis://redis:6379/0
     volumes:
-      - wiki_data:/app/wiki
+      - ./knowledge/wiki:/app/wiki
     depends_on:
       falkordb: { condition: service_healthy }
       redis:    { condition: service_healthy }
@@ -82,7 +83,7 @@ services:
       FALKORDB_HOST: falkordb
       REDIS_URL: redis://redis:6379/0
     volumes:
-      - wiki_data:/app/wiki   # shares wiki volume with sage-core
+      - ./knowledge/wiki:/app/wiki   # shares wiki dir with sage-core
     depends_on:
       falkordb: { condition: service_healthy }
       redis:    { condition: service_healthy }
@@ -189,6 +190,3 @@ services:
       sage-core: { condition: service_started }
     profiles: ["agents"]
 
-volumes:
-  falkordb_data:
-  wiki_data:

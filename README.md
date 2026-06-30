@@ -30,8 +30,9 @@ SAGE continuously ingests geopolitical and logistics signals from four always-on
 5. [System 1 — Sensory Agent Wiring Guide](#system-1--sensory-agent-wiring-guide)
 6. [Tech Stack](#tech-stack)
 7. [Getting Started](#getting-started)
-8. [Team Ownership](#team-ownership)
-9. [License](#license)
+8. [Instantiating Foundational Knowledge (Context Bundle)](#instantiating-foundational-knowledge-context-bundle)
+9. [Team Ownership](#team-ownership)
+10. [License](#license)
 
 ---
 
@@ -43,7 +44,7 @@ SAGE continuously ingests geopolitical and logistics signals from four always-on
 | **Anticipatory sandbox** | When risk crosses `elevated`, the sandbox forks a speculative future, runs the full ARIO cascade and procurement solver speculatively, and pre-stages results. When the crossing is confirmed, output appears in 300ms rather than 8,500ms (28× speedup). |
 | **Bitemporal graph** | Every edge carries `observed_at` (when the event happened in the world) and `ingested_at` (when SAGE recorded it). `invalid_at IS NULL` = current fact. Old values are invalidated, never deleted. |
 | **Source-aware triage** | AIS and price signals always route to `"extract"` (numeric, never prose). Sanctions always route to `"synthesize"`. News routes on cosine similarity. The routing decision is deterministic code, not an LLM call. |
-| **Canonical entity registry** | 22 seed entities, 123 aliases, 11 H3 cells. Three lookup indices: alias → entity_id, H3 cell → entity_id, price instrument → [entity_id]. No duplicate graph nodes; alias resolution happens before any LLM is invoked. |
+| **Canonical entity registry** | 31 entities (22 routing entities + 9 crude grades), 153 aliases, 11 H3 cells. Three lookup indices: alias → entity_id, H3 cell → entity_id, price instrument → [entity_id]. No duplicate graph nodes; alias resolution happens before any LLM is invoked. |
 | **Obsidian-style second brain** | Every entity has a git-versioned Markdown wiki page with YAML frontmatter and `[[Canonical Name]]` wikilinks. Opens natively in Obsidian; also parsed by the geospatial renderer for ArcLayer edges. |
 | **No-hallucination risk scores** | Risk scores are expressed as prose sentences only (`_RISK_SENTENCE_TEMPLATE`). The synthesis prompt explicitly bans `"Current risk score:"` labels — prevents Nova Lite from inventing schema-less edge types. |
 
@@ -198,7 +199,7 @@ entity_id = resolve_name("Hormuz Strait")         # → "corridor_hormuz"  (alia
 display    = canonical_name(entity_id)            # → "Strait of Hormuz"
 ```
 
-**Canonical names — all 22 tracked entities:**
+**Canonical names — the 22 routing entities** (sub-agents resolve these via H3/instrument/name; 9 crude grades also registered):
 
 | Category | Canonical names |
 |---|---|
@@ -337,7 +338,7 @@ asyncio.run(init())
 print('Registry:', len(REGISTRY), 'entities')
 print('Hormuz H3 lookup:', canonical_name(resolve_h3('8a2a1072b59ffff')))
 "
-# Expected: Registry: 22 entities
+# Expected: Registry: 31 entities
 #           Hormuz H3 lookup: Strait of Hormuz
 ```
 
@@ -360,6 +361,84 @@ DEMO_MODE=true docker compose up
 from knowledge.connection import init as kb_init
 await kb_init()   # idempotent — call once at container boot before any KB call
 ```
+
+---
+
+## Instantiating Foundational Knowledge (Context Bundle)
+
+Before any live signal arrives, SAGE is **instantiated** with a foundational knowledge snapshot — the
+geopolitical entities and the relationships between them. This is to SAGE what pretrained weights are
+to a model: a **load**, not a train (`from_pretrained`, not `fit`). Live signals (System 1) then layer
+continual updates on top.
+
+The knowledge lives in a versioned, provenance-tracked **context bundle** with **two layers**:
+
+```
+data/india-energy-2026.context/        # the bundle ("knowledge2026")
+├── manifest.yaml                       # metadata, source registry, estimation methods
+├── facts/                              # LAYER 1 — structured ground truth
+│   ├── nodes/*.csv                     #   Corridors, Suppliers, Refineries, CrudeGrades, Ports, SPR
+│   └── edges/*.csv                     #   EXPORTS_VIA, FEEDS, SUPPLIES, CONFIGURED_FOR, BYPASS_ROUTE
+└── narratives/                         # LAYER 2 — per-entity prose with [[wikilinks]]
+    └── <entity_id>.md                  #   strait-of-hormuz, saudi-aramco, jamnagar, …
+```
+
+**Why two layers — facts vs narrative.** They are different kinds of knowledge and load differently:
+
+| Layer | Example | How it loads |
+|---|---|---|
+| **Facts** (CSV) | `Jamnagar capacity = 1.40 mbpd`, `Arab Light API = 32.8` | Written **directly** as graph attributes. Deterministic — the LLM does *not* reconcile a known number. |
+| **Narratives** (Markdown) | "Why Hormuz is critical; its tie to `[[Saudi Aramco]]` and the `[[2019 Tanker Attacks]]`" | Routed through the **synthesis path** — the same one System 1 uses for live signals. |
+
+Every facts row carries a `tier` (`real` / `derived` / `estimated`) and a `source` — the loader
+**rejects any unsourced row**, the machine-checked "no simulated data" guarantee.
+
+**How instantiation populates all three stores.** `bundle.instantiate(g)` runs two phases:
+
+```
+Phase 1 — FACTS       facts/*.csv ──► structural episodes ──► add_episode()
+                                                              → Store 1 (episodic) + Store 2 (graph attrs)
+
+Phase 2 — NARRATIVES  narratives/*.md ──► render_wiki_page() ──► write_wiki_page()  → Store 3 (wiki)
+                                          (resolves [[wikilinks]],   └─► add_episode(body) → Stores 1 + 2
+                                           builds links_out)              (relations + vector embeddings)
+```
+
+Phase 2 is the key part: narratives go through the **same synthesis machinery System 1 uses**, so the
+foundational pages get reconciled prose, `[[wikilinks]]`, and `links_out` relations — not a flat dump.
+Any entity with facts but no hand-authored narrative gets a **foundational stub** auto-generated from
+its facts + graph relationships, so Store 3 is always fully covered. Enrich it later by dropping a
+`narratives/<entity_id>.md` file.
+
+> **Authoring vs distribution.** The `.context` bundle is the human-authored *source* (facts + prose) —
+> diffable, swappable, easy to contribute to. Instantiation reconciles it through the pipeline. (A
+> future `export_baked()` can snapshot the reconciled state for deterministic fast loading — the true
+> "frozen weights" — but the source bundle stays the canonical, editable artifact.)
+
+**Load + validate a bundle:**
+```python
+from knowledge.context import load_bundle
+bundle = load_bundle("data/india-energy-2026.context")   # parses + validates provenance
+print(bundle.summary())                                   # counts by type, tier, narratives
+counts = await bundle.instantiate(g)                      # {facts: N, narratives: M}
+```
+
+`scripts/seed_kb.py` does this automatically (controlled by `SAGE_CONTEXT_BUNDLE`):
+```bash
+# Run against LIVE Bedrock — the stub LLM does not extract typed fields or synthesise wiki prose
+LLM_PROVIDER=bedrock SAGE_CONTEXT_BUNDLE=data/india-energy-2026.context \
+  python scripts/seed_kb.py
+```
+
+**Swap the worldview** by pointing at a different bundle — by year (`india-energy-2027.context`),
+region (`europe-gas-2026.context`), or domain. Build your own with the format spec:
+[`data/CONTEXT_BUNDLE_SCHEMA.md`](data/CONTEXT_BUNDLE_SCHEMA.md). Full sourcing rationale per value:
+[`docs/data.md`](docs/data.md).
+
+> **Refresh cadence:** almost everything in a bundle changes once a year (refinery capacity, assays,
+> import shares) or never (coordinates, distances). Pull once, commit, version as a new dated bundle —
+> don't build scrapers for annual data. Anything event-driven (sanctions, prices) is System 1's job,
+> not the static bundle.
 
 ---
 

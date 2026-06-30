@@ -37,7 +37,10 @@ from contracts.signal import NormalizedSignal
 
 log = logging.getLogger(__name__)
 
-WIKI_DIR = Path(os.environ.get("WIKI_DIR", "/app/wiki"))
+# The wiki store lives under knowledge/ so all three KB stores (graph, vector, wiki)
+# are co-located and the growing "memory" is visible/browsable (Obsidian vault).
+# Docker overrides WIKI_DIR=/app/wiki (bind-mounted to ./knowledge/wiki).
+WIKI_DIR = Path(os.environ.get("WIKI_DIR", "knowledge/wiki"))
 
 
 # ---------------------------------------------------------------------------

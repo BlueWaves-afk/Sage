@@ -1,0 +1,6 @@
+entity_id,canonical_name,country,daily_export_mbpd,sanctioned,tier,source,as_of,notes
+supplier_aramco,Saudi Aramco,Saudi Arabia,6.0,false,real,PPAC-imports,2025,total crude export capacity
+supplier_iraqoil,Iraqi Oil Ministry,Iraq,3.4,false,real,PPAC-imports,2025,SOMO total exports
+supplier_adnoc,ADNOC,United Arab Emirates,3.0,false,real,PPAC-imports,2025,total crude exports
+supplier_rosneft,Rosneft,Russia,4.5,false,real,PPAC-imports,2025,seaborne export proxy for all Russian suppliers
+supplier_nioc,NIOC,Iran,1.4,true,real,OFAC-sdn,2025,sanctioned default; authoritative value set live by System 1

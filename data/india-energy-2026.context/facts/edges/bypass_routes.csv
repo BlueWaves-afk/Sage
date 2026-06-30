@@ -1,0 +1,3 @@
+src_entity_id,dst_entity_id,cost_premium,added_days,tier,source,as_of,notes
+supplier_aramco,port_yanbu,2.50,10.0,real,Petroline-wiki,2026,Petroline to Red Sea; +7-12d via Suez/Cape
+supplier_adnoc,port_fujairah,1.20,2.0,real,IEA-hormuz,2026,ADCOP to Fujairah bypasses Hormuz

@@ -1,0 +1,4 @@
+entity_id,canonical_name,jurisdiction,tier,source,as_of,notes
+authority_ofac,OFAC,US,real,OFAC-sdn,2025,US Treasury Office of Foreign Assets Control — SDN list issuer
+authority_eu,EU,EU,real,EU-sanctions,2025,EU Council CFSP consolidated sanctions list
+authority_un,UN,UN,real,UN-sanctions,2025,UN Security Council consolidated sanctions list

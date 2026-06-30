@@ -1,0 +1,5 @@
+src_entity_id,dst_entity_id,volume_mbpd,tier,source,as_of,notes
+supplier_aramco,corridor_hormuz,0.69,derived,DERIVED-import-volume,2025,PPAC ~14% share x 244.5 MT to India
+supplier_iraqoil,corridor_hormuz,0.98,derived,DERIVED-import-volume,2025,PPAC ~20% share
+supplier_adnoc,corridor_hormuz,0.47,derived,DERIVED-import-volume,2025,PPAC ~9.5% share
+supplier_rosneft,corridor_malacca,1.75,derived,DERIVED-import-volume,2025,PPAC ~35.8% share; routed via Malacca/Cape not Hormuz

@@ -147,10 +147,11 @@ async def get_risk_scores() -> list[RiskScoreView]:
     Uses Cypher for deterministic results — semantic search on risk state
     would miss entities at calm/watch band (no salient risk keywords in fact text).
     """
-    # Cypher: find all RISK_STATE edges where invalid_at is null (current facts)
+    # graphiti-core stores all custom edges as RELATES_TO with the edge type in
+    # r.name and the typed attributes as edge properties (r.score, r.band, …).
     query = """
-    MATCH (src:Entity)-[r:RISK_STATE]->(tgt:Entity)
-    WHERE r.invalid_at IS NULL
+    MATCH (src:Entity)-[r:RELATES_TO]->(tgt:Entity)
+    WHERE r.name = 'RISK_STATE' AND r.invalid_at IS NULL
     RETURN
       src.uuid        AS entity_uuid,
       src.name        AS entity_name,
@@ -295,7 +296,7 @@ async def get_subgraph(entity: str, hops: int = 2) -> SubgraphView:
       }}) AS nodes,
       collect(DISTINCT {{
         fact: r.fact,
-        relation_type: type(r),
+        relation_type: coalesce(r.name, type(r)),
         source_uuid: startNode(r).uuid,
         target_uuid: endNode(r).uuid,
         valid_at: r.valid_at,
@@ -324,15 +325,15 @@ async def get_available_suppliers(risk_max: float = 0.4) -> list[SupplierView]:
     query = """
     MATCH (s:Entity)
     WHERE 'Supplier' IN s.labels AND (s.sanctioned IS NULL OR s.sanctioned = false)
-    OPTIONAL MATCH (s)-[r:RISK_STATE]->(x:Entity)
-      WHERE r.invalid_at IS NULL
+    OPTIONAL MATCH (s)-[r:RELATES_TO]->(x:Entity)
+      WHERE r.name = 'RISK_STATE' AND r.invalid_at IS NULL
     RETURN
       s.uuid             AS uuid,
       s.name             AS display_name,
       s.country          AS country,
       s.daily_export_mbpd AS daily_export_mbpd,
       r.score            AS risk_score
-    ORDER BY r.score ASC NULLS LAST
+    ORDER BY risk_score ASC
     """
     rows = await _cypher(query)
 
@@ -362,8 +363,8 @@ async def get_grade_specs(refinery: str) -> list[GradeSpecView]:
     joined with CrudeGrade attributes.
     """
     query = """
-    MATCH (r:Entity)-[e:CONFIGURED_FOR]->(g:Entity)
-    WHERE 'Refinery' IN r.labels AND r.name = $refinery
+    MATCH (r:Entity)-[e:RELATES_TO]->(g:Entity)
+    WHERE e.name = 'CONFIGURED_FOR' AND 'Refinery' IN r.labels AND r.name = $refinery
       AND 'CrudeGrade' IN g.labels
     RETURN
       r.name      AS refinery,
@@ -399,15 +400,15 @@ async def get_routes(risk_max: float = 0.5) -> list[CorridorView]:
     query = """
     MATCH (c:Entity)
     WHERE 'Corridor' IN c.labels
-    OPTIONAL MATCH (c)-[r:RISK_STATE]->(x:Entity)
-      WHERE r.invalid_at IS NULL
+    OPTIONAL MATCH (c)-[r:RELATES_TO]->(x:Entity)
+      WHERE r.name = 'RISK_STATE' AND r.invalid_at IS NULL
     RETURN
       c.uuid           AS uuid,
       c.name           AS display_name,
       r.score          AS risk_score,
       c.throughput_mbpd AS throughput_mbpd,
       c.h3_cells        AS h3_cells
-    ORDER BY r.score ASC NULLS LAST
+    ORDER BY risk_score ASC
     """
     rows = await _cypher(query)
 

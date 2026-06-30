@@ -108,19 +108,21 @@ async def _seed_edge_types(g, ENTITY_TYPES, EDGE_TYPES, EDGE_TYPE_MAP) -> None:
     except Exception:
         pass
 
+    # Uses synthetic placeholder entities (not real tracked ones) so it registers
+    # every custom edge type's attributes without polluting real-entity facts. The
+    # real values come from the context bundle (data/<bundle>.context).
     seed_text = """
-SAGE knowledge graph edge-type seed episode (internal).
-Saudi Aramco (Supplier) EXPORTS_VIA Strait of Hormuz (Corridor) at 6.5 mbpd.
-Strait of Hormuz (Corridor) FEEDS Vadinar terminal (Port).
-Vadinar (Port) SUPPLIES Jamnagar Refinery (Refinery).
-Jamnagar (Refinery) CONFIGURED_FOR Arab Medium (CrudeGrade) compatibility 0.95.
-MT Destiny (Vessel) SANCTIONED_BY OFAC (Authority) effective 2025-01-15.
-NIOC (Supplier) SANCTIONED_BY EU (Authority) effective 2022-03-01.
-Saudi Aramco (Supplier) BYPASS_ROUTE via Yanbu (Port) cost_premium 0.80 added_days 3.5.
-Jamnagar (Refinery) FEEDS_RESERVE Vizag SPR (SPRCavern).
-Strait of Hormuz RISK_STATE: score 0.62, band elevated, factor_ais 0.41,
-  factor_gdelt 0.55, factor_price 0.30, factor_sanctions 0.00.
-RISK_STATE AFFECTS_SCENARIO sandbox-00000001 (PendingScenario) confidence 0.55.
+SAGE knowledge graph edge-type seed episode (internal placeholders only).
+SeedSupplierX (Supplier) EXPORTS_VIA SeedCorridorX (Corridor) at volume_mbpd 1.0.
+SeedCorridorX (Corridor) FEEDS SeedPortX (Port) with throughput_share_pct 0.50.
+SeedPortX (Port) SUPPLIES SeedRefineryX (Refinery) with throughput_share_pct 0.50.
+SeedRefineryX (Refinery) CONFIGURED_FOR SeedGradeX (CrudeGrade) compatibility 0.50 yield_pct 50.
+SeedVesselX (Vessel) SANCTIONED_BY SeedAuthorityX (Authority) effective 2025-01-01.
+SeedSupplierX (Supplier) BYPASS_ROUTE via SeedPortX (Port) cost_premium 1.0 added_days 1.0.
+SeedRefineryX (Refinery) FEEDS_RESERVE SeedReserveX (SPRCavern).
+SeedCorridorX RISK_STATE: score 0.50, band watch, factor_ais 0.0,
+  factor_gdelt 0.0, factor_price 0.0, factor_sanctions 0.0.
+RISK_STATE AFFECTS_SCENARIO seed-scenario-0 (PendingScenario) confidence 0.50.
 """.strip()
 
     try:

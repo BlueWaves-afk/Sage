@@ -1,0 +1,3 @@
+src_entity_id,dst_entity_id,throughput_share_pct,tier,source,as_of,notes
+port_vadinar,refinery_jamnagar,0.70,estimated,EST-allocation,2025,co-location estimate; operator allocation not published
+port_sikka,refinery_jamnagar,0.30,estimated,EST-allocation,2025,co-location estimate

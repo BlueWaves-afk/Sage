@@ -1,0 +1,10 @@
+entity_id,canonical_name,api_gravity,sulfur_pct,origin,yield_naphtha_pct,yield_kerosene_pct,yield_diesel_pct,yield_vgo_pct,yield_residue_pct,tier,source,as_of,notes
+grade_arab_light,Arab Light,32.8,1.96,Saudi Arabia,22,13,20,22,23,real,Aramco-assay,2021,api/sulfur real; yield_* representative (refine from BP/Aramco PDF)
+grade_arab_medium,Arab Medium,30.4,2.59,Saudi Arabia,19,12,19,22,28,real,Aramco-assay,2021,api/sulfur real; yield_* representative
+grade_arab_heavy,Arab Heavy,27.4,2.89,Saudi Arabia,16,11,18,22,33,real,Aramco-assay,2021,api/sulfur real; yield_* representative
+grade_arab_xlight,Arab Extra Light,40.9,1.15,Saudi Arabia,28,15,22,20,15,real,Aramco-assay,2021,api/sulfur real; yield_* representative
+grade_basrah_medium,Basrah Medium,27.9,3.00,Iraq,17,11,18,21,33,real,SP-Global-Iraq,2023,api/sulfur real; yield_* representative
+grade_basrah_heavy,Basrah Heavy,24.0,4.05,Iraq,13,10,16,21,40,real,SP-Global-Iraq,2023,api/sulfur real; yield_* representative
+grade_urals,Urals,31.3,1.30,Russia,19,12,20,22,27,real,Petrosolutions-urals,2024,api/sulfur real; yield_* representative
+grade_murban,Murban,40.2,0.79,United Arab Emirates,28,15,22,20,15,real,BP-assay,2024,api/sulfur real; yield_* representative
+grade_bonny_light,Bonny Light,38.0,0.37,Nigeria,26,14,23,20,17,real,BP-assay,2024,api/sulfur real; total distillate ~61% (comparative assay)

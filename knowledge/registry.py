@@ -229,6 +229,73 @@ REGISTRY: dict[str, EntityRegistryEntry] = {
         coordinates={"lat": 13.06, "lon": 74.68},
     ),
 
+    # ── Crude Grades ─────────────────────────────────────────────────────────────
+    # No H3 cells / instruments — grades are referenced by name in news/sanctions
+    # text and configured on refineries via CONFIGURED_FOR edges. Assays in docs/data.md §4.
+
+    "grade_arab_light": EntityRegistryEntry(
+        entity_id="grade_arab_light",
+        entity_type="CrudeGrade",
+        canonical_name="Arab Light",
+        aliases=["Arabian Light", "AL crude", "Saudi Arab Light"],
+    ),
+
+    "grade_arab_medium": EntityRegistryEntry(
+        entity_id="grade_arab_medium",
+        entity_type="CrudeGrade",
+        canonical_name="Arab Medium",
+        aliases=["Arabian Medium", "AM crude"],
+    ),
+
+    "grade_arab_heavy": EntityRegistryEntry(
+        entity_id="grade_arab_heavy",
+        entity_type="CrudeGrade",
+        canonical_name="Arab Heavy",
+        aliases=["Arabian Heavy", "Safaniya"],
+    ),
+
+    "grade_arab_xlight": EntityRegistryEntry(
+        entity_id="grade_arab_xlight",
+        entity_type="CrudeGrade",
+        canonical_name="Arab Extra Light",
+        aliases=["Arabian Extra Light", "AXL", "Berri"],
+    ),
+
+    "grade_basrah_medium": EntityRegistryEntry(
+        entity_id="grade_basrah_medium",
+        entity_type="CrudeGrade",
+        canonical_name="Basrah Medium",
+        aliases=["Basra Medium", "Basrah Light", "Basra Light"],
+    ),
+
+    "grade_basrah_heavy": EntityRegistryEntry(
+        entity_id="grade_basrah_heavy",
+        entity_type="CrudeGrade",
+        canonical_name="Basrah Heavy",
+        aliases=["Basra Heavy"],
+    ),
+
+    "grade_urals": EntityRegistryEntry(
+        entity_id="grade_urals",
+        entity_type="CrudeGrade",
+        canonical_name="Urals",
+        aliases=["Russian Urals", "Urals blend", "REBCO"],
+    ),
+
+    "grade_murban": EntityRegistryEntry(
+        entity_id="grade_murban",
+        entity_type="CrudeGrade",
+        canonical_name="Murban",
+        aliases=["ADNOC Murban", "Murban crude"],
+    ),
+
+    "grade_bonny_light": EntityRegistryEntry(
+        entity_id="grade_bonny_light",
+        entity_type="CrudeGrade",
+        canonical_name="Bonny Light",
+        aliases=["Nigerian Bonny Light", "Bonny"],
+    ),
+
     # ── Authorities ────────────────────────────────────────────────────────────
 
     "authority_ofac": EntityRegistryEntry(

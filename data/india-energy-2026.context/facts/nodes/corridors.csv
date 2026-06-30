@@ -1,0 +1,5 @@
+entity_id,canonical_name,throughput_mbpd,choke_severity,location_lat,location_lon,tier,source,as_of,notes
+corridor_hormuz,Strait of Hormuz,20.0,0.95,26.5,56.4,real,EIA-chokepoints,2024,throughput real (EIA); choke_severity analyst-assigned structural constant
+corridor_bab_el_mandeb,Bab-el-Mandeb,4.2,0.55,12.5,43.3,real,EIA-chokepoints,2025-H1,throughput real (EIA 1H25); choke_severity analyst-assigned
+corridor_suez,Suez Canal,4.9,0.60,30.7,32.3,real,EIA-chokepoints,2025-H1,Suez+SUMED combined; choke_severity analyst-assigned
+corridor_malacca,Strait of Malacca,23.0,0.70,2.5,102.0,real,EIA-chokepoints,2024,choke_severity analyst-assigned
