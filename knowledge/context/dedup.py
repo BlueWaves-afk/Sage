@@ -174,13 +174,18 @@ async def derive_exposures() -> int:
     # Fresh recompute: drop the old derived layer.
     await _cy("MATCH ()-[r:RELATES_TO]->() WHERE r.name='EXPOSES' DELETE r")
 
-    # Aggregate the two-hop share product, then create one EXPOSES edge per (corridor, refinery).
+    # Two-step aggregation with max() per port-pair — collapses duplicate edges and
+    # avoids the Cartesian cross-product (pairing one port's feed with another's supply).
+    # exposure(c,r) = Σ_port  feed(c→port) × supply(port→r).
     await _cy(
         """
-        MATCH (c:Entity)-[f:RELATES_TO]->(p:Entity)-[s:RELATES_TO]->(r:Entity)
-        WHERE f.name='FEEDS' AND s.name='SUPPLIES'
-          AND 'Corridor' IN c.labels AND 'Refinery' IN r.labels
-        WITH c, r, sum(coalesce(f.throughput_share_pct,0.0) * coalesce(s.throughput_share_pct,0.0)) AS exposure
+        MATCH (c:Entity)-[f:RELATES_TO]->(p:Entity)
+        WHERE f.name='FEEDS' AND 'Corridor' IN c.labels
+        WITH c, p, max(coalesce(f.throughput_share_pct,0.0)) AS fshare
+        MATCH (p)-[s:RELATES_TO]->(r:Entity)
+        WHERE s.name='SUPPLIES' AND 'Refinery' IN r.labels
+        WITH c, r, p, fshare, max(coalesce(s.throughput_share_pct,0.0)) AS sshare
+        WITH c, r, sum(fshare * sshare) AS exposure
         WHERE exposure > 0.0001
         CREATE (c)-[:RELATES_TO {name:'EXPOSES', exposure_pct: exposure, valid_at: $now}]->(r)
         """,

@@ -88,6 +88,12 @@ sources:
   EIA-spare:
     label: EIA — OPEC effective spare capacity
     url:   https://www.eia.gov/outlooks/steo/report/global_oil.php
+  PPAC-sectoral:
+    label: PPAC/Nielsen — All India Study on Sectoral Demand of Diesel & Petrol
+    url:   https://www.pib.gov.in/newsite/printrelease.aspx?relid=102799
+  NIPFP-gdp:
+    label: NIPFP — Oil price shock impact on India GDP/inflation ($10/bbl → −40bps GDP)
+    url:   https://www.nipfp.org.in/media/documents/wp_2012_99.pdf
 
 # ── Estimation methods ───────────────────────────────────────────────────────
 # Rows with tier=derived or estimated reference one of these as their `source`.
@@ -127,6 +133,9 @@ estimation_methods:
   EST-bypass-ramp:
     method: Aramco operations estimate for time to ramp Petroline/ADCOP to capacity
     tier:   estimated
+  EST-sector-other:
+    method: Residual petroleum products not in named sectors
+    tier:   estimated
 
 # ── Bundle contents ──────────────────────────────────────────────────────────
 # Two layers:
@@ -154,6 +163,10 @@ edges:
 # Model parameters (ARIO economic coefficients) — sourced, provenance-tracked, swappable.
 # System 2 reads these instead of hardcoding constants. Same tier+source contract.
 params_file: params/ario_params.csv
+
+# Economic sectors (petroleum consumption share + GDP weight) — for the reduced-form
+# input-output sectoral cascade (System 2): oil shock → which sectors bear the shortage.
+sectors_file: params/sectors.csv
 
 # Narratives are auto-discovered from narratives/*.md (filename = entity_id).
 # Each carries frontmatter: entity_id, source_url, as_of, tier.

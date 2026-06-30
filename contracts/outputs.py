@@ -41,7 +41,13 @@ class ScenarioOutputData(BaseModel):
     price_impact_low: float = Field(..., description="USD/bbl, low uncertainty band")
     price_impact_high: float = Field(..., description="USD/bbl, high uncertainty band")
     spr_depletion_days: float = Field(..., description="Days of SPR cover remaining at projected draw rate")
-    gdp_proxy_impact_pct: Optional[float] = None
+    gdp_proxy_impact_pct: Optional[float] = Field(None, description="GDP-growth hit %, price-driven (NIPFP)")
+    inflation_impact_pct: Optional[float] = Field(None, description="CPI inflation rise %, price-driven (NIPFP)")
+    sector_impacts: list[dict] = Field(default_factory=list, description=(
+        "Reduced-form IO sectoral cascade. Each: {sector, petroleum_share, shortfall_mbpd, "
+        "gdp_weight, criticality}. Shows which downstream sectors bear the oil shortage "
+        "(transport hit hardest; agriculture food-security-critical)."
+    ))
 
     # Per-node propagation — how the shock spreads through the graph (powers the System 5
     # digital-twin animation: which refinery/port is hit, when, how much).

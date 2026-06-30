@@ -49,6 +49,9 @@ class ARIOParams:
     price_per_mbpd_high:    float = 6.0       # high band (convexity)
     global_spare_mbpd:      float = 3.5       # OPEC effective spare capacity (EIA/IEA)
     global_bypass_mbpd:     float = 4.0       # Petroline+ADCOP global rerouting (IEA 3.5–5.5)
+    # Macro transmission of the price shock to India (sourced, replaces abstract multiplier).
+    gdp_pct_per_usd_bbl:    float = -0.04     # GDP-growth hit per $/bbl (NIPFP: $10 → −40bps)
+    inflation_pct_per_usd_bbl: float = 0.035  # CPI rise per $/bbl (NIPFP)
     # ── Scenario inputs ──────────────────────────────────────────────────────
     disruption_fraction:    float = 1.0       # 0=none, 1=full Hormuz closure
     disruption_days:        int   = 30
@@ -68,6 +71,8 @@ class ARIOParams:
             "price_per_mbpd_high":   {"value": self.price_per_mbpd_high, "unit": "$/bbl/mbpd", "source": "Fed IFDP 1173 / IMF WP17-15 (convex)"},
             "global_spare_mbpd":     {"value": self.global_spare_mbpd, "unit": "mbpd", "source": "EIA/IEA OPEC spare"},
             "global_bypass_mbpd":    {"value": self.global_bypass_mbpd, "unit": "mbpd", "source": "IEA Petroline+ADCOP"},
+            "gdp_pct_per_usd_bbl":   {"value": self.gdp_pct_per_usd_bbl, "unit": "%/$bbl", "source": "NIPFP WP2012-99"},
+            "inflation_pct_per_usd_bbl": {"value": self.inflation_pct_per_usd_bbl, "unit": "%/$bbl", "source": "NIPFP WP2012-99"},
             "disruption_fraction":   {"value": self.disruption_fraction, "unit": "frac", "source": "scenario input"},
             "disruption_days":       {"value": self.disruption_days, "unit": "days", "source": "scenario input"},
         }
@@ -85,6 +90,16 @@ class NodeImpact:
 
 
 @dataclass
+class SectorImpact:
+    """Downstream sectoral impact of the oil shock (reduced-form IO cascade)."""
+    sector:           str
+    petroleum_share:  float          # fraction of national products this sector consumes
+    shortfall_mbpd:   float          # physical product shortfall borne by this sector (peak)
+    gdp_weight:       float          # sector's % of GDP
+    criticality:      float          # 0..1 strategic criticality (food/transport etc.)
+
+
+@dataclass
 class ARIOResult:
     feedstock_gap_timeline: list[float] = field(default_factory=list)   # mbpd per day (national)
     gap_mbpd:               float = 0.0     # peak daily feedstock gap
@@ -93,12 +108,15 @@ class ARIOResult:
     days_until_product_shortfall: float = 0.0   # when refinery inventory is exhausted
     price_impact_low:       float = 0.0     # USD/bbl
     price_impact_high:      float = 0.0
-    gdp_proxy_impact_pct:   float = 0.0
+    gdp_proxy_impact_pct:   float = 0.0      # GDP-growth hit % (price-driven, sourced)
+    inflation_impact_pct:   float = 0.0      # CPI rise % (price-driven, sourced)
     node_impacts:           list[NodeImpact] = field(default_factory=list)   # per-node propagation
+    sector_impacts:         list[SectorImpact] = field(default_factory=list) # downstream sectoral cascade
     assumptions:            dict = field(default_factory=dict)
 
 
-def run(params: ARIOParams, refineries: list[dict] | None = None) -> ARIOResult:
+def run(params: ARIOParams, refineries: list[dict] | None = None,
+        sectors: list[dict] | None = None) -> ARIOResult:
     """
     Day-by-day ARIO cascade. Deterministic; see run_monte_carlo for uncertainty bands.
 
@@ -147,8 +165,28 @@ def run(params: ARIOParams, refineries: list[dict] | None = None) -> ARIOResult:
 
     peak_gap = max(timeline) if timeline else 0.0
     gap_days = sum(1 for g in timeline if g > 0.01)
+
+    # ── Macro transmission: the PRICE shock drives GDP + inflation (sourced, NIPFP) ──
+    price_mid = (price_low + price_high) / 2.0
+    gdp_hit       = round(price_mid * p.gdp_pct_per_usd_bbl, 3)        # negative %
+    inflation_hit = round(price_mid * p.inflation_pct_per_usd_bbl, 3)  # positive %
+    # Legacy GDP proxy (supply-side, indirect multiplier) kept for continuity.
     direct_pct = (peak_gap / p.daily_consumption_mbpd) * 100.0 if p.daily_consumption_mbpd else 0.0
-    gdp_proxy = round(direct_pct * p.indirect_multiplier / 100.0, 3)   # % GDP proxy
+    gdp_proxy = round(direct_pct * p.indirect_multiplier / 100.0, 3)
+
+    # ── Reduced-form IO sectoral cascade: which sectors bear the product shortage ────
+    sector_impacts: list[SectorImpact] = []
+    if sectors:
+        for s in sectors:
+            share = float(s.get("petroleum_share_pct", 0)) / 100.0
+            sector_impacts.append(SectorImpact(
+                sector=s.get("sector", "?"),
+                petroleum_share=round(share, 4),
+                shortfall_mbpd=round(peak_gap * share, 4),     # physical shortfall borne
+                gdp_weight=float(s.get("gdp_weight_pct", 0)),
+                criticality=float(s.get("criticality", 0)),
+            ))
+        sector_impacts.sort(key=lambda x: -x.shortfall_mbpd)
 
     # ── Node-to-node propagation: distribute the national gap across refineries ───
     node_impacts: list[NodeImpact] = []
@@ -177,8 +215,10 @@ def run(params: ARIOParams, refineries: list[dict] | None = None) -> ARIOResult:
         days_until_product_shortfall=product_shortfall_day,
         price_impact_low=price_low,
         price_impact_high=price_high,
-        gdp_proxy_impact_pct=gdp_proxy,
+        gdp_proxy_impact_pct=gdp_hit,           # price-driven, sourced (NIPFP)
+        inflation_impact_pct=inflation_hit,
         node_impacts=node_impacts,
+        sector_impacts=sector_impacts,
         assumptions=p.sources(),
     )
 

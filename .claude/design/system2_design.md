@@ -114,6 +114,31 @@ Read from the subgraph (now reliable):
 6. **Sandbox forecast** (`sandbox._forecast_trajectories`): Chronos-2 over signal history.
    (Sequenced after System 1 produces history.)
 
+## 6a. Reduced-form IO sectoral cascade (the "business impact" layer)
+
+The supply cascade (§4) answers "how much crude/feedstock is short." The IO layer answers
+**"what does that do to the economy"** — the high-value insight.
+
+- **Macro transmission (sourced):** the price shock drives GDP + inflation via NIPFP's
+  empirical coefficients (`gdp_pct_per_usd_bbl=-0.04`, `inflation_pct_per_usd_bbl=0.035` —
+  $10/bbl → −40bps GDP). These live in `params/ario_params.csv`, replacing the abstract
+  10.6× multiplier as the headline GDP number.
+- **Sectoral propagation:** the national product shortfall is distributed across sectors by
+  their petroleum-consumption share (`params/sectors.csv`, PPAC/Nielsen): transport 51%,
+  industry/petrochem/residential 12% each, agriculture 5% (food-security-critical). Output:
+  per-sector `shortfall_mbpd` + criticality → `ScenarioOutputData.sector_impacts`.
+
+**Verified (full Hormuz closure):** $44–75/bbl spike → GDP −2.38% → inflation +2.08% →
+transport short 0.45 mbpd, agriculture (crit 0.85) hit. The full chain: corridor → refinery
+→ sector → GDP/inflation, every coefficient sourced.
+
+**Honesty / upgrade path:** this is a *reduced-form* IO model (sector consumption shares +
+macro elasticities), NOT a full Leontief inversion. The full version needs India's national
+input-output table (MOSPI Supply-Use, ~140 sectors) — a static dataset that would slot into
+`.context` as a new layer. The ABM (agent-based) is the further upgrade and is what the GNN
+surrogate would emulate. The reduced form captures the demo-critical sectoral+GDP story with
+real sourced data.
+
 ## 7. Validation targets
 
 - Full Hormuz closure (`disruption_fraction=1.0`): feedstock gap appears after refinery inventory +

@@ -36,11 +36,12 @@ async def run(
 
     params     = await _extract_ario_params(subgraph, spr, disruption_fraction, disruption_days)
     refineries = _extract_refineries(subgraph, trigger_entity)
+    sectors    = _bundle_sectors()
 
     if status == "speculative":
         result, bands = await _run_gnn(subgraph, params), None
     else:
-        result = run_ario(params, refineries)
+        result = run_ario(params, refineries, sectors)
         bands  = run_monte_carlo(params, n=300)
 
     # Dynamic war-risk premium (System 1): live fear/insurance premium on top of the
@@ -61,6 +62,11 @@ async def run(
          "peak_gap_mbpd": n.peak_gap_mbpd, "onset_day": n.onset_day, "gap_timeline": n.gap_timeline}
         for n in result.node_impacts
     ]
+    sector_impacts = [
+        {"sector": s.sector, "petroleum_share": s.petroleum_share, "shortfall_mbpd": s.shortfall_mbpd,
+         "gdp_weight": s.gdp_weight, "criticality": s.criticality}
+        for s in result.sector_impacts
+    ]
 
     data = ScenarioOutputData(
         scenario_id=scenario_id,
@@ -74,7 +80,9 @@ async def run(
         price_impact_high=result.price_impact_high,
         spr_depletion_days=result.spr_depletion_days,
         gdp_proxy_impact_pct=result.gdp_proxy_impact_pct,
+        inflation_impact_pct=result.inflation_impact_pct,
         node_impacts=node_impacts,
+        sector_impacts=sector_impacts,
         assumptions=assumptions,
     )
     await write_scenario(data)
@@ -86,17 +94,34 @@ import os
 _PARAM_CACHE: dict | None = None
 
 
+_SECTOR_CACHE: list | None = None
+
+
+def _load_bundle():
+    from knowledge.context import load_bundle
+    return load_bundle(os.environ.get("SAGE_CONTEXT_BUNDLE", "data/india-energy-2026.context"))
+
+
 def _bundle_params() -> dict:
     """Load the ARIO economic coefficients from the context bundle (sourced, cached)."""
     global _PARAM_CACHE
     if _PARAM_CACHE is None:
         try:
-            from knowledge.context import load_bundle
-            bundle = load_bundle(os.environ.get("SAGE_CONTEXT_BUNDLE", "data/india-energy-2026.context"))
-            _PARAM_CACHE = {k: float(v["value"]) for k, v in bundle.model_params.items()}
+            _PARAM_CACHE = {k: float(v["value"]) for k, v in _load_bundle().model_params.items()}
         except Exception:
             _PARAM_CACHE = {}
     return _PARAM_CACHE
+
+
+def _bundle_sectors() -> list[dict]:
+    """Load the economic sectors (IO cascade) from the bundle, cached."""
+    global _SECTOR_CACHE
+    if _SECTOR_CACHE is None:
+        try:
+            _SECTOR_CACHE = _load_bundle().sectors
+        except Exception:
+            _SECTOR_CACHE = []
+    return _SECTOR_CACHE
 
 
 async def _extract_ario_params(

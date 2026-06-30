@@ -11,3 +11,6 @@ price_per_mbpd_low,3.5,usd_per_bbl_per_mbpd,derived,DERIVED-price-elasticity,low
 price_per_mbpd_high,6.0,usd_per_bbl_per_mbpd,derived,DERIVED-price-elasticity,high band (convex response)
 global_spare_mbpd,3.5,mbpd,real,EIA-spare,OPEC effective spare capacity
 global_bypass_mbpd,4.0,mbpd,real,IEA-hormuz,global pipeline rerouting around Hormuz
+gdp_pct_per_usd_bbl,-0.04,pct_per_usd,derived,NIPFP-gdp,India GDP-growth hit per $/bbl (NIPFP: $10/bbl -> -40bps)
+inflation_pct_per_usd_bbl,0.035,pct_per_usd,derived,NIPFP-gdp,India CPI inflation rise per $/bbl (~$10 -> +0.35pp)
+

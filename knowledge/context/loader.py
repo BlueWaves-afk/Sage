@@ -43,6 +43,7 @@ class ContextBundle:
     edge_rows:   dict[str, list[dict]] = field(default_factory=dict)   # type -> rows
     narratives:  dict[str, dict] = field(default_factory=dict)         # entity_id -> {body, frontmatter}
     model_params: dict[str, dict] = field(default_factory=dict)        # param -> {value, unit, tier, source, notes}
+    sectors:      list[dict] = field(default_factory=list)             # economic sectors (IO cascade)
 
     # ── metadata ──────────────────────────────────────────────────────────────
     @property
@@ -461,6 +462,11 @@ def load_bundle(bundle_path: str | Path) -> ContextBundle:
         for row in _read_csv(path / pf):
             bundle.model_params[row["param"]] = row
 
+    # Economic sectors (reduced-form IO cascade)
+    sf = manifest.get("sectors_file")
+    if sf and (path / sf).exists():
+        bundle.sectors = _read_csv(path / sf)
+
     # Narratives — auto-discovered from narratives_dir/*.md (filename = entity_id)
     narr_dir = path / manifest.get("narratives_dir", "narratives")
     if narr_dir.is_dir():
@@ -500,6 +506,8 @@ def validate_bundle(bundle: ContextBundle) -> None:
         _check(f"edge:{etype}", rows)
     if bundle.model_params:
         _check("params", list(bundle.model_params.values()))
+    if bundle.sectors:
+        _check("sectors", bundle.sectors)
 
     if errors:
         raise BundleValidationError(
