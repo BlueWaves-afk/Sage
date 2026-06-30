@@ -228,3 +228,6 @@ knowledge/wiki/.obsidian/
 
 # Obsidian creates empty notes from wikilink clicks; ignore display-name stubs
 knowledge/wiki/[A-Z]*.md
+
+# Trained surrogate weights (regenerable via scenario_agent/gnn/train.py)
+scenario_agent/gnn/weights/
