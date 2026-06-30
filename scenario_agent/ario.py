@@ -52,10 +52,14 @@ class ARIOParams:
     # Macro transmission of the price shock to India (sourced, replaces abstract multiplier).
     gdp_pct_per_usd_bbl:    float = -0.04     # GDP-growth hit per $/bbl (NIPFP: $10 → −40bps)
     inflation_pct_per_usd_bbl: float = 0.035  # CPI rise per $/bbl (NIPFP)
-    # ── Scenario inputs ──────────────────────────────────────────────────────
-    disruption_fraction:    float = 1.0       # 0=none, 1=full Hormuz closure
+    # ── Scenario inputs (the LLM decides these from live signals) ─────────────
+    disruption_fraction:    float = 1.0       # 0=none, 1=full closure
     disruption_days:        int   = 30
     horizon_days:           int   = 45
+    escalation_profile:     str   = "constant"   # constant | escalating | resolving
+    bypass_compromised_frac: float = 0.0      # 0=bypass available, 1=bypass also blocked (e.g. Red Sea too)
+    spr_policy:             str   = "moderate"   # aggressive | moderate | none — govt drawdown stance
+    demand_destruction_pct: float = 0.0       # demand reduction from high prices (0..1 of consumption)
 
     def sources(self) -> dict:
         """Labelled, sourced assumptions for ScenarioOutputData.assumptions."""
@@ -126,11 +130,19 @@ def run(params: ARIOParams, refineries: list[dict] | None = None,
     share. This is the node-to-node spread the digital twin animates.
     """
     p = params
-    hormuz_dep_mbpd = p.daily_consumption_mbpd * p.hormuz_share_pct / 100.0
+    # Demand destruction (high prices cut consumption) lowers the dependent volume.
+    eff_consumption = p.daily_consumption_mbpd * (1.0 - p.demand_destruction_pct)
+    hormuz_dep_mbpd = eff_consumption * p.hormuz_share_pct / 100.0
+
+    # SPR policy scales the government's willingness to draw down.
+    spr_draw_mult = {"aggressive": 1.5, "moderate": 1.0, "none": 0.0}.get(p.spr_policy, 1.0)
+    eff_spr_draw  = p.spr_max_draw_mbpd * spr_draw_mult
+    # Bypass can itself be compromised (e.g. simultaneous Red Sea + Hormuz).
+    eff_bypass_cap = p.bypass_capacity_mbpd * (1.0 - p.bypass_compromised_frac)
 
     spr_remaining   = p.spr_total_mmt * p.spr_fill_frac * BBL_PER_TONNE     # mbbl available
-    spr_floor_mbbl  = p.spr_floor_days * p.daily_consumption_mbpd
-    refinery_buffer = p.refinery_inventory_days * p.daily_consumption_mbpd  # mbbl
+    spr_floor_mbbl  = p.spr_floor_days * eff_consumption
+    refinery_buffer = p.refinery_inventory_days * eff_consumption          # mbbl
     cumulative_gap  = 0.0
 
     timeline: list[float] = []
@@ -139,12 +151,21 @@ def run(params: ARIOParams, refineries: list[dict] | None = None,
     spr_hit = prod_hit = False
 
     for t in range(p.horizon_days):
-        lost   = hormuz_dep_mbpd * p.disruption_fraction if t < p.disruption_days else 0.0
+        # Escalation profile shapes how the disruption evolves over its window.
+        if t >= p.disruption_days:
+            sev = 0.0
+        elif p.escalation_profile == "escalating":
+            sev = p.disruption_fraction * min(1.0, (t + 1) / max(p.disruption_days * 0.5, 1))
+        elif p.escalation_profile == "resolving":
+            sev = p.disruption_fraction * max(0.0, 1.0 - t / max(p.disruption_days, 1))
+        else:  # constant
+            sev = p.disruption_fraction
+        lost   = hormuz_dep_mbpd * sev
         ramp   = max(0.0, min(1.0, (t - p.bypass_ramp_days) / max(p.bypass_ramp_days, 1)))
-        relief = min(p.bypass_capacity_mbpd, lost) * ramp
+        relief = min(eff_bypass_cap, lost) * ramp
         net    = max(0.0, lost - relief)                       # unmet by bypass
 
-        draw = min(p.spr_max_draw_mbpd, net, max(0.0, spr_remaining - spr_floor_mbbl))
+        draw = min(eff_spr_draw, net, max(0.0, spr_remaining - spr_floor_mbbl))
         spr_remaining -= draw
         if not spr_hit and spr_remaining <= spr_floor_mbbl and net > 0:
             spr_depletion_day, spr_hit = float(t), True

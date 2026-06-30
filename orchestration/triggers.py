@@ -128,11 +128,15 @@ async def _cold_pipeline(client: object, entity: str, score: float) -> None:
     scenario_id = f"cold-{uuid.uuid4().hex[:8]}"
     log.info("[trigger] cold pipeline — '%s' ref=%s", entity, scenario_id)
 
-    # System 2
+    # System 2 — the LLM decides the disruption scenario parameters from the live
+    # signal context (NOT a hardcoded full closure), then runs the cascade.
     await _publish_stage(client, "SCENARIO", entity, "running")
     try:
-        from scenario_agent.runner import run_scenario
-        await run_scenario(trigger_entity=entity, scenario_id=scenario_id, status="confirmed")
+        from orchestration.scenario_params import decide_scenario_params
+        from scenario_agent.runner import run as run_scenario
+        scenario = await decide_scenario_params(entity)
+        log.info("[trigger] scenario params for '%s': %s", entity, scenario)
+        scenario_id = await run_scenario(trigger_entity=entity, status="confirmed", scenario=scenario)
         await _publish_stage(client, "SCENARIO", entity, "done")
     except Exception as exc:
         log.error("[trigger] scenario_agent failed for '%s': %s", entity, exc)

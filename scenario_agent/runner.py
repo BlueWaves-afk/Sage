@@ -23,18 +23,23 @@ Status = Literal["speculative", "confirmed"]
 async def run(
     trigger_entity: str,
     status: Status = "confirmed",
-    disruption_fraction: float = 1.0,
-    disruption_days: int = 30,
+    scenario: dict | None = None,
 ) -> str:
     """
     Full scenario run. Returns scenario_id.
-    Confirmed → full ARIO + Monte-Carlo bands. Speculative → GNN surrogate (sandbox speed).
+
+    `scenario` is the (LLM-decided) parameter dict — any subset of:
+      disruption_fraction, disruption_days, escalation_profile, bypass_compromised_frac,
+      spr_policy, demand_destruction_pct, horizon_days
+    It overrides the static defaults from the bundle. Extensible — add a field to
+    ARIOParams and the LLM can set it. Confirmed → full ARIO + MC; speculative → fast.
     """
+    scenario = scenario or {}
     scenario_id = f"scenario-{uuid.uuid4().hex[:8]}"
     subgraph = await get_subgraph(trigger_entity, hops=2)
     spr      = await get_spr_state()
 
-    params     = await _extract_ario_params(subgraph, spr, disruption_fraction, disruption_days)
+    params     = await _extract_ario_params(subgraph, spr, scenario)
     refineries = _extract_refineries(subgraph, trigger_entity)
     sectors    = _bundle_sectors()
 
@@ -135,15 +140,13 @@ def _bundle_sectors() -> list[dict]:
     return _SECTOR_CACHE
 
 
-async def _extract_ario_params(
-    subgraph, spr_caverns, disruption_fraction: float, disruption_days: int,
-) -> ARIOParams:
+async def _extract_ario_params(subgraph, spr_caverns, scenario: dict | None = None) -> ARIOParams:
     """
-    Build ARIO params from (1) the sourced bundle params, (2) live KB state (SPR fill,
-    refinery inventory), (3) the scenario inputs. No hardcoded economic constants —
-    every coefficient is provenance-tracked in data/<bundle>.context/params/.
+    Build ARIO params from (1) sourced bundle coefficients, (2) live KB state (SPR fill,
+    refinery inventory), (3) the LLM-decided scenario dict. No hardcoded economic
+    constants — every coefficient is provenance-tracked in data/<bundle>.context/params/.
     """
-    p = ARIOParams(disruption_fraction=disruption_fraction, disruption_days=disruption_days)
+    p = ARIOParams()
 
     # (1) Override defaults with the sourced bundle coefficients.
     for k, v in _bundle_params().items():
@@ -165,6 +168,11 @@ async def _extract_ario_params(
     ]
     if inv:
         p.refinery_inventory_days = round(sum(inv) / len(inv), 1)
+
+    # (3) Apply the LLM-decided scenario overrides (any subset of the scenario knobs).
+    for k, v in (scenario or {}).items():
+        if hasattr(p, k) and v is not None:
+            setattr(p, k, v)
 
     return p
 
