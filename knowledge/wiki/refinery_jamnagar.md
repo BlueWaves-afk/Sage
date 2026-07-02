@@ -1,8 +1,11 @@
 ---
 entity_id: refinery_jamnagar
 aliases:
-- Jamnagar
+- Jamnagar Refinery
 entity_type: Refinery
+tags:
+- sage/refinery
+- risk/calm
 risk_score: 0.0
 risk_band: CALM
 factors:
@@ -10,41 +13,40 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-02T16:18:13.907281+00:00'
-valid_at: '2026-07-02T16:17:34.991607+00:00'
+last_updated: '2026-07-02T21:10:17.969738+00:00'
+valid_at: '2026-07-02T21:10:17.969738+00:00'
 source_episodes: []
 links_out:
-- corridor_hormuz
+- grade_arab_light
+- grade_arab_medium
 - supplier_aramco
-- supplier_kpc
+- grade_basrah_heavy
 - supplier_iraqoil
-- event_tanker_war
-- event_2019_hormuz_attacks
+- grade_urals
+- supplier_rosneft
+- port_vadinar
+- port_sikka
+- corridor_hormuz
+- port_yanbu
 coordinates:
   lat: 22.47
   lon: 70.07
 ---
 
 
-## Current Assessment
-The [[Jamnagar Refinery]] continues to rely heavily on crude imports via the [[Strait of Hormuz]], with [[Saudi Aramco]], [[Kuwait Petroleum Corporation]], and [[Iraqi Oil Ministry]] as top alternative suppliers. The refinery's high complexity allows it to adapt to various crude grades, though its primary exposure remains through the [[Strait of Hormuz]].
+## Overview
+The [[Jamnagar Refinery]] (Reliance) is the world's largest single-site refining complex —
+~1.40 mbpd across its DTA and SEZ units, with a Nelson Complexity Index of 21.1.
 
-## Historical Pattern
-The refinery's dependency on [[Strait of Hormuz]] has precedents in the [[Tanker War]] (80% feature-overlap) and the [[2019 Tanker Attacks]] (75% feature-overlap).
+## Crude Diet
+Its high complexity lets it process a very wide slate: [[Arab Light]] and [[Arab Medium]] from
+[[Saudi Aramco]], [[Basrah Heavy]] from the [[Iraqi Oil Ministry]], and [[Urals]] from [[Rosneft]]
+(increased post-2022 for price advantage). See the CONFIGURED_FOR edges for compatibility scores.
 
-## Affected Entities
-- **[[Saudi Aramco]]**: High exposure due to primary crude supplier.
-- **[[Kuwait Petroleum Corporation]]**: Medium exposure as an alternative supplier.
-- **[[Iraqi Oil Ministry]]**: Medium exposure as an alternative supplier.
-- **[[Strait of Hormuz]]**: High exposure due to primary supply route.
+## Supply Path
+Crude arrives via [[Vadinar]] (~70%) and [[Sikka]] (~30%), both fed through the
+[[Strait of Hormuz]]. This makes Jamnagar SAGE's most Hormuz-exposed demand node.
 
-## Signal Basis
-- System 3 procurement analysis for Jamnagar: 18 alternative crude sources ranked.
-
-## Relations
-| Relation         | Entity                        | Type               | Strength |
-|------------------|-------------------------------|--------------------|----------|
-| supply_dependency| [[Saudi Aramco]]              | supply_dependency  | high     |
-| supply_dependency| [[Kuwait Petroleum Corporation]]| supply_dependency  | medium   |
-| supply_dependency| [[Iraqi Oil Ministry]]       | supply_dependency  | medium   |
-| supply_dependency| [[Strait of Hormuz]]          | supply_dependency  | high     |
+## SAGE Risk Profile
+High exposure to a Hormuz disruption; bypass feasibility is high because it can absorb
+[[Yanbu]]-routed [[Arab Light]] with a modest cost premium. On-site crude inventory ≈ 22 days.
