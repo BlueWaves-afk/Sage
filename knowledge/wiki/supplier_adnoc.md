@@ -3,6 +3,9 @@ entity_id: supplier_adnoc
 aliases:
 - ADNOC
 entity_type: Supplier
+tags:
+- sage/supplier
+- risk/calm
 risk_score: 0.0
 risk_band: CALM
 factors:
@@ -10,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-06-30T09:21:32.925926+00:00'
-valid_at: '2026-06-30T09:21:32.925926+00:00'
+last_updated: '2026-07-02T21:07:01.033981+00:00'
+valid_at: '2026-07-02T21:07:01.033981+00:00'
 source_episodes: []
 links_out:
 - port_fujairah
@@ -26,13 +29,20 @@ coordinates: {}
 - **Sanctioned**: False
 
 ## Operations
-- **Subsidiaries**: ADNOC has 16 subsidiary companies across upstream, midstream, and downstream stages.
-- **Refineries**: Operates Ruwais Refinery and Umm Al Nar.
-- **Exports**: Exports natural gas as liquefied natural gas (LNG) and supplies local utilities and industries.
+- **Headquarters**: Abu Dhabi, United Arab Emirates
+- **Key People**: Mohamed bin Zayed Al Nahyan (Chairman), Sultan Ahmed Al Jaber (Director-General & CEO)
+- **Products**: Petroleum, oil products, natural gas, petrochemicals
+- **Subsidiaries**: ADNOC Onshore, ADNOC Offshore, ADNOC Drilling, Al Yasat Petroleum, Al Dhafra Petroleum, ADNOC Sour Gas, ADNOC Gas Processing, ADNOC LNG, ADNOC Refining, Fertiglobe, ADNOC Industrial Gas, Abu Dhabi Polymers Company (Borouge), ADNOC Logistics & Services, ADNOC Distribution, Abu Dhabi Crude Oil Pipeline LLC (ADCOP)
+- **Refineries**: Ruwais Refinery, Umm Al Nar
+- **Exports**: Liquefied natural gas (LNG)
 
-## Strategic Investments
-- **Foreign Direct Investment**: Received major investments from US asset managers BlackRock and KKR, Italian firm Eni, Austria's OMV, and Singapore's GIC.
-- **Pipeline Expansion**: Announced acceleration of the West-East Pipeline project to double oil export capacity through [[Fujairah]], bypassing the [[Strait of Hormuz]].
+## Strategic Initiatives
+- **West-East Pipeline Project**: Accelerated in May 2026 to double oil export capacity through [[Fujairah]], bypassing the [[Strait of Hormuz]]. Expected operational by 2027.
 
-## Leadership
-- **Key People**: Mohamed bin Zayed Al Nahyan (Chairman), Sultan Ahmed Al Jaber (Director-General & CEO).
+## Foreign Direct Investment
+- **Investors**: BlackRock, KKR, Eni, OMV, GIC
+- **Investments**: 
+  - BlackRock and KKR acquired 40% of ADNOC's pipeline assets for $4 billion.
+  - Eni SpA took a 20% stake in Abu Dhabi Oil Refining Company for over $3 billion.
+  - OMV invested $2.8 billion for 15% of ADNOC's refining business.
+  - GIC acquired a 6% share in ADNOC's pipeline infrastructure for $600 million.
