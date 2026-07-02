@@ -3,6 +3,9 @@ entity_id: authority_ofac
 aliases:
 - OFAC
 entity_type: Authority
+tags:
+- sage/authority
+- risk/calm
 risk_score: 0.0
 risk_band: CALM
 factors:
@@ -10,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-06-30T09:32:01.219830+00:00'
-valid_at: '2026-06-30T09:32:01.219830+00:00'
+last_updated: '2026-07-02T21:17:27.813312+00:00'
+valid_at: '2026-07-02T21:17:27.813312+00:00'
 source_episodes: []
 links_out: []
 coordinates: {}
@@ -19,13 +22,13 @@ coordinates: {}
 
 
 ## Authority and Activities
+The [[OFAC]] (OFAC) is a financial intelligence and enforcement agency of the United States Department of the Treasury. It administers and enforces economic and trade sanctions in support of U.S. national security and foreign policy objectives. OFAC derives its authority from various U.S. federal laws, including the Trading with the Enemy Act and the International Emergency Economic Powers Act (IEEPA).
 
-The [[OFAC]] (OFAC) is a financial intelligence and enforcement agency of the United States Department of the Treasury. It administers and enforces economic and trade sanctions in support of U.S. national security and foreign policy objectives. OFAC derives its authority from various U.S. federal laws, including the Trading with the Enemy Act and the International Emergency Economic Powers Act (IEEPA). It enforces sanctions by preventing "prohibited transactions," which are trade or financial transactions in which U.S. persons may not engage unless authorized by OFAC or expressly exempted by statute.
+## History
+OFAC was founded in 1950 as the Division of Foreign Assets Control. Its predecessor agencies include Foreign Funds Control (1940-1947) and the Office of International Finance (1947-1950). OFAC has been involved in administering sanctions since its inception, with its activities expanding over the years to include a wide range of targets deemed threats to U.S. national security.
 
 ## Specially Designated Nationals
+OFAC maintains a list of Specially Designated Nationals (SDNs) and blocked persons. This list includes individuals and entities subject to U.S. sanctions. Being listed as an SDN can result in asset freezes and restrictions on transactions involving U.S. persons or entities.
 
-OFAC maintains a list of Specially Designated Nationals (SDNs) and blocked persons, which includes individuals and entities deemed to pose a threat to U.S. national security. Assets of those listed are subject to blocking, and U.S. persons are generally prohibited from engaging in transactions with them.
-
-## Enforcement Actions
-
-OFAC has the authority to impose significant penalties, including fines, asset freezes, and barring parties from operating in the U.S., against entities that violate its directives. Notable enforcement actions include fines against organizations and individuals for violating sanctions, such as the $963 million settlement with BNP Paribas in 2014.
+## Notable Actions
+OFAC has taken several notable actions, including fining organizations and individuals for violating sanctions. Examples include fining Voices in the Wilderness for providing humanitarian aid to Iraq and imposing penalties on French bank BNP Paribas for violations related to sanctions on Iran.
