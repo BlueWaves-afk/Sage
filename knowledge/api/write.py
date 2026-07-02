@@ -570,7 +570,72 @@ async def write_procurement(data: ProcurementRecData) -> EpisodeRef:
     )
 
     episode_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"procurement_{data.scenario_id}"))
+
+    if data.status != "counterfactual" and data.target_refinery:
+        try:
+            await _reconcile_procurement_into_wiki(data, now)
+        except Exception as exc:
+            log.warning("Procurement wiki reconciliation failed for %s: %s", data.scenario_id, exc)
+
     return EpisodeRef(episode_uuid=episode_uuid, scenario_id=data.scenario_id)
+
+
+async def _reconcile_procurement_into_wiki(data: "ProcurementRecData", now: datetime) -> None:
+    from contracts.signal import NormalizedSignal
+    from knowledge.synthesis import synthesize, write_wiki_page, load_wiki_page
+    from knowledge.wikilink_processor import parse_frontmatter, validate_page
+
+    top = data.ranked[0] if data.ranked else None
+    summary = (
+        f"System 3 procurement analysis for {data.target_refinery}: "
+        f"{len(data.ranked)} alternative crude sources ranked. "
+        + (
+            f"Top option: {top.supplier} ({top.grade}) via {top.route_via} — "
+            f"${top.landed_cost_usd_bbl:.2f}/bbl, {top.lead_time_days:.0f} day lead time, "
+            f"grade compatibility {top.grade_compatibility:.2f}, TOPSIS score {top.topsis_score:.2f}. "
+            if top else ""
+        )
+        + (
+            f"Alternative options: "
+            + "; ".join(
+                f"{o.supplier} via {o.route_via} (${o.landed_cost_usd_bbl:.2f}/bbl, TOPSIS {o.topsis_score:.2f})"
+                for o in data.ranked[1:3]
+            ) + "."
+            if len(data.ranked) > 1 else ""
+        )
+    )
+
+    signal = NormalizedSignal(
+        signal_id=f"procurement_{data.scenario_id}",
+        source="scenario",
+        observed_at=now,
+        ingested_at=now,
+        priority_hint="HIGH" if data.status == "confirmed" else "MED",
+        force_synthesis=True,
+        entity_refs=[data.target_refinery],
+        summary=summary,
+        payload={"scenario_id": data.scenario_id, "system": "procurement"},
+    )
+
+    current_fm = parse_frontmatter(load_wiki_page(data.target_refinery))
+    risk = current_fm.get("risk") or {}
+    factors = risk.get("factors") or {}
+
+    page = await synthesize(
+        signal=signal,
+        entity=data.target_refinery,
+        risk_score=risk.get("score"),
+        risk_band=risk.get("band"),
+        factor_ais=factors.get("ais", 0.0),
+        factor_gdelt=factors.get("gdelt", 0.0),
+        factor_price=factors.get("price", 0.0),
+        factor_sanctions=factors.get("sanctions", 0.0),
+        rationale=f"System 3 procurement {data.scenario_id}",
+        model_version="topsis-routing",
+        persist=False,
+    )
+    if not validate_page(page):
+        write_wiki_page(data.target_refinery, page)
 
 
 # ---------------------------------------------------------------------------
@@ -624,7 +689,67 @@ async def write_spr_schedule(data: SPRScheduleData) -> EpisodeRef:
     )
 
     episode_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"spr_{data.scenario_id}"))
+
+    if data.status != "counterfactual":
+        try:
+            await _reconcile_spr_into_wiki(data, now)
+        except Exception as exc:
+            log.warning("SPR wiki reconciliation failed for %s: %s", data.scenario_id, exc)
+
     return EpisodeRef(episode_uuid=episode_uuid, scenario_id=data.scenario_id)
+
+
+async def _reconcile_spr_into_wiki(data: "SPRScheduleData", now: datetime) -> None:
+    from contracts.signal import NormalizedSignal
+    from knowledge.synthesis import synthesize, write_wiki_page, load_wiki_page
+    from knowledge.wikilink_processor import parse_frontmatter, validate_page
+
+    total_draw  = sum(d.volume_mmt for d in data.daily_plan)
+    draw_days   = sum(1 for d in data.daily_plan if d.action == "draw")
+    end_reserve = data.daily_plan[-1].reserve_after_mmt if data.daily_plan else 0.0
+    constraint  = "CMDP chance constraint satisfied" if data.constraint_satisfied else "CMDP chance constraint VIOLATED — current SPR fill insufficient to maintain emergency buffer through the projected gap"
+
+    summary = (
+        f"System 4 SPR optimisation for scenario {data.scenario_id}: "
+        f"optimal drawdown over {draw_days} days, total release {total_draw:.3f} MMT. "
+        f"Ending reserve {end_reserve:.2f} MMT. "
+        f"P(reserve > 3-day emergency buffer) = {data.prob_above_buffer:.1%}. "
+        f"{constraint}. "
+        + (f"Real-options: option value of 5-day delay = ${data.option_value_of_waiting:.1f}/MMT equivalent. " if data.option_value_of_waiting else "")
+        + f"Policy: {data.policy_memo[:300]}"
+    )
+
+    signal = NormalizedSignal(
+        signal_id=f"spr_{data.scenario_id}",
+        source="scenario",
+        observed_at=now,
+        ingested_at=now,
+        priority_hint="HIGH" if data.status == "confirmed" else "MED",
+        force_synthesis=True,
+        entity_refs=["India SPR"],
+        summary=summary,
+        payload={"scenario_id": data.scenario_id, "system": "spr", "constraint_satisfied": data.constraint_satisfied},
+    )
+
+    current_fm = parse_frontmatter(load_wiki_page("India SPR"))
+    risk = current_fm.get("risk") or {}
+    factors = risk.get("factors") or {}
+
+    page = await synthesize(
+        signal=signal,
+        entity="India SPR",
+        risk_score=risk.get("score"),
+        risk_band=risk.get("band"),
+        factor_ais=factors.get("ais", 0.0),
+        factor_gdelt=factors.get("gdelt", 0.0),
+        factor_price=factors.get("price", 0.0),
+        factor_sanctions=factors.get("sanctions", 0.0),
+        rationale=f"System 4 SPR schedule {data.scenario_id}",
+        model_version="sdp-cmdp",
+        persist=False,
+    )
+    if not validate_page(page):
+        write_wiki_page("India SPR", page)
 
 
 # ---------------------------------------------------------------------------
