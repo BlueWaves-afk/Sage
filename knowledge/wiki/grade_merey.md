@@ -3,6 +3,9 @@ entity_id: grade_merey
 aliases:
 - Merey
 entity_type: CrudeGrade
+tags:
+- sage/crudegrade
+- risk/calm
 risk_score: 0.0
 risk_band: CALM
 factors:
@@ -10,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-06-30T09:29:24.476313+00:00'
-valid_at: '2026-06-30T09:29:24.476313+00:00'
+last_updated: '2026-07-02T21:14:35.694237+00:00'
+valid_at: '2026-07-02T21:14:35.694237+00:00'
 source_episodes: []
 links_out:
 - supplier_pdvsa
@@ -33,9 +36,9 @@ coordinates: {}
   - Residue: 55%
 
 ## Role
-- **Primary Use**: Merey is a heavy, sour crude oil primarily used in refineries capable of handling high-sulfur content and complex processing to maximize yield from heavy residues.
-- **Refining Suitability**: Ideal for refineries with coking units and advanced upgrading facilities, such as the [[Jamnagar Refinery]], to process the high residue output into more valuable products.
+- **Primary Use**: Merey crude is primarily utilized in refineries capable of handling heavy, sour crudes. Its high residue yield makes it suitable for refineries with complex configurations, such as coking units, which can process the heavy fractions into more valuable products.
+- **Key Consumers**: Refineries in Asia, particularly in [[Jamnagar Refinery]], have the capability to process Merey crude due to their advanced refining infrastructure.
 
 ## Risk
-- **Geopolitical Instability**: Originating from [[PDVSA]], supply chains for Merey crude are susceptible to political and economic instability, impacting consistent supply.
-- **Refining Complexity**: The high sulfur and residue content require sophisticated refining capabilities, limiting the number of refineries that can efficiently process Merey crude.
+- **Geopolitical Instability**: The political and economic instability in [[PDVSA]] poses significant risks to the consistent supply of Merey crude.
+- **Quality Variability**: The heavy and sour nature of Merey crude requires specific refining capabilities, limiting the number of potential buyers and increasing dependency on refineries with suitable configurations.
