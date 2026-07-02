@@ -3,6 +3,9 @@ entity_id: authority_un
 aliases:
 - UN
 entity_type: Authority
+tags:
+- sage/authority
+- risk/calm
 risk_score: 0.0
 risk_band: CALM
 factors:
@@ -10,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-06-30T09:33:38.433433+00:00'
-valid_at: '2026-06-30T09:33:38.433433+00:00'
+last_updated: '2026-07-02T21:19:28.953316+00:00'
+valid_at: '2026-07-02T21:19:28.953316+00:00'
 source_episodes: []
 links_out: []
 coordinates: {}
@@ -20,12 +23,16 @@ coordinates: {}
 
 ## Jurisdiction Overview
 
-The [[UN]] (UN) plays a critical role in the global governance of oil supply chains through its various mandates and resolutions. The UN's involvement is primarily through the United Nations Security Council (UNSC), which has the authority to impose sanctions that can directly impact oil-producing nations and their export capabilities.
+The [[UN]] (UN) holds authority over international sanctions, including those impacting the oil supply chain. The UN Security Council is the primary body responsible for imposing and enforcing these sanctions.
 
-## Sanctions and Oil Supply Chains
+## Sanctions Mechanism
 
-UNSC sanctions can target specific countries involved in the oil supply chain, restricting their ability to export oil or access international markets. These sanctions are designed to influence political behavior and can lead to significant disruptions in global oil supply. 
+UN sanctions are enforced through resolutions passed by the Security Council. These resolutions can target specific countries, entities, or individuals involved in activities that threaten international peace and security, which may include illicit oil trade.
 
-## Energy Security Implications
+## Impact on Oil Supply Chain
 
-The imposition of UN sanctions on oil-exporting countries can have profound implications for global energy security. Restricted oil flows can lead to supply shortages, increased prices, and instability in oil-importing nations. The UN’s role in sanctioning thus has direct consequences on the stability and security of the global oil supply chain.
+Sanctions imposed by the UN can significantly disrupt the oil supply chain by restricting the export, import, or transit of oil and related products. This can lead to shortages, increased prices, and altered trade routes.
+
+## Enforcement and Compliance
+
+Compliance with UN sanctions is monitored by member states and international bodies. Non-compliance can result in further sanctions or other punitive measures.
