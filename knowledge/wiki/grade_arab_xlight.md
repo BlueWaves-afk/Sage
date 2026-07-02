@@ -3,6 +3,9 @@ entity_id: grade_arab_xlight
 aliases:
 - Arab Extra Light
 entity_type: CrudeGrade
+tags:
+- sage/crudegrade
+- risk/calm
 risk_score: 0.0
 risk_band: CALM
 factors:
@@ -10,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-06-30T09:27:16.345737+00:00'
-valid_at: '2026-06-30T09:27:16.345737+00:00'
+last_updated: '2026-07-02T21:12:33.983805+00:00'
+valid_at: '2026-07-02T21:12:33.983805+00:00'
 source_episodes: []
 links_out: []
 coordinates: {}
@@ -19,10 +22,21 @@ coordinates: {}
 
 
 ## Profile
-Arab Extra Light is a Crude Oil grade originating from Saudi Arabia. It is characterized by an API gravity of 40.9, indicating a relatively light crude, and a sulfur content of 1.15%, classifying it as a medium-sour crude. 
+- **Name:** Arab Extra Light
+- **Origin:** Saudi Arabia
+- **API Gravity:** 40.9
+- **Sulfur Content:** 1.15%
+- **Yields:** 
+  - Naphtha: 28%
+  - Kerosene: 15%
+  - Diesel: 22%
+  - Vacuum Gas Oil (VGO): 20%
+  - Residue: 15%
 
 ## Role
-This crude grade is valued for its high yield of light-end products. It produces 28% naphtha, 15% kerosene, and 22% diesel. Additionally, it yields 20% vacuum gas oil (VGO) and 15% residue. The high naphtha yield makes it particularly attractive for refineries focused on petrochemical production.
+- **Market Position:** Arab Extra Light is a high-value crude grade due to its low sulfur content and high API gravity, making it attractive for refineries seeking to produce lighter, higher-value products such as naphtha and diesel.
+- **Refining:** Its yield profile is particularly suited for refineries configured to maximize light-end products, enhancing its desirability in markets with high demand for gasoline and diesel.
 
 ## Risk
-The primary risks associated with Arab Extra Light include geopolitical tensions in Saudi Arabia, which can impact supply stability. Additionally, fluctuations in global oil demand, especially for light-end products, can affect its market value.
+- **Geopolitical:** As a product of Saudi Arabia, supply chains for Arab Extra Light are susceptible to regional geopolitical tensions, which can impact production and export stability.
+- **Market Volatility:** Fluctuations in global oil demand, especially for light products, can affect the crude's market value and refining margins.
