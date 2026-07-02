@@ -3,6 +3,9 @@ entity_id: port_yanbu
 aliases:
 - Yanbu
 entity_type: Port
+tags:
+- sage/port
+- risk/calm
 risk_score: 0.0
 risk_band: CALM
 factors:
@@ -10,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-06-30T09:30:33.558813+00:00'
-valid_at: '2026-06-30T09:30:33.558813+00:00'
+last_updated: '2026-07-02T21:15:50.122427+00:00'
+valid_at: '2026-07-02T21:15:50.122427+00:00'
 source_episodes: []
 links_out:
 - supplier_aramco
@@ -22,10 +25,10 @@ coordinates:
 
 
 ## Profile
-The Port of Yanbu, located at coordinates 24.09, 38.05, is a key maritime gateway in the Red Sea. It serves as a critical node in the oil supply chain, facilitating the export of crude oil and refined petroleum products. The port's draft of 24.0 meters allows it to accommodate large vessels, enhancing its capacity to handle significant volumes of cargo.
+The Port of Yanbu, located at coordinates 24.09, 38.05, serves as a critical maritime gateway on the Red Sea. It is engineered to accommodate vessels with a draft of up to 24.0 meters, facilitating the handling of large-scale maritime traffic without reported congestion issues (congestion=0.0).
 
 ## Role
-Yanbu plays a pivotal role in the operations of [[Saudi Aramco]], serving as a major export terminal for the company's oil products. The port's strategic location enables efficient shipping routes to global markets, particularly in Asia and Europe. Its minimal congestion level of 0.0 ensures smooth and uninterrupted operations, contributing to the reliability of the supply chain.
+Yanbu plays a pivotal role in the [[Saudi Aramco]] supply chain, acting as a key export terminal for refined petroleum products and crude oil. Its strategic location enhances the efficiency of oil exports to global markets, particularly towards Europe and Asia.
 
 ## Risk
-The port's exposure to Red Sea geopolitical tensions poses a risk to its operations. Potential threats include piracy, regional conflicts, and the impact of global maritime security issues. Ensuring the safety and security of shipments through Yanbu is critical for maintaining the stability of the oil supply chain.
+The port's operations are susceptible to geopolitical tensions in the Red Sea region, which could impact its functionality as a critical node in the global oil supply chain. Additionally, environmental factors and potential disruptions in the [[Saudi Aramco]] production could indirectly affect the port's throughput and operational stability.
