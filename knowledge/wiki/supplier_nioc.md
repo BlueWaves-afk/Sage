@@ -3,6 +3,9 @@ entity_id: supplier_nioc
 aliases:
 - NIOC
 entity_type: Supplier
+tags:
+- sage/supplier
+- risk/calm
 risk_score: 0.0
 risk_band: CALM
 factors:
@@ -10,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-06-30T09:22:24.830802+00:00'
-valid_at: '2026-06-30T09:22:24.830802+00:00'
+last_updated: '2026-07-02T21:08:08.018407+00:00'
+valid_at: '2026-07-02T21:08:08.018407+00:00'
 source_episodes: []
 links_out:
 - refinery_mangaluru
