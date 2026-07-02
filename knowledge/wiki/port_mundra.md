@@ -3,6 +3,9 @@ entity_id: port_mundra
 aliases:
 - Mundra
 entity_type: Port
+tags:
+- sage/port
+- risk/calm
 risk_score: 0.0
 risk_band: CALM
 factors:
@@ -10,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-06-30T09:30:58.239161+00:00'
-valid_at: '2026-06-30T09:30:58.239161+00:00'
+last_updated: '2026-07-02T21:16:20.128206+00:00'
+valid_at: '2026-07-02T21:16:20.128206+00:00'
 source_episodes: []
 links_out: []
 coordinates:
@@ -21,10 +24,10 @@ coordinates:
 
 
 ## Profile
-The Port of Mundra is a major maritime gateway located on the western coast of India, at coordinates 22.74 latitude and 69.70 longitude. It is characterized by a significant draft of 30.0 meters, enabling it to accommodate large vessels, including oil tankers and bulk carriers.
+The Port of Mundra is a major maritime gateway located in the Kutch district of Gujarat, India. Positioned at latitude 22.74 and longitude 69.70, it is one of the largest private ports in the country. The port's draft of 30.0 meters allows it to accommodate large vessels, enhancing its capacity to handle significant volumes of cargo, including oil and petroleum products.
 
 ## Role
-Mundra serves as a critical node in the oil supply chain, facilitating the import and export of crude oil and petroleum products. Its strategic location and deep draft make it an essential port for energy trade, connecting India's energy needs with global oil markets.
+Mundra plays a critical role in India's oil supply chain by facilitating the import and export of crude oil and refined products. Its strategic location on the western coast enables efficient connectivity with major global oil producers and consumers. The port's minimal congestion level of 0.0 indicates robust operational efficiency, ensuring smooth transit and minimal delays for oil tankers.
 
 ## Risk
-The port exhibits minimal congestion (0.0), suggesting efficient operations and reduced risk of delays. However, geopolitical tensions and regional security dynamics could pose potential risks to its operations and the stability of the oil supply chain passing through it.
+The primary risks associated with the Port of Mundra include geopolitical tensions in the region, potential cyber threats to its infrastructure, and environmental concerns related to oil spills. Additionally, the port's reliance on stable political and economic conditions in India poses a risk to its operational continuity.
