@@ -18,6 +18,25 @@ Sources:
   Dixit & Pindyck 1994, "Investment Under Uncertainty" (real options framing)
 """
 from __future__ import annotations
+import os
+
+
+def _load_options_params() -> dict:
+    """Load option valuation defaults from bundle economics_params."""
+    defaults = {
+        "baseline_brent_usd_per_bbl":            80.0,
+        "daily_consumption_mmt":                 0.56,
+        "option_demand_destruction_during_wait": 0.30,
+    }
+    bundle_path = os.environ.get("SAGE_BUNDLE_PATH", "")
+    if not bundle_path:
+        return defaults
+    try:
+        from knowledge.context.loader import load_bundle
+        ep = load_bundle(bundle_path).economics_params
+        return {k: float(ep.get(k, {"value": v})["value"]) for k, v in defaults.items()}
+    except Exception:
+        return defaults
 
 
 def option_value_of_waiting(
@@ -25,8 +44,8 @@ def option_value_of_waiting(
     resolution_days: float,
     refill_cost_premium: float,
     gap_mbpd: float,
-    price_per_bbl: float = 80.0,
-    daily_consumption_mmt: float = 0.56,
+    price_per_bbl: float | None = None,
+    daily_consumption_mmt: float | None = None,
 ) -> float:
     """
     Returns option value (USD/MMT equivalent) of delaying the drawdown decision
@@ -47,6 +66,12 @@ def option_value_of_waiting(
     if gap_mbpd <= 0 or resolution_days <= 0:
         return 0.0
 
+    p = _load_options_params()
+    if price_per_bbl is None:
+        price_per_bbl = p["baseline_brent_usd_per_bbl"]
+    if daily_consumption_mmt is None:
+        daily_consumption_mmt = p["daily_consumption_mmt"]
+
     _BBL_TO_MMT = 0.000000109
 
     # Volume needed over the resolution window (MMT)
@@ -58,7 +83,8 @@ def option_value_of_waiting(
 
     # If we wait and crisis resolves: no drawdown needed → save cost_draw_now
     # But we bear unmet_demand cost during wait window (partial shortfall)
-    unmet_cost_wait = cost_draw_now * 0.3   # assume ~30% demand destruction / rationing buffers it
+    demand_destruction_frac = p["option_demand_destruction_during_wait"]
+    unmet_cost_wait = cost_draw_now * demand_destruction_frac
 
     # If we wait and crisis continues: must draw at the end of window anyway,
     # plus refill premium on what we eventually draw

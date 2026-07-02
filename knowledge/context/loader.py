@@ -42,8 +42,15 @@ class ContextBundle:
     node_rows:   dict[str, list[dict]] = field(default_factory=dict)   # type -> rows
     edge_rows:   dict[str, list[dict]] = field(default_factory=dict)   # type -> rows
     narratives:  dict[str, dict] = field(default_factory=dict)         # entity_id -> {body, frontmatter}
-    model_params: dict[str, dict] = field(default_factory=dict)        # param -> {value, unit, tier, source, notes}
-    sectors:      list[dict] = field(default_factory=list)             # economic sectors (IO cascade)
+    model_params:   dict[str, dict] = field(default_factory=dict)  # param -> {value, unit, tier, source, notes}
+    sectors:        list[dict] = field(default_factory=list)       # economic sectors (IO cascade)
+    routing_params:   dict[str, dict] = field(default_factory=dict)  # System 3: VLCC costs/lead times/war-risk
+    ranking_params:   dict[str, dict] = field(default_factory=dict)  # System 3: TOPSIS criterion weights
+    spr_params:       dict[str, dict] = field(default_factory=dict)  # System 4: SDP/CMDP constants
+    grade_params:     dict[str, dict] = field(default_factory=dict)  # System 3: grade compatibility tolerances
+    heuristic_params: dict[str, dict] = field(default_factory=dict)  # Orchestration heuristic thresholds
+    economics_params: dict[str, dict] = field(default_factory=dict)  # Shared baseline economics
+    volatile_registry: list[dict] = field(default_factory=list)      # Refresh contract: values that drift sub-annually
 
     # ── metadata ──────────────────────────────────────────────────────────────
     @property
@@ -467,6 +474,52 @@ def load_bundle(bundle_path: str | Path) -> ContextBundle:
     if sf and (path / sf).exists():
         bundle.sectors = _read_csv(path / sf)
 
+    # System 3 routing params (VLCC costs, lead times, war-risk premium)
+    # Keyed by "param|country" when a country column exists; by "param" otherwise.
+    rf = manifest.get("routing_params_file")
+    if rf and (path / rf).exists():
+        for row in _read_csv(path / rf):
+            country = row.get("country", "").strip()
+            key = f"{row['param']}|{country}" if country else row["param"]
+            bundle.routing_params[key] = row
+
+    # System 3 ranking params (TOPSIS criterion weights)
+    rk = manifest.get("ranking_params_file")
+    if rk and (path / rk).exists():
+        for row in _read_csv(path / rk):
+            bundle.ranking_params[row["param"]] = row
+
+    # System 4 SPR params (SDP/CMDP constants, p_resolve probabilities)
+    sp = manifest.get("spr_params_file")
+    if sp and (path / sp).exists():
+        for row in _read_csv(path / sp):
+            bundle.spr_params[row["param"]] = row
+
+    # System 3 grade compatibility tolerances
+    gp = manifest.get("grade_params_file")
+    if gp and (path / gp).exists():
+        for row in _read_csv(path / gp):
+            bundle.grade_params[row["param"]] = row
+
+    # Orchestration heuristic thresholds
+    hp = manifest.get("heuristic_params_file")
+    if hp and (path / hp).exists():
+        for row in _read_csv(path / hp):
+            bundle.heuristic_params[row["param"]] = row
+
+    # Shared baseline economics (Brent, daily consumption, risk filters)
+    ep = manifest.get("economics_params_file")
+    if ep and (path / ep).exists():
+        for row in _read_csv(path / ep):
+            bundle.economics_params[row["param"]] = row
+
+    # Volatile-value refresh registry (a meta-index of values that drift sub-annually).
+    # Not provenance-validated: it references params/facts that ARE sourced elsewhere;
+    # it is the refresh CONTRACT (cadence + live override), not a data source itself.
+    vr = manifest.get("volatile_registry_file")
+    if vr and (path / vr).exists():
+        bundle.volatile_registry = _read_csv(path / vr)
+
     # Narratives — auto-discovered from narratives_dir/*.md (filename = entity_id)
     narr_dir = path / manifest.get("narratives_dir", "narratives")
     if narr_dir.is_dir():
@@ -508,6 +561,18 @@ def validate_bundle(bundle: ContextBundle) -> None:
         _check("params", list(bundle.model_params.values()))
     if bundle.sectors:
         _check("sectors", bundle.sectors)
+    if bundle.routing_params:
+        _check("routing_params", list(bundle.routing_params.values()))
+    if bundle.ranking_params:
+        _check("ranking_params", list(bundle.ranking_params.values()))
+    if bundle.spr_params:
+        _check("spr_params", list(bundle.spr_params.values()))
+    if bundle.grade_params:
+        _check("grade_params", list(bundle.grade_params.values()))
+    if bundle.heuristic_params:
+        _check("heuristic_params", list(bundle.heuristic_params.values()))
+    if bundle.economics_params:
+        _check("economics_params", list(bundle.economics_params.values()))
 
     if errors:
         raise BundleValidationError(

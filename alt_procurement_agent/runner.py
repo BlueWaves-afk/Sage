@@ -17,6 +17,19 @@ import logging
 import os
 from typing import Literal
 
+
+def _load_economics_params() -> dict:
+    defaults = {"supplier_risk_max_filter": 0.4, "corridor_risk_max_filter": 0.5}
+    bundle_path = os.environ.get("SAGE_BUNDLE_PATH", "")
+    if not bundle_path:
+        return defaults
+    try:
+        from knowledge.context.loader import load_bundle
+        ep = load_bundle(bundle_path).economics_params
+        return {k: float(ep.get(k, {"value": v})["value"]) for k, v in defaults.items()}
+    except Exception:
+        return defaults
+
 from contracts.outputs import ProcurementOption, ProcurementRecData
 from knowledge.api.read import get_available_suppliers, get_grade_specs, get_routes
 from knowledge.api.write import write_procurement
@@ -64,15 +77,19 @@ async def run(
     Full procurement run. Returns scenario_id on completion.
     `gap_mbpd` from ScenarioOutputData scopes how much volume to source.
     """
-    suppliers  = await get_available_suppliers(risk_max=0.4)
+    ep = _load_economics_params()
+    supplier_risk_max = ep["supplier_risk_max_filter"]
+    corridor_risk_max = ep["corridor_risk_max_filter"]
+
+    suppliers  = await get_available_suppliers(risk_max=supplier_risk_max)
     grade_specs = await get_grade_specs(trigger_refinery)
-    corridors  = await get_routes(risk_max=0.5)
+    corridors  = await get_routes(risk_max=corridor_risk_max)
 
     if not suppliers:
         log.warning("[procurement] no non-sanctioned suppliers returned from KB")
 
     # Route each supplier to their best open corridor
-    routes = solve_routes(suppliers, corridors, _BYPASS_EDGES, risk_max=0.5)
+    routes = solve_routes(suppliers, corridors, _BYPASS_EDGES, risk_max=corridor_risk_max)
 
     options: list[ProcurementOption] = []
     for supplier in suppliers:

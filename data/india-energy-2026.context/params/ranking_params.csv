@@ -1,0 +1,5 @@
+param,value,unit,tier,source,update_freq,notes
+topsis_weight_cost,0.35,fraction,estimated,IEA-supply-security,policy-driven,India PSU mandate: minimize landed cost; dominant criterion for government refineries
+topsis_weight_lead_time,0.25,fraction,estimated,IEA-supply-security,policy-driven,Time to bridge gap; equal weight to grade compat (fast incompatible = slow compatible)
+topsis_weight_grade_compatibility,0.25,fraction,estimated,IEA-supply-security,policy-driven,Yield loss and processing cost if grade outside refinery window
+topsis_weight_corridor_risk,0.15,fraction,estimated,IEA-supply-security,policy-driven,Lower weight because high-risk corridors already excluded by risk_max filter before TOPSIS

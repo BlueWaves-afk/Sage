@@ -1,0 +1,10 @@
+param,lives_in,unit,update_freq,staleness_risk,live_override_by,refresh_source,notes
+baseline_brent_usd_per_bbl,params/economics_params.csv,usd_per_bbl,monthly,high,System 1 price sub-agent,EIA-STEO,Oil moves daily; the static $95 is a cold-start seed only — live price feed must override in production
+hormuz_share_pct,params/ario_params.csv,pct,quarterly,high,System 1 live routing,PPAC-imports,Crisis-sensitive; 42.5 structural baseline vs ~30 observed mid-2026 (70% routed outside Hormuz)
+vlcc_cost_usd_bbl,params/routing_params.csv,usd_bbl,weekly,high,System 1 freight/war-risk factor,Baltic-BDTI,Freight is weekly-volatile; Hormuz-crisis spikes were ~10x normal (WS897 / $400k+/day Feb-Jun 2026)
+current_fill_mmt,facts/nodes/spr_caverns.csv,mmt,monthly,high,System 1 SPR feed,ISPRL,India fills/draws the SPR over months; capacity_mmt on the same node is structural (annual)
+global_spare_mbpd,params/ario_params.csv,mbpd,quarterly,medium,System 1 price factor,EIA-spare,OPEC+ policy-driven; ~5 Mbpd Apr-2026 narrowing to ~3 by year-end as cuts unwind
+refinery_inventory_days,facts/nodes/refineries.csv,days,monthly,medium,System 1 ops feed,EST-inventory,Operational crude stock; 22-day national average applied uniformly until a live feed exists
+port_congestion,facts/nodes/ports.csv,fraction,live,n/a,System 1 AIS density,EST-congestion,Already 0.0 baseline — this field is live-only by design; never set statically
+import_dependence_pct,params/ario_params.csv,pct,annual,low,—,PPAC-imports,Drifts slowly with domestic output decline; safe for a yearly commit
+daily_consumption_mbpd,params/ario_params.csv,mbpd,annual,low,—,PPAC-imports,Grows ~2-3%/yr with demand; safe for a yearly commit

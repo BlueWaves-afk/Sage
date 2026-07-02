@@ -20,10 +20,42 @@ ISPRL annual report 2023-24 (capacity/fill data).
 """
 from __future__ import annotations
 
+import os
 import numpy as np
 from dataclasses import dataclass, field
 
 _BBL_TO_MMT = 0.000000109   # 1 bbl ≈ 0.109 tonne → 1e-6 MMT
+
+_SDP_DEFAULTS = {
+    "buffer_threshold_days":  3.0,
+    "spr_horizon_days":       90,
+    "sdp_discount_rate":      0.97,
+    "sdp_max_draw_fraction":  0.60,
+    "daily_consumption_mmt":  0.56,   # from economics_params (derived from ario_params)
+    "baseline_brent_usd_per_bbl": 80.0,
+}
+
+
+def _load_sdp_bundle() -> dict:
+    """Return SDP structural constants from bundle, or compiled defaults."""
+    bundle_path = os.environ.get("SAGE_BUNDLE_PATH", "")
+    if not bundle_path:
+        return _SDP_DEFAULTS.copy()
+    try:
+        from knowledge.context.loader import load_bundle
+        b = load_bundle(bundle_path)
+        sp = b.spr_params
+        ep = b.economics_params
+        return {
+            "buffer_threshold_days":  float(sp.get("buffer_threshold_days",     {"value": 3.0})["value"]),
+            "spr_horizon_days":       int(float(sp.get("spr_horizon_days",      {"value": 90})["value"])),
+            "sdp_discount_rate":      float(sp.get("sdp_discount_rate",         {"value": 0.97})["value"]),
+            "sdp_max_draw_fraction":  float(sp.get("sdp_max_draw_fraction",     {"value": 0.60})["value"]),
+            "daily_consumption_mmt":  float(ep.get("daily_consumption_mmt",     {"value": 0.56})["value"]),
+            "baseline_brent_usd_per_bbl": float(ep.get("baseline_brent_usd_per_bbl", {"value": 80.0})["value"]),
+        }
+    except Exception:
+        return _SDP_DEFAULTS.copy()
 
 
 @dataclass
@@ -33,8 +65,10 @@ class SDPParams:
     gap_mbpd:                float = 0.0    # supply gap from ScenarioOutputData
     gap_duration_days:       int   = 30
     price_per_bbl:           float = 80.0   # current Brent USD/bbl
-    buffer_threshold_days:   float = 3.0    # P(reserve < this) ≤ 0.05
-    horizon_days:            int   = 90
+    buffer_threshold_days:   float = 3.0    # P(reserve < this) ≤ 0.05  [from bundle: buffer_threshold_days]
+    horizon_days:            int   = 90     # [from bundle: spr_horizon_days]
+    discount_rate:           float = 0.97   # daily discount  [from bundle: sdp_discount_rate]
+    max_draw_fraction:       float = 0.60   # of daily consumption [from bundle: sdp_max_draw_fraction]
 
     # Bisection settings for Lagrangian CMDP
     lambda_lo:  float = 0.0
@@ -67,7 +101,7 @@ def solve(params: SDPParams) -> SDPResult:
     levels = np.linspace(0.0, r_max, _N_LEVELS)
     buf    = params.buffer_threshold_days * params.daily_consumption_mmt
 
-    max_draw = min(gap_mmt_per_day, params.daily_consumption_mmt * 0.6)
+    max_draw = min(gap_mmt_per_day, params.daily_consumption_mmt * params.max_draw_fraction)
     draw_vol = {
         "hold":         0.0,
         "draw_min":     max_draw * 0.10,
@@ -125,7 +159,7 @@ def _run_mdp(params, levels, buf, gap_mmt, draw_vol, lam):
 
                 next_li = int(np.searchsorted(levels, min(new_res, levels[-1])))
                 next_li = min(next_li, NL - 1)
-                total   = reward + 0.97 * V[t + 1, next_li]
+                total   = reward + params.discount_rate * V[t + 1, next_li]
 
                 if total > best_v:
                     best_v, best_a = total, ai

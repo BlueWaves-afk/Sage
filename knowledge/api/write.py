@@ -41,6 +41,34 @@ class EpisodeRef(BaseModel):
     scenario_id: Optional[str] = None
 
 
+# ---------------------------------------------------------------------------
+# Structured output cache (Redis)
+# ---------------------------------------------------------------------------
+# Graph episodes hold the non-lossy prose; for the API/frontend we also cache the
+# exact structured model_dump() so /api/scenario, /api/procurement, /api/spr-schedule
+# can return full-fidelity JSON without re-parsing episode text. Best-effort, never
+# blocks the KB write — same discipline as the pub/sub publish.
+_OUTPUT_TTL_S = 24 * 3600
+
+
+async def _cache_output(kind: str, scenario_id: str, data: BaseModel) -> None:
+    """Cache a structured output under sage:<kind>:<id> and sage:<kind>:latest."""
+    import json
+    import os
+    try:
+        import redis.asyncio as aioredis
+        client = aioredis.from_url(os.environ.get("REDIS_URL", "redis://redis:6379/0"),
+                                   decode_responses=True)
+        try:
+            payload = json.dumps(data.model_dump(), default=str)
+            await client.set(f"sage:{kind}:{scenario_id}", payload, ex=_OUTPUT_TTL_S)
+            await client.set(f"sage:{kind}:latest", payload, ex=_OUTPUT_TTL_S)
+        finally:
+            await client.aclose()
+    except Exception as exc:
+        log.warning("Output cache failed for %s:%s (non-fatal): %s", kind, scenario_id, exc)
+
+
 class IngestResult(BaseModel):
     signal_id: str
     decision: Literal["synthesized", "extracted", "stored", "dropped"]
@@ -436,6 +464,7 @@ async def write_scenario(data: ScenarioOutputData) -> EpisodeRef:
                 data.scenario_id, exc,
             )
 
+    await _cache_output("scenario", data.scenario_id, data)
     return EpisodeRef(episode_uuid=episode_uuid, scenario_id=data.scenario_id)
 
 
@@ -577,6 +606,7 @@ async def write_procurement(data: ProcurementRecData) -> EpisodeRef:
         except Exception as exc:
             log.warning("Procurement wiki reconciliation failed for %s: %s", data.scenario_id, exc)
 
+    await _cache_output("procurement", data.scenario_id, data)
     return EpisodeRef(episode_uuid=episode_uuid, scenario_id=data.scenario_id)
 
 
@@ -696,6 +726,7 @@ async def write_spr_schedule(data: SPRScheduleData) -> EpisodeRef:
         except Exception as exc:
             log.warning("SPR wiki reconciliation failed for %s: %s", data.scenario_id, exc)
 
+    await _cache_output("spr", data.scenario_id, data)
     return EpisodeRef(episode_uuid=episode_uuid, scenario_id=data.scenario_id)
 
 

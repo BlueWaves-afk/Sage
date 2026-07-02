@@ -90,6 +90,16 @@ class SPRCavernView(BaseModel):
     current_fill_mmt: Optional[float]
 
 
+class RiskHistoryPoint(BaseModel):
+    """One bitemporal RISK_STATE observation (current or invalidated)."""
+    valid_at: str
+    score: float
+    factor_ais: float = 0.0
+    factor_gdelt: float = 0.0
+    factor_price: float = 0.0
+    factor_sanctions: float = 0.0
+
+
 class WikiPage(BaseModel):
     entity: str
     content: str
@@ -197,6 +207,97 @@ async def get_risk_scores() -> list[RiskScoreView]:
             log.warning("Malformed RISK_STATE row: %s | error: %s", row, exc)
 
     return results
+
+
+async def get_output(kind: str, scenario_id: Optional[str] = None) -> Optional[dict]:
+    """
+    Read back a structured agent output (System 2/3/4) from the Redis output cache.
+
+    kind        : "scenario" | "procurement" | "spr"
+    scenario_id : specific run id, or None for the most recent output of that kind.
+
+    Returns the exact model_dump() the agent wrote (full fidelity — not parsed from
+    episode prose), or None if nothing is cached. Drives /api/scenario, /api/procurement,
+    /api/spr-schedule for the frontend.
+    """
+    import json
+    import os
+    if kind not in ("scenario", "procurement", "spr"):
+        raise ValueError(f"unknown output kind: {kind}")
+    key = f"sage:{kind}:{scenario_id or 'latest'}"
+    try:
+        import redis.asyncio as aioredis
+        client = aioredis.from_url(os.environ.get("REDIS_URL", "redis://redis:6379/0"),
+                                   decode_responses=True)
+        try:
+            raw = await client.get(key)
+        finally:
+            await client.aclose()
+        return json.loads(raw) if raw else None
+    except Exception as exc:
+        log.warning("get_output(%s, %s) failed: %s", kind, scenario_id, exc)
+        return None
+
+
+async def get_risk_history(entity: str, hours: int = 72) -> list[RiskHistoryPoint]:
+    """
+    Anticipatory sandbox (Stage 1 forecast input).
+
+    Returns the bitemporal RISK_STATE time series for one entity over the last `hours`,
+    oldest → newest. Includes both invalidated edges (past values) and the current edge
+    (invalid_at IS NULL) — that IS the historical signal trajectory the forecaster projects.
+
+    Falls back to an empty list when the entity has no risk history yet (e.g. before System 1
+    has produced any signals for it); callers should degrade to a current-signal projection.
+    """
+    from datetime import datetime, timezone, timedelta
+
+    query = """
+    MATCH (src:Entity)-[r:RELATES_TO]->(tgt:Entity)
+    WHERE r.name = 'RISK_STATE' AND src.name = $entity
+    RETURN
+      r.score            AS score,
+      r.factor_ais       AS factor_ais,
+      r.factor_gdelt     AS factor_gdelt,
+      r.factor_price     AS factor_price,
+      r.factor_sanctions AS factor_sanctions,
+      r.valid_at         AS valid_at
+    """
+    rows = await _cypher(query, {"entity": entity})
+    if not rows:
+        return []
+
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
+    points: list[RiskHistoryPoint] = []
+    for row in rows:
+        va = row.get("valid_at")
+        ts = _parse_iso(str(va)) if va else None
+        if ts is not None and ts < cutoff:
+            continue
+        try:
+            points.append(RiskHistoryPoint(
+                valid_at=str(va or _now_iso()),
+                score=float(row.get("score", 0.0) or 0.0),
+                factor_ais=float(row.get("factor_ais", 0.0) or 0.0),
+                factor_gdelt=float(row.get("factor_gdelt", 0.0) or 0.0),
+                factor_price=float(row.get("factor_price", 0.0) or 0.0),
+                factor_sanctions=float(row.get("factor_sanctions", 0.0) or 0.0),
+            ))
+        except Exception as exc:
+            log.warning("Malformed RISK_STATE history row: %s | error: %s", row, exc)
+
+    points.sort(key=lambda p: p.valid_at)
+    return points
+
+
+def _parse_iso(s: str):
+    """Best-effort ISO-8601 → aware datetime; None on failure."""
+    from datetime import datetime, timezone
+    try:
+        dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
+        return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+    except Exception:
+        return None
 
 
 async def _get_risk_scores_semantic() -> list[RiskScoreView]:

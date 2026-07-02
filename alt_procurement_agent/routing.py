@@ -16,31 +16,30 @@ IEA Oil Supply Security 2014 (Table 4.2 bypass capacity/cost).
 """
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 
 from knowledge.api.read import CorridorView
 
-# Base voyage costs by supplier region (USD/bbl, VLCC equivalent, full cargo).
+# Fallback routing params used when no bundle is loaded (SAGE_BUNDLE_PATH unset).
 # Sources: Clarkson Research VLCC rate norms 2024; Baltic Exchange VLCC routes.
-_BASE_COST: dict[str, float] = {
+_DEFAULT_BASE_COST: dict[str, float] = {
     "Saudi Arabia":    1.80,
     "Iraq":            1.80,
     "United Arab Emirates": 1.85,
     "Kuwait":          1.80,
     "Qatar":           1.85,
     "Iran":            1.85,
-    "Russia":          3.20,  # Ust-Luga/Primorsk → India via Cape or Suez
-    "Nigeria":         3.80,  # West Africa via Cape/Suez
-    "United States":   5.20,  # US Gulf Coast → India
-    "Brazil":          4.60,  # Santos → India
+    "Russia":          3.20,
+    "Nigeria":         3.80,
+    "United States":   5.20,
+    "Brazil":          4.60,
     "Venezuela":       5.50,
-    "Kazakhstan":      3.50,  # CPC Blend via Black Sea → Suez → India
+    "Kazakhstan":      3.50,
     "Angola":          4.00,
 }
 
-# Base lead times by supplier region (days, port-to-port).
-# Source: Clarkson VLCC voyage duration estimates.
-_BASE_DAYS: dict[str, float] = {
+_DEFAULT_BASE_DAYS: dict[str, float] = {
     "Saudi Arabia":    20.0,
     "Iraq":            22.0,
     "United Arab Emirates": 22.0,
@@ -56,7 +55,6 @@ _BASE_DAYS: dict[str, float] = {
     "Angola":          28.0,
 }
 
-# Corridor handles: which corridor a regional supplier uses by default.
 _DEFAULT_CORRIDOR: dict[str, str] = {
     "Saudi Arabia":    "Strait of Hormuz",
     "Iraq":            "Strait of Hormuz",
@@ -73,9 +71,32 @@ _DEFAULT_CORRIDOR: dict[str, str] = {
     "Angola":          "Cape of Good Hope",
 }
 
-# War-risk insurance cost per corridor risk unit (USD/bbl per 0.5 of risk score).
-# Source: Lloyd's Joint War Committee / IEA risk-cost estimates.
-_WAR_RISK_PER_UNIT = 0.80  # per 0.5 risk unit above 0.3 threshold
+_DEFAULT_WAR_RISK_PER_UNIT = 0.80  # USD/bbl per 0.5 risk unit above 0.3
+
+
+def _load_routing_bundle():
+    """Return (base_cost, base_days, war_risk) dicts from bundle, or defaults."""
+    bundle_path = os.environ.get("SAGE_BUNDLE_PATH", "")
+    if not bundle_path:
+        return _DEFAULT_BASE_COST, _DEFAULT_BASE_DAYS, _DEFAULT_WAR_RISK_PER_UNIT
+    try:
+        from knowledge.context.loader import load_bundle
+        b = load_bundle(bundle_path)
+        rp = b.routing_params
+
+        base_cost: dict[str, float] = {}
+        base_days: dict[str, float] = {}
+        for country in _DEFAULT_BASE_COST:
+            cost_row = rp.get(f"vlcc_cost_usd_bbl|{country}")
+            days_row = rp.get(f"lead_time_days|{country}")
+            base_cost[country] = float(cost_row["value"]) if cost_row else _DEFAULT_BASE_COST[country]
+            base_days[country] = float(days_row["value"]) if days_row else _DEFAULT_BASE_DAYS[country]
+
+        war_row = rp.get("war_risk_premium_per_half_unit")
+        war_risk = float(war_row["value"]) if war_row else _DEFAULT_WAR_RISK_PER_UNIT
+        return base_cost, base_days, war_risk
+    except Exception:
+        return _DEFAULT_BASE_COST, _DEFAULT_BASE_DAYS, _DEFAULT_WAR_RISK_PER_UNIT
 
 
 @dataclass
@@ -91,24 +112,25 @@ class RouteOption:
 def solve(
     suppliers: list,               # list[SupplierView]
     corridors: list[CorridorView],
-    bypass_edges: list[dict],       # [{src, via_port, cost_premium, added_days}]
+    bypass_edges: list[dict],       # [{src, via_corridor, cost_premium, added_days}]
     risk_max: float = 0.5,
 ) -> dict[str, RouteOption]:
     """
     For each non-sanctioned supplier, returns the lowest landed-cost open route.
 
-    Considers: default corridor + any bypass routes from BYPASS_ROUTE bundle edges.
-    Excludes corridors with risk_score > risk_max (treat as closed).
+    Routing params (VLCC costs, lead times, war-risk premium) are read from the
+    bundle at SAGE_BUNDLE_PATH if set; falls back to compiled defaults otherwise.
 
     Returns {supplier_display_name → RouteOption}.
     """
+    base_cost, base_days, war_risk_per_unit = _load_routing_bundle()
     corridor_by_name = {c.display_name: c for c in corridors}
 
     result: dict[str, RouteOption] = {}
     for supplier in suppliers:
         country = supplier.country or ""
-        base_cost = _BASE_COST.get(country, 4.0)
-        base_days = _BASE_DAYS.get(country, 28.0)
+        sup_base_cost = base_cost.get(country, 4.0)
+        sup_base_days = base_days.get(country, 28.0)
         default_corr_name = _DEFAULT_CORRIDOR.get(country, "Suez Canal")
 
         candidates: list[RouteOption] = []
@@ -118,13 +140,13 @@ def solve(
         if corr is not None:
             risk = corr.risk_score or 0.0
             if risk <= risk_max:
-                war_premium = max(0.0, (risk - 0.3)) / 0.5 * _WAR_RISK_PER_UNIT
+                war_premium = max(0.0, (risk - 0.3)) / 0.5 * war_risk_per_unit
                 candidates.append(RouteOption(
                     supplier=supplier.display_name,
                     corridor=default_corr_name,
                     is_bypass=False,
-                    landed_cost_usd_bbl=round(base_cost + war_premium, 2),
-                    lead_time_days=base_days,
+                    landed_cost_usd_bbl=round(sup_base_cost + war_premium, 2),
+                    lead_time_days=sup_base_days,
                     corridor_risk=risk,
                 ))
         else:
@@ -133,8 +155,8 @@ def solve(
                 supplier=supplier.display_name,
                 corridor=default_corr_name,
                 is_bypass=False,
-                landed_cost_usd_bbl=round(base_cost, 2),
-                lead_time_days=base_days,
+                landed_cost_usd_bbl=round(sup_base_cost, 2),
+                lead_time_days=sup_base_days,
                 corridor_risk=0.1,
             ))
 
@@ -147,18 +169,17 @@ def solve(
             bypass_risk = (bypass_corr.risk_score or 0.0) if bypass_corr else 0.1
             if bypass_risk > risk_max:
                 continue
-            war_premium = max(0.0, (bypass_risk - 0.3)) / 0.5 * _WAR_RISK_PER_UNIT
+            war_premium = max(0.0, (bypass_risk - 0.3)) / 0.5 * war_risk_per_unit
             candidates.append(RouteOption(
                 supplier=supplier.display_name,
                 corridor=bypass_corr_name,
                 is_bypass=True,
-                landed_cost_usd_bbl=round(base_cost + edge.get("cost_premium", 0.0) + war_premium, 2),
-                lead_time_days=base_days + edge.get("added_days", 0.0),
+                landed_cost_usd_bbl=round(sup_base_cost + edge.get("cost_premium", 0.0) + war_premium, 2),
+                lead_time_days=sup_base_days + edge.get("added_days", 0.0),
                 corridor_risk=bypass_risk,
             ))
 
         if candidates:
-            # Select minimum landed cost among open routes
             result[supplier.display_name] = min(candidates, key=lambda r: r.landed_cost_usd_bbl)
 
     return result

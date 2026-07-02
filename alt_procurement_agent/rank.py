@@ -17,16 +17,35 @@ security scoring framework):
 from __future__ import annotations
 
 import math
+import os
 from copy import deepcopy
 
 from contracts.outputs import ProcurementOption, ScoreBreakdown
 
-_WEIGHTS = {
+_DEFAULT_WEIGHTS = {
     "cost":          0.35,
     "lead_time":     0.25,
     "compatibility": 0.25,
     "corridor_risk": 0.15,
 }
+
+
+def _load_weights() -> dict[str, float]:
+    """Load TOPSIS weights from bundle; falls back to IEA-sourced defaults."""
+    bundle_path = os.environ.get("SAGE_BUNDLE_PATH", "")
+    if not bundle_path:
+        return _DEFAULT_WEIGHTS
+    try:
+        from knowledge.context.loader import load_bundle
+        rk = load_bundle(bundle_path).ranking_params
+        return {
+            "cost":          float(rk.get("topsis_weight_cost",              {"value": 0.35})["value"]),
+            "lead_time":     float(rk.get("topsis_weight_lead_time",         {"value": 0.25})["value"]),
+            "compatibility": float(rk.get("topsis_weight_grade_compatibility",{"value": 0.25})["value"]),
+            "corridor_risk": float(rk.get("topsis_weight_corridor_risk",     {"value": 0.15})["value"]),
+        }
+    except Exception:
+        return _DEFAULT_WEIGHTS
 
 
 def rank(options: list[ProcurementOption]) -> list[ProcurementOption]:
@@ -45,6 +64,8 @@ def rank(options: list[ProcurementOption]) -> list[ProcurementOption]:
             corridor_risk_score=1.0 - o.corridor_risk,
         )
         return [o]
+
+    weights = _load_weights()
 
     costs   = [o.landed_cost_usd_bbl  for o in options]
     times   = [o.lead_time_days        for o in options]
@@ -67,7 +88,7 @@ def rank(options: list[ProcurementOption]) -> list[ProcurementOption]:
     # Anti-ideal: cost=1, time=1, compat=0, risk=1
     ideal      = [0.0, 0.0, 1.0, 0.0]
     anti_ideal = [1.0, 1.0, 0.0, 1.0]
-    w = [_WEIGHTS["cost"], _WEIGHTS["lead_time"], _WEIGHTS["compatibility"], _WEIGHTS["corridor_risk"]]
+    w = [weights["cost"], weights["lead_time"], weights["compatibility"], weights["corridor_risk"]]
 
     scores: list[float] = []
     breakdowns: list[ScoreBreakdown] = []

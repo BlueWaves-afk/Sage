@@ -1,4 +1,4 @@
 entity_id,canonical_name,capacity_mmt,current_fill_mmt,location,tier,source,as_of,notes
-spr_vizag,Vizag SPR,1.33,0.53,Visakhapatnam Andhra Pradesh,real,ISPRL,2025,capacity real; current_fill estimated (EST-spr) — national ~40% distributed
-spr_mangaluru,Mangaluru SPR,1.50,0.60,Mangaluru Karnataka,real,ISPRL,2025,capacity real; current_fill estimated (EST-spr)
-spr_padur,Padur SPR,2.50,1.00,Padur Udupi Karnataka,real,ISPRL,2025,capacity real; current_fill estimated (EST-spr)
+spr_vizag,Vizag SPR,1.33,0.76,Visakhapatnam Andhra Pradesh,real,ISPRL,2025,capacity real; current_fill derived (EST-spr) — 21.4 Mbbl (~57%) ISPRL Mar-2025 distributed by capacity
+spr_mangaluru,Mangaluru SPR,1.50,0.86,Mangaluru Karnataka,real,ISPRL,2025,capacity real; current_fill derived (EST-spr) — national ~57% distributed
+spr_padur,Padur SPR,2.50,1.43,Padur Udupi Karnataka,real,ISPRL,2025,capacity real; current_fill derived (EST-spr) — national ~57% distributed

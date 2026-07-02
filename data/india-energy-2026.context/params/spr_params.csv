@@ -1,0 +1,9 @@
+param,value,unit,tier,source,update_freq,notes
+buffer_threshold_days,3.0,days,real,PNGRB-norms,regulatory,Minimum operational crude inventory per PNGRB refinery operating norms; emergency floor below which unplanned shutdowns occur
+refill_cost_premium_pct,0.12,fraction,estimated,IEA-SPR-replenishment,dynamic,12% average premium above release price to refill; IEA coordinated release episodes 2005/2011/2022 showed 8-15% range; ideally read from live Brent futures contango/backwardation
+spr_horizon_days,90,days,real,PNGRB-norms,regulatory,India statutory 90-day import cover obligation under petroleum planning norms
+p_resolve_resolving,0.55,probability,estimated,ICB-dataset,dynamic,P(crisis resolves in 5 days) when escalation_profile=resolving; calibrated from ICB historical crisis resolution rates for actively de-escalating crises; should become dynamic from System 1 signals
+p_resolve_constant,0.20,probability,estimated,ICB-dataset,dynamic,P(crisis resolves in 5 days) for constant-severity crises; median IEA crisis duration ~3-4 weeks implies ~20% per 5-day window
+p_resolve_escalating,0.05,probability,estimated,ICB-dataset,dynamic,P(crisis resolves in 5 days) for escalating crises; low near-term resolution probability by definition
+sdp_discount_rate,0.97,fraction_per_day,derived,standard-finance,annual,Daily discount rate for SDP value function; equivalent to ~10.5% annual discount rate
+sdp_max_draw_fraction,0.60,fraction,estimated,ISPRL-ops,annual,Max daily SPR draw as fraction of daily consumption; ISPRL emergency pumping rate estimate

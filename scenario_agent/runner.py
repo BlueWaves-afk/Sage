@@ -44,7 +44,7 @@ async def run(
     sectors    = _bundle_sectors()
 
     if status == "speculative":
-        result, bands = await _run_gnn(subgraph, params), None
+        result, bands = await _run_gnn(subgraph, params, refineries, sectors), None
     else:
         result = run_ario(params, refineries, sectors)
         bands  = run_monte_carlo(params, n=300)
@@ -209,7 +209,17 @@ def _extract_refineries(subgraph, trigger_entity: str) -> list[dict]:
     ]
 
 
-_BASELINE_BRENT = 75.0   # baseline price for the IO price-rise fraction
+def _baseline_brent() -> float:
+    """Baseline Brent price for IO normalisation. Read from bundle; falls back to 75.0."""
+    bundle_path = os.environ.get("SAGE_BUNDLE_PATH", os.environ.get("SAGE_CONTEXT_BUNDLE", ""))
+    if bundle_path:
+        try:
+            from knowledge.context.loader import load_bundle
+            ep = load_bundle(bundle_path).economics_params
+            return float(ep.get("baseline_brent_usd_per_bbl", {"value": 75.0})["value"])
+        except Exception:
+            pass
+    return 75.0
 
 
 def _run_io_and_abm(ario_result, params, refineries):
@@ -222,7 +232,7 @@ def _run_io_and_abm(ario_result, params, refineries):
         if io:
             shortfall = min(1.0, ario_result.gap_mbpd / max(params.daily_consumption_mbpd, 0.01))
             price_mid = (ario_result.price_impact_low + ario_result.price_impact_high) / 2.0
-            ior = io.run(shortfall, price_mid / _BASELINE_BRENT)
+            ior = io.run(shortfall, price_mid / _baseline_brent())
             io_block = {
                 "model": "Leontief IO (aggregated India IOTT, MOSPI/IIOA)",
                 "gdp_loss_pct": ior.gdp_loss_pct, "inflation_pct": ior.inflation_pct,
@@ -263,10 +273,19 @@ async def _war_risk_premium(trigger_entity: str) -> float:
         return 0.0
 
 
-async def _run_gnn(subgraph, params: ARIOParams):
+async def _run_gnn(subgraph, params: ARIOParams, refineries=None, sectors=None):
     """
-    GNN surrogate for sandbox speed (<150ms). Falls back to ARIO until the model
-    is trained (gnn/train.py). Stub returns the analytic ARIO result for now.
+    Fast cascade for the speculative (sandbox) path.
+
+    Design note (see scenario_agent/gnn/model.py): for SAGE's FIXED India supply-chain
+    topology the analytic ARIO is a ~0.04 ms/call pure-Python day-loop — cheaper AND more
+    accurate than the trained surrogate (~13 ms, degrades near full closure). So the correct
+    "surrogate" for the current ground truth is ARIO itself: 500 MC paths × 0.04 ms ≈ 20 ms,
+    well under the 150 ms budget. The joblib surrogate earns its keep only when the ground
+    truth becomes EXPENSIVE (ARIO replaced/augmented by a seconds-per-run ABM); at that point
+    predict_cascade() transparently swaps in the trained model behind this same seam.
+
+    We run ARIO here with the full refineries + sectors so speculative output carries the same
+    per-node attribution as the confirmed path (previously these were dropped in speculative mode).
     """
-    # TODO: load CascadeGNN from checkpoint, run forward() on subgraph features
-    return run_ario(params)
+    return run_ario(params, refineries, sectors)

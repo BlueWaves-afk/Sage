@@ -1,0 +1,7 @@
+param,value,unit,tier,source,update_freq,notes
+baseline_brent_usd_per_bbl,95.0,usd_per_bbl,real,EIA-STEO,monthly,EIA STEO Jun-2026 Brent 2026 annual-average forecast ($95/bbl); Q2 $114.60, Q3 $99.80, Q4 $88.00; overridden live by System 1 price sub-agent
+daily_consumption_mmt,0.57,mmt_per_day,derived,PPAC-imports,annual,India daily crude consumption in MMT; derived from 5.25 mbpd × 0.109 tonnes/bbl; matches ario_params daily_consumption_mbpd via unit conversion
+supplier_risk_max_filter,0.4,fraction,estimated,IEA-supply-security,policy-driven,Maximum risk_score for a supplier to be included in procurement options; suppliers above 0.4 are considered too risky for primary sourcing
+corridor_risk_max_filter,0.5,fraction,estimated,IEA-supply-security,policy-driven,Maximum corridor risk_score for a route to be considered open; Hormuz above 0.5 triggers bypass-only routing
+option_resolution_window_days,5.0,days,estimated,IEA-supply-security,annual,Real-options observation window: number of days to wait before committing to SPR drawdown decision; IEA guidance suggests 5-day diplomatic/military resolution window
+option_demand_destruction_during_wait,0.30,fraction,estimated,NIPFP-gdp,annual,Fraction of unmet demand assumed absorbed by rationing/demand destruction during the wait window; NIPFP demand elasticity bounds

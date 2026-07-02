@@ -14,13 +14,30 @@ RF+PR-EOS upgrade path: system3_design.md §3.1 — drop-in when yield curves av
 from __future__ import annotations
 
 import math
+import os
 
 from knowledge.api.read import GradeSpecView
 
-_API_SIGMA    = 8.0   # one-sigma API tolerance (°API)
-_SULFUR_SIGMA = 0.5   # one-sigma sulfur tolerance (wt %)
-_API_FLOOR    = 0.25  # minimum for fully mismatched API (blending still possible)
-_SULFUR_FLOOR = 0.30  # minimum for fully mismatched sulfur
+_GRADE_DEFAULTS = {
+    "grade_api_sigma":     8.0,
+    "grade_sulfur_sigma":  0.5,
+    "grade_api_floor":     0.25,
+    "grade_sulfur_floor":  0.30,
+    "grade_api_weight":    0.6,
+    "grade_sulfur_weight": 0.4,
+}
+
+
+def _load_grade_params() -> dict:
+    bundle_path = os.environ.get("SAGE_BUNDLE_PATH", "")
+    if not bundle_path:
+        return _GRADE_DEFAULTS.copy()
+    try:
+        from knowledge.context.loader import load_bundle
+        gp = load_bundle(bundle_path).grade_params
+        return {k: float(gp.get(k, {"value": v})["value"]) for k, v in _GRADE_DEFAULTS.items()}
+    except Exception:
+        return _GRADE_DEFAULTS.copy()
 
 
 def compatibility_score(
@@ -34,6 +51,9 @@ def compatibility_score(
     1.0  = drop-in within tolerance window
     ~0.5 = processable with yield penalty / blending needed
     <0.3 = significant throughput loss; avoid unless no alternative
+
+    All tolerance parameters (API/sulfur sigma, floors, weights) read from bundle
+    grade_params.csv; no hardcoded values in this function.
     """
     # Bundle CONFIGURED_FOR edges may carry LP-calibrated compatibility directly.
     if refinery_spec.compatibility is not None:
@@ -44,9 +64,10 @@ def compatibility_score(
     if ref_api is None or ref_sulfur is None:
         return 0.5  # no spec data — neutral
 
-    api_score    = _gaussian(supplier_grade_api,    ref_api,    _API_SIGMA,    _API_FLOOR)
-    sulfur_score = _gaussian(supplier_grade_sulfur, ref_sulfur, _SULFUR_SIGMA, _SULFUR_FLOOR)
-    return round(max(0.0, min(1.0, 0.6 * api_score + 0.4 * sulfur_score)), 4)
+    p = _load_grade_params()
+    api_score    = _gaussian(supplier_grade_api,    ref_api,    p["grade_api_sigma"],    p["grade_api_floor"])
+    sulfur_score = _gaussian(supplier_grade_sulfur, ref_sulfur, p["grade_sulfur_sigma"], p["grade_sulfur_floor"])
+    return round(max(0.0, min(1.0, p["grade_api_weight"] * api_score + p["grade_sulfur_weight"] * sulfur_score)), 4)
 
 
 def best_compatibility(

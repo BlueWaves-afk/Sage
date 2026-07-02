@@ -1,0 +1,7 @@
+param,value,unit,tier,source,update_freq,notes
+grade_api_sigma,8.0,degrees_api,estimated,IEA-refinery-complexity,annual,One-sigma API gravity tolerance window; IEA Refinery Complexity study + PPAC NCI guidance suggest ±8°API processing window before significant yield penalty
+grade_sulfur_sigma,0.5,wt_pct,estimated,EIA-crude-economics,annual,One-sigma sulfur tolerance; EIA crude assay economics / desulphuriser capacity norms; refineries with hydrotreaters tolerate ±0.5 wt% without throughput loss
+grade_api_floor,0.25,fraction,estimated,DERIVED-compat,annual,Minimum compatibility score when API fully mismatched (>3-sigma); blending still possible so floor >0; operator experience estimate
+grade_sulfur_floor,0.30,fraction,estimated,DERIVED-compat,annual,Minimum compat when sulfur fully mismatched; slightly higher floor than API because sulfur drives catalyst costs and environmental compliance
+grade_api_weight,0.6,fraction,estimated,EIA-crude-economics,annual,Weight of API score in blended compatibility (0.6 API + 0.4 sulfur); EIA crude assay sensitivity analysis shows API affects distillation yield more than sulfur
+grade_sulfur_weight,0.4,fraction,estimated,EIA-crude-economics,annual,Weight of sulfur score in blended compatibility; complement to grade_api_weight (must sum to 1.0)

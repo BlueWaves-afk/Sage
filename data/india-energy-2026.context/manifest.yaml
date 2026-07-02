@@ -11,15 +11,30 @@
 bundle_id:      india-energy-2026
 name:           India Energy Supply Chain — 2026
 schema_version: 1.0.0
+bundle_version: 1.1.0          # bump on any structural change; upgrade.py diffs on this
+previous_version: null          # set to prior bundle_id on upgrade (e.g. india-energy-2025)
 domain:         oil-supply-chain
 region:         India
 vintage:        2026
-created:        2026-06-30
+created:        2026-07-02
+
+# ── Upgrade policy ────────────────────────────────────────────────────────────
+# STRUCTURAL layers (facts/, params/, io/) are REPLACED on upgrade.
+# DYNAMIC layers (RISK_STATE edges, GeoEvent nodes, episodes, wiki narratives
+#   written by System 1) are PRESERVED — upgrade.py never deletes them.
+# Wiki pages for changed entities are re-synthesized with a "## Context Update" note.
+# Run: python3.11 -m knowledge.context.upgrade <new_bundle_path>
+upgrade_policy:
+  replace:  [facts, params, io]
+  preserve: [risk_state_edges, geo_events, vessel_nodes, episodes, wiki_dynamic]
+  resynthesise_on_change: true
 description: >
   Foundational static knowledge for India's crude oil supply chain: maritime
   corridors, suppliers, refineries, crude grades, ports, strategic reserves, and
   the structural relationships between them. All values sourced from public data;
   fields with no public source are tagged with an estimation_method.
+  Full per-value provenance (real/derived/estimated + source links) is documented
+  in DATA_PROVENANCE.md alongside this manifest.
 
 # ── Provenance tiers ─────────────────────────────────────────────────────────
 # Every node/edge row carries a `tier` and a `source` key (resolved below).
@@ -88,6 +103,9 @@ sources:
   EIA-spare:
     label: EIA — OPEC effective spare capacity
     url:   https://www.eia.gov/outlooks/steo/report/global_oil.php
+  EIA-STEO:
+    label: EIA Short-Term Energy Outlook — Brent crude price forecast (Jun 2026, $95/bbl 2026 avg)
+    url:   https://www.eia.gov/outlooks/steo/
   PPAC-sectoral:
     label: PPAC/Nielsen — All India Study on Sectoral Demand of Diesel & Petrol
     url:   https://www.pib.gov.in/newsite/printrelease.aspx?relid=102799
@@ -103,6 +121,36 @@ sources:
   CSEP-io:
     label: CSEP — Input-Output Transactions Table India 2015-16 (aggregated)
     url:   https://csep.org/discussion-note/input-output-transactions-table-india-2015-16/
+  Baltic-BDTI:
+    label: Baltic Exchange Dirty Tanker Index — VLCC voyage cost benchmarks (TD3C, TD1)
+    url:   https://www.balticexchange.com/en/data-services/market-information/tankers.html
+  Clarkson-voyage:
+    label: Clarkson Research Services — VLCC voyage duration estimates by route
+    url:   https://www.clarksons.net/
+  Lloyds-JWC:
+    label: Lloyd's Joint War Committee — Hull War, Strikes & Terrorism Listed Areas
+    url:   https://www.lmalloyds.com/LMA/Underwriting/Marine/Joint_War_Committee/LMA/Underwriting_Group/Marine_Underwriting/JWC.aspx
+  IEA-supply-security:
+    label: IEA Oil Supply Security 2014 — disruption cost methodology and supply-security scoring
+    url:   https://www.iea.org/reports/oil-supply-security
+  PNGRB-norms:
+    label: Petroleum & Natural Gas Regulatory Board — refinery operating norms (90-day cover obligation, 3-day buffer)
+    url:   https://www.pngrb.gov.in/
+  IEA-SPR-replenishment:
+    label: IEA — Coordinated SPR release episodes (2005/2011/2022); refill cost premium analysis
+    url:   https://www.iea.org/topics/oil-supply-security/strategic-petroleum-reserves
+  ICB-dataset:
+    label: International Crisis Behavior dataset — crisis resolution rate calibration
+    url:   https://sites.duke.edu/icbdata/
+  ISPRL-ops:
+    label: ISPRL — Indian Strategic Petroleum Reserves Ltd operational pumping rate estimates
+    url:   https://isprlindia.com
+  IEA-refinery-complexity:
+    label: IEA — Refinery Complexity and Crude Processing Window study
+    url:   https://www.iea.org/reports/the-future-of-petrochemicals
+  EIA-crude-economics:
+    label: EIA — Crude Oil Assay Economics and Refinery Yield Analysis
+    url:   https://www.eia.gov/todayinenergy/detail.php?id=9731
 
 # ── Estimation methods ───────────────────────────────────────────────────────
 # Rows with tier=derived or estimated reference one of these as their `source`.
@@ -145,6 +193,9 @@ estimation_methods:
   EST-sector-other:
     method: Residual petroleum products not in named sectors
     tier:   estimated
+  standard-finance:
+    method: Annual discount rate 10.5% → daily factor 0.97 (r_daily = (1+r_annual)^(1/365) - 1 ≈ 0.97)
+    tier:   derived
 
 # ── Bundle contents ──────────────────────────────────────────────────────────
 # Two layers:
@@ -169,13 +220,21 @@ edges:
   - {type: CONFIGURED_FOR, file: facts/edges/configured_for.csv}
   - {type: BYPASS_ROUTE,   file: facts/edges/bypass_routes.csv}
 
-# Model parameters (ARIO economic coefficients) — sourced, provenance-tracked, swappable.
-# System 2 reads these instead of hardcoding constants. Same tier+source contract.
-params_file: params/ario_params.csv
+# Model parameters — sourced, provenance-tracked, swappable per-bundle.
+# All systems read from these files; nothing is hardcoded in agent code.
+params_file:          params/ario_params.csv       # System 2 ARIO economic coefficients
+sectors_file:         params/sectors.csv            # System 2 IO sectoral weights
+routing_params_file:  params/routing_params.csv     # System 3 VLCC costs/lead times/war-risk
+ranking_params_file:  params/ranking_params.csv     # System 3 TOPSIS criterion weights
+spr_params_file:      params/spr_params.csv         # System 4 SDP/CMDP constants + p_resolve
+grade_params_file:    params/grade_params.csv       # System 3 grade compatibility tolerances
+heuristic_params_file: params/heuristic_params.csv  # Orchestration heuristic thresholds
+economics_params_file: params/economics_params.csv  # Shared baseline economics (Brent, daily consumption, risk filters)
 
-# Economic sectors (petroleum consumption share + GDP weight) — for the reduced-form
-# input-output sectoral cascade (System 2): oil shock → which sectors bear the shortage.
-sectors_file: params/sectors.csv
+# Refresh contract: the subset of values that drift SUB-ANNUALLY and are only safe as
+# static defaults because System 1 overrides them live. A yearly commit is enough for
+# everything EXCEPT the rows listed here. See DATA_PROVENANCE.md §Refresh contract.
+volatile_registry_file: params/volatile_defaults.csv
 
 # Narratives are auto-discovered from narratives/*.md (filename = entity_id).
 # Each carries frontmatter: entity_id, source_url, as_of, tier.

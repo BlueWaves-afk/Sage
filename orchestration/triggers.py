@@ -166,11 +166,32 @@ async def _run_procurement(scenario_id: str, trigger_entity: str) -> None:
     await run_procurement(scenario_id=scenario_id, trigger_refinery=trigger_entity)
 
 
+def _hormuz_dependency_mbpd() -> float:
+    """
+    India's Hormuz-dependent import volume in mbpd.
+    Derived from bundle: daily_consumption_mbpd × import_dependence_pct × hormuz_share_pct.
+    Falls back to compiled value (2.19 mbpd) if bundle unavailable.
+    """
+    bundle_path = __import__("os").environ.get("SAGE_BUNDLE_PATH", "")
+    if bundle_path:
+        try:
+            from knowledge.context.loader import load_bundle
+            mp = load_bundle(bundle_path).model_params
+            consumption = float(mp.get("daily_consumption_mbpd", {"value": 5.15})["value"])
+            import_dep  = float(mp.get("import_dependence_pct",  {"value": 88.2})["value"]) / 100.0
+            hormuz_share = float(mp.get("hormuz_share_pct",       {"value": 42.5})["value"]) / 100.0
+            return round(consumption * import_dep * hormuz_share, 3)
+        except Exception:
+            pass
+    return 2.19  # compiled fallback: 5.15 × 0.882 × 0.425 ≈ 2.19 mbpd
+
+
 async def _run_spr(scenario_id: str, scenario_params: dict) -> None:
     from reserve_optim_agent.runner import run as run_spr
+    hormuz_mbpd = _hormuz_dependency_mbpd()
     await run_spr(
         scenario_id=scenario_id,
-        gap_mbpd=scenario_params.get("disruption_fraction", 1.0) * 2.19,  # Hormuz dep ~2.19mbpd
+        gap_mbpd=scenario_params.get("disruption_fraction", 1.0) * hormuz_mbpd,
         gap_duration_days=int(scenario_params.get("disruption_days", 30)),
         escalation_profile=scenario_params.get("escalation_profile", "constant"),
     )

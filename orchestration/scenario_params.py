@@ -14,9 +14,35 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from typing import Optional
 
 log = logging.getLogger(__name__)
+
+_HEURISTIC_DEFAULTS = {
+    "heuristic_default_risk_score":        0.7,
+    "heuristic_severity_lower_bound":      0.3,
+    "heuristic_severity_width":            0.6,
+    "heuristic_sanctions_factor_threshold": 0.5,
+    "heuristic_disruption_days_if_sanctions": 30,
+    "heuristic_disruption_days_if_normal": 14,
+    "heuristic_escalation_score_threshold": 0.8,
+    "heuristic_spr_aggressive_threshold":  0.9,
+    "heuristic_max_disruption_days":       180,
+    "heuristic_max_demand_destruction_pct": 0.30,
+}
+
+
+def _load_heuristic_params() -> dict:
+    bundle_path = os.environ.get("SAGE_BUNDLE_PATH", "")
+    if not bundle_path:
+        return _HEURISTIC_DEFAULTS.copy()
+    try:
+        from knowledge.context.loader import load_bundle
+        hp = load_bundle(bundle_path).heuristic_params
+        return {k: float(hp.get(k, {"value": v})["value"]) for k, v in _HEURISTIC_DEFAULTS.items()}
+    except Exception:
+        return _HEURISTIC_DEFAULTS.copy()
 
 _VALID_ESCALATION = {"constant", "escalating", "resolving"}
 _VALID_SPR = {"aggressive", "moderate", "none"}
@@ -70,17 +96,18 @@ async def _llm_decide(entity: str, risk) -> Optional[dict]:
 # ── Deterministic fallback ──────────────────────────────────────────────────────
 
 def _heuristic(risk) -> dict:
-    score = float(getattr(risk, "score", 0.7) or 0.7)
+    p = _load_heuristic_params()
+    score = float(getattr(risk, "score", p["heuristic_default_risk_score"]) or p["heuristic_default_risk_score"])
     f = getattr(risk, "factors", {}) or {}
-    # severity scales with how far past the 'elevated' band we are
-    frac = max(0.1, min(1.0, (score - 0.3) / 0.6))
-    sanctions_heavy = float(f.get("sanctions", 0)) > 0.5
+    frac = max(0.1, min(1.0, (score - p["heuristic_severity_lower_bound"]) / p["heuristic_severity_width"]))
+    sanctions_heavy = float(f.get("sanctions", 0)) > p["heuristic_sanctions_factor_threshold"]
     return {
         "disruption_fraction": round(frac, 2),
-        "disruption_days": 30 if sanctions_heavy else 14,
-        "escalation_profile": "escalating" if score < 0.8 else "constant",
+        "disruption_days": int(p["heuristic_disruption_days_if_sanctions"]) if sanctions_heavy
+                           else int(p["heuristic_disruption_days_if_normal"]),
+        "escalation_profile": "escalating" if score < p["heuristic_escalation_score_threshold"] else "constant",
         "bypass_compromised_frac": 0.0,
-        "spr_policy": "aggressive" if score >= 0.9 else "moderate",
+        "spr_policy": "aggressive" if score >= p["heuristic_spr_aggressive_threshold"] else "moderate",
         "demand_destruction_pct": 0.0,
         "rationale": f"heuristic from risk {score:.2f}",
     }
@@ -96,13 +123,14 @@ async def _current_risk(entity: str):
 
 
 def _sanitise(d: dict) -> dict:
+    p = _load_heuristic_params()
     out = {}
     out["disruption_fraction"] = max(0.0, min(1.0, float(d.get("disruption_fraction", 1.0))))
-    out["disruption_days"] = int(max(1, min(180, d.get("disruption_days", 30))))
+    out["disruption_days"] = int(max(1, min(int(p["heuristic_max_disruption_days"]), d.get("disruption_days", 30))))
     out["escalation_profile"] = d.get("escalation_profile") if d.get("escalation_profile") in _VALID_ESCALATION else "constant"
     out["bypass_compromised_frac"] = max(0.0, min(1.0, float(d.get("bypass_compromised_frac", 0.0))))
     out["spr_policy"] = d.get("spr_policy") if d.get("spr_policy") in _VALID_SPR else "moderate"
-    out["demand_destruction_pct"] = max(0.0, min(0.3, float(d.get("demand_destruction_pct", 0.0))))
+    out["demand_destruction_pct"] = max(0.0, min(p["heuristic_max_demand_destruction_pct"], float(d.get("demand_destruction_pct", 0.0))))
     if d.get("rationale"):
         out["rationale"] = str(d["rationale"])[:200]
     return out

@@ -31,7 +31,8 @@ SAGE continuously ingests geopolitical and logistics signals from four always-on
 6. [Tech Stack](#tech-stack)
 7. [Getting Started](#getting-started)
 8. [Instantiating Foundational Knowledge (Context Bundle)](#instantiating-foundational-knowledge-context-bundle)
-9. [Team Ownership](#team-ownership)
+9. [Upgrading the Knowledge Base to a New Bundle](#upgrading-the-knowledge-base-to-a-new-bundle)
+10. [Team Ownership](#team-ownership)
 10. [License](#license)
 
 ---
@@ -456,10 +457,81 @@ region (`europe-gas-2026.context`), or domain. Build your own with the format sp
 [`data/CONTEXT_BUNDLE_SCHEMA.md`](data/CONTEXT_BUNDLE_SCHEMA.md). Full sourcing rationale per value:
 [`docs/data.md`](docs/data.md).
 
-> **Refresh cadence:** almost everything in a bundle changes once a year (refinery capacity, assays,
-> import shares) or never (coordinates, distances). Pull once, commit, version as a new dated bundle —
-> don't build scrapers for annual data. Anything event-driven (sanctions, prices) is System 1's job,
-> not the static bundle.
+> **Refresh cadence:** most of a bundle changes once a year (refinery capacity, assays, import shares)
+> or never (coordinates, distances). Pull once, commit, version as a new dated bundle — don't build
+> scrapers for annual data. A handful of values drift faster (Brent, freight, SPR fill, Hormuz share):
+> these are listed explicitly in [`params/volatile_defaults.csv`](data/india-energy-2026.context/params/volatile_defaults.csv)
+> with their cadence and the System 1 signal that overrides them live. Anything event-driven (risk
+> scores, congestion, sanctions, war-risk premium) is System 1's job, never the static bundle.
+
+---
+
+## Upgrading the Knowledge Base to a New Bundle
+
+When a new `.context` bundle is available (e.g. `india-energy-2027.context` with updated refinery capacities, new suppliers, revised TOPSIS weights), you can apply it **without losing any dynamic KB data** — RISK_STATE edges, GeoEvent nodes, live episodes from System 1, and wiki pages written by the synthesis path are all preserved.
+
+### What the upgrade replaces vs. preserves
+
+| Layer | Action |
+|---|---|
+| **Structural facts** — node attributes (capacity, assay, throughput), edge weights (volume, share, compatibility), model params (ARIO, routing, TOPSIS, SPR/SDP, grade, heuristic, economics) | **REPLACED** — upserted from the new bundle's CSVs |
+| **RISK_STATE edges** — live risk scores, factor breakdowns, rationale strings | **PRESERVED** — written by System 1, never touched by the upgrade |
+| **GeoEvent nodes, Vessel nodes** — dynamic entities registered at runtime | **PRESERVED** |
+| **Graphiti episodes** — every event the system has ever processed | **PRESERVED** |
+| **Wiki narratives from System 1** — synthesised pages for live signals | **PRESERVED** |
+| **Wiki pages for changed entities** | **RE-SYNTHESIZED** — a `## Context Update` note is appended with the new structural facts; the rest of the page is unchanged |
+
+An audit episode (`bundle-upgrade-{old_version}-to-{new_version}`) is written to the KB after every successful upgrade so the transition is part of the provenance ledger.
+
+### Run an upgrade
+
+```bash
+# Point SAGE_BUNDLE_PATH at the current bundle so the upgrade can diff
+export SAGE_BUNDLE_PATH=data/india-energy-2026.context
+
+# Apply the new bundle
+python3.11 -m knowledge.context.upgrade data/india-energy-2027.context
+```
+
+Output:
+
+```
+Upgrade complete:
+  old_version: 1.1.0
+  new_version: 1.2.0
+  node_attrs_updated: 142
+  edge_attrs_updated: 37
+  edges_reconciled: 41
+  exposures_derived: 22
+  wiki_resynced: 8
+```
+
+After the upgrade, set `SAGE_BUNDLE_PATH` to the new bundle path so agents read the updated params on the next restart.
+
+### All model parameters are bundle-driven
+
+No numeric constant is hardcoded in agent code. Every parameter that affects model behaviour lives in one of the bundle's param CSVs:
+
+| CSV | Controls |
+|---|---|
+| `params/ario_params.csv` | System 2 — ARIO cascade: supply shares, bypass capacity, price elasticity, GDP/inflation multipliers |
+| `params/sectors.csv` | System 2 — Leontief IO sectoral weights |
+| `params/routing_params.csv` | System 3 — VLCC costs and lead times per country, war-risk premium |
+| `params/ranking_params.csv` | System 3 — TOPSIS criterion weights (cost, lead time, compatibility, corridor risk) |
+| `params/grade_params.csv` | System 3 — Grade compatibility tolerances (API/sulfur sigma, floors, weights) |
+| `params/spr_params.csv` | System 4 — SDP discount rate, max draw fraction, buffer threshold, crisis-resolution probabilities |
+| `params/economics_params.csv` | Shared — baseline Brent price, daily consumption, risk filter thresholds, real-options window |
+| `params/heuristic_params.csv` | Orchestration — scenario heuristic bounds, disruption day defaults, SPR policy thresholds |
+
+To change any value: edit the CSV in the bundle, bump `bundle_version` in `manifest.yaml`, run `python3.11 -m knowledge.context.upgrade <new_bundle_path>`.
+
+### Building a bundle for a new region or year
+
+See [`data/CONTEXT_BUNDLE_SCHEMA.md`](data/CONTEXT_BUNDLE_SCHEMA.md) for the full format specification. Every row must carry a `tier` (`real` / `derived` / `estimated`) and a `source` that resolves to a registered entry in `manifest.yaml` — the loader rejects any unsourced row as a hard validation error.
+
+### Data provenance — what's real vs estimated
+
+Every value in the shipped `india-energy-2026` bundle is catalogued in [`data/india-energy-2026.context/DATA_PROVENANCE.md`](data/india-energy-2026.context/DATA_PROVENANCE.md): its tier, its source (with links), and — for the values reviewed against live data in July 2026 — the correction applied and the citation. Real values trace to EIA, PPAC, ISPRL, Aramco/BP assays, MOSPI, and OFAC; derived values state their method; estimated values fall into three honest buckets (analyst-assigned structural weights, live-at-runtime placeholders, and tunable policy/behavioural parameters). Judges and users can audit the whole data footprint there.
 
 ---
 

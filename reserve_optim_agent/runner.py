@@ -12,6 +12,7 @@ Triggered in parallel with System 3 by a new ScenarioOutput.
 from __future__ import annotations
 
 import logging
+import os
 from typing import Literal
 
 from contracts.outputs import SPRDay, SPRScheduleData
@@ -24,13 +25,47 @@ log = logging.getLogger(__name__)
 
 Status = Literal["speculative", "confirmed"]
 
-# Regime → P(crisis resolves in the next 5 days).
-# Calibrated from IEA historical crisis resolution data.
-_RESOLVE_PROB: dict[str, float] = {
-    "resolving":  0.55,   # escalation_profile=resolving → high resolve prob
+_DEFAULT_RESOLVE_PROB: dict[str, float] = {
+    "resolving":  0.55,
     "constant":   0.20,
     "escalating": 0.05,
 }
+_DEFAULT_REFILL_PREMIUM = 0.12
+
+
+def _load_spr_bundle_params() -> tuple[dict[str, float], float]:
+    """Return (resolve_prob_by_profile, refill_cost_premium) from bundle or defaults."""
+    bundle_path = os.environ.get("SAGE_BUNDLE_PATH", "")
+    if not bundle_path:
+        return _DEFAULT_RESOLVE_PROB, _DEFAULT_REFILL_PREMIUM
+    try:
+        from knowledge.context.loader import load_bundle
+        sp = load_bundle(bundle_path).spr_params
+        resolve = {
+            "resolving":  float(sp.get("p_resolve_resolving",  {"value": 0.55})["value"]),
+            "constant":   float(sp.get("p_resolve_constant",   {"value": 0.20})["value"]),
+            "escalating": float(sp.get("p_resolve_escalating", {"value": 0.05})["value"]),
+        }
+        refill = float(sp.get("refill_cost_premium_pct", {"value": 0.12})["value"])
+        return resolve, refill
+    except Exception:
+        return _DEFAULT_RESOLVE_PROB, _DEFAULT_REFILL_PREMIUM
+
+
+def _load_economics_defaults() -> dict:
+    defaults = {
+        "baseline_brent_usd_per_bbl":       80.0,
+        "option_resolution_window_days":      5.0,
+    }
+    bundle_path = os.environ.get("SAGE_BUNDLE_PATH", "")
+    if not bundle_path:
+        return defaults
+    try:
+        from knowledge.context.loader import load_bundle
+        ep = load_bundle(bundle_path).economics_params
+        return {k: float(ep.get(k, {"value": v})["value"]) for k, v in defaults.items()}
+    except Exception:
+        return defaults
 
 
 async def run(
@@ -39,14 +74,21 @@ async def run(
     gap_duration_days: int,
     status: Status = "confirmed",
     escalation_profile: str = "constant",
-    price_per_bbl: float = 80.0,
+    price_per_bbl: float | None = None,
 ) -> str:
     """
     Full SPR optimisation run. Returns scenario_id on completion.
 
     `escalation_profile` from the LLM-decided scenario shapes the real-options
     calculation: a resolving crisis → stronger case for waiting before drawing.
+    `price_per_bbl` defaults to bundle economics_params.baseline_brent_usd_per_bbl
+    when not supplied (overridden by System 1 price sub-agent when available).
     """
+    eco = _load_economics_defaults()
+    if price_per_bbl is None:
+        price_per_bbl = eco["baseline_brent_usd_per_bbl"]
+    resolution_days = eco["option_resolution_window_days"]
+
     caverns         = await get_spr_state()
     total_fill_mmt  = sum(c.current_fill_mmt or 0.0 for c in caverns)
     total_cap_mmt   = sum(c.capacity_mmt     or 0.0 for c in caverns)
@@ -56,11 +98,12 @@ async def run(
              total_fill_mmt, total_cap_mmt, fill_frac * 100)
 
     # Real-options valuation first — influences SDP horizon framing.
-    p_resolve  = _RESOLVE_PROB.get(escalation_profile, 0.20)
+    resolve_prob, refill_premium = _load_spr_bundle_params()
+    p_resolve  = resolve_prob.get(escalation_profile, 0.20)
     opt_val    = option_value_of_waiting(
         p_crisis_resolves      = p_resolve,
-        resolution_days        = 5.0,
-        refill_cost_premium    = 0.12,
+        resolution_days        = resolution_days,
+        refill_cost_premium    = refill_premium,
         gap_mbpd               = gap_mbpd,
         price_per_bbl          = price_per_bbl,
     )
@@ -68,12 +111,18 @@ async def run(
     log.info("[spr] real-options: opt_val=%.2f — %s", opt_val, wait_rec)
 
     # SDP/CMDP: solve for optimal day-by-day schedule
+    from reserve_optim_agent.sdp import _load_sdp_bundle
+    sdp_b = _load_sdp_bundle()
     params = SDPParams(
         spr_initial_mmt       = total_fill_mmt,
         gap_mbpd              = gap_mbpd,
         gap_duration_days     = gap_duration_days,
-        price_per_bbl         = price_per_bbl,
-        horizon_days          = max(gap_duration_days + 30, 60),
+        price_per_bbl          = price_per_bbl,
+        daily_consumption_mmt  = sdp_b["daily_consumption_mmt"],
+        horizon_days           = max(gap_duration_days + 30, sdp_b["spr_horizon_days"]),
+        buffer_threshold_days  = sdp_b["buffer_threshold_days"],
+        discount_rate          = sdp_b["sdp_discount_rate"],
+        max_draw_fraction      = sdp_b["sdp_max_draw_fraction"],
     )
     result: SDPResult = solve(params)
 

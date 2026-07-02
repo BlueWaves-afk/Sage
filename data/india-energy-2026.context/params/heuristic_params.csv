@@ -1,0 +1,11 @@
+param,value,unit,tier,source,update_freq,notes
+heuristic_default_risk_score,0.7,fraction,estimated,ICB-dataset,annual,Fallback risk score used when live KB score unavailable; 0.7 sits in the action band (0.70-0.90) ensuring the pipeline fires without being critical
+heuristic_severity_lower_bound,0.3,fraction,estimated,ICB-dataset,annual,Lower bound of the severity scaling formula: frac=(score-lower)/(width); 0.3 is the elevated-band floor — below this disruption fraction should approach 0
+heuristic_severity_width,0.6,fraction,estimated,ICB-dataset,annual,Width of severity scaling: frac=(score-0.3)/width; 0.6 spans elevated→critical band so score=0.9 → frac=1.0
+heuristic_sanctions_factor_threshold,0.5,fraction,estimated,ICB-dataset,annual,Sanctions factor score above which disruption_days is set longer; >0.5 means sanctions are a primary driver suggesting sustained supply loss
+heuristic_disruption_days_if_sanctions,30,days,estimated,ICB-dataset,annual,Default disruption duration when sanctions are the primary factor; sanctions-driven closures average 30 days before alternative routing
+heuristic_disruption_days_if_normal,14,days,estimated,ICB-dataset,annual,Default disruption duration for non-sanctions events (military exercises, weather); shorter because physical events typically resolve faster
+heuristic_escalation_score_threshold,0.8,fraction,estimated,ICB-dataset,annual,Score below this threshold → escalating profile; above 0.8 → crisis is at peak so profile switches to constant (not still escalating)
+heuristic_spr_aggressive_threshold,0.9,fraction,estimated,ICB-dataset,annual,Score at or above this → aggressive SPR policy; critical band (>=0.9) warrants maximum drawdown readiness
+heuristic_max_disruption_days,180,days,estimated,ICB-dataset,annual,Hard cap on disruption_days sanity check; longest observed oil supply disruption (Libya 2011) was ~120 days; 180 provides headroom
+heuristic_max_demand_destruction_pct,0.30,fraction,estimated,NIPFP-gdp,annual,Hard cap on demand_destruction_pct sanity check; NIPFP demand elasticity study bounds severe demand destruction at ~30%

@@ -19,6 +19,8 @@ from typing import AsyncGenerator
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 
+from fastapi import HTTPException
+
 from knowledge.api.read import (
     copilot_query,
     get_risk_scores,
@@ -26,6 +28,7 @@ from knowledge.api.read import (
     get_available_suppliers,
     get_routes,
     get_wiki_page,
+    get_output,
 )
 
 log = logging.getLogger(__name__)
@@ -127,6 +130,37 @@ async def spr_state() -> list:
     """Current SPR cavern fill levels."""
     result = await get_spr_state()
     return [s.model_dump() for s in result]
+
+
+# ---------------------------------------------------------------------------
+# Agent outputs (System 2/3/4) — full-fidelity structured read-back
+# ---------------------------------------------------------------------------
+
+@app.get("/api/scenario")
+async def scenario_output(scenario_id: str | None = None) -> dict:
+    """Latest (or specific) System 2 ScenarioOutputData. 404 if none cached yet."""
+    out = await get_output("scenario", scenario_id)
+    if out is None:
+        raise HTTPException(status_code=404, detail="no scenario output available")
+    return out
+
+
+@app.get("/api/procurement")
+async def procurement_output(scenario_id: str | None = None) -> dict:
+    """Latest (or specific) System 3 ProcurementRecData (TOPSIS-ranked options)."""
+    out = await get_output("procurement", scenario_id)
+    if out is None:
+        raise HTTPException(status_code=404, detail="no procurement output available")
+    return out
+
+
+@app.get("/api/spr-schedule")
+async def spr_schedule_output(scenario_id: str | None = None) -> dict:
+    """Latest (or specific) System 4 SPRScheduleData (day-by-day drawdown plan)."""
+    out = await get_output("spr", scenario_id)
+    if out is None:
+        raise HTTPException(status_code=404, detail="no SPR schedule available")
+    return out
 
 
 # ---------------------------------------------------------------------------
