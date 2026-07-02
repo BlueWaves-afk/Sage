@@ -3,6 +3,9 @@ entity_id: grade_cabinda
 aliases:
 - Cabinda
 entity_type: CrudeGrade
+tags:
+- sage/crudegrade
+- risk/calm
 risk_score: 0.0
 risk_band: CALM
 factors:
@@ -10,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-06-30T09:29:55.855432+00:00'
-valid_at: '2026-06-30T09:29:55.855432+00:00'
+last_updated: '2026-07-02T21:15:12.905013+00:00'
+valid_at: '2026-07-02T21:15:12.905013+00:00'
 source_episodes: []
 links_out:
 - supplier_sonangol
@@ -21,24 +24,10 @@ coordinates: {}
 
 
 ## Profile
-- **CrudeGrade**: Cabinda
-- **Origin**: [[Sonangol]]
-- **API Gravity**: 32.0
-- **Sulfur Content**: 0.13%
+[[Cabinda]] is a light sweet crude oil grade originating from [[Sonangol]]. It has an API gravity of 32.0 and a sulfur content of 0.13%. 
 
 ## Role
-- **Yield Composition**: 
-  - Naphtha: 20%
-  - Kerosene: 13%
-  - Diesel: 22%
-  - Vacuum Gas Oil (VGO): 23%
-  - Residue: 22%
-- **Refining Suitability**: 
-  - High yield of middle distillates (kerosene and diesel) makes it valuable for refineries focused on transportation fuels.
-  - Notable refineries include [[Chennai Refinery]], which processes similar crude grades for optimized diesel and kerosene output.
+Cabinda crude is valued for its high yield of light products. Its refining process typically produces 20% naphtha, 13% kerosene, 22% diesel, 23% vacuum gas oil (VGO), and 22% residue. These yields make it suitable for refineries like the [[Chennai Refinery]], which prioritizes light and middle distillates.
 
 ## Risk
-- **Geopolitical**: 
-  - Supply chain vulnerabilities due to political instability in [[Sonangol]].
-- **Market**: 
-  - Price volatility influenced by regional production changes and global demand for low-sulfur crudes.
+The primary risks associated with Cabinda crude include geopolitical instability in [[Sonangol]] and potential disruptions in the Atlantic Basin shipping routes. These factors can impact supply reliability and pricing volatility.
