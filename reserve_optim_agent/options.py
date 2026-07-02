@@ -1,11 +1,21 @@
 """
 Real-options valuation for SPR drawdown timing.
 
-Values the option of WAITING before a major drawdown.
-If there is a 30% chance the crisis resolves in 5 days, waiting has positive option value —
-drawing down now is irreversible and expensive to refill.
+Models the decision to draw down NOW vs WAIT as an irreversible investment.
+If there is a meaningful probability the crisis resolves soon, waiting retains
+option value — drawing is costly to reverse (refilling at spot costs ~12% premium).
 
-Used to adjust the SDP policy when crisis duration is uncertain.
+Binomial tree: two scenarios over [resolution_days]:
+  - Up branch (p = p_crisis_resolves): crisis ends → no drawdown needed → save cost
+  - Down branch (1-p): crisis continues → must draw anyway, but now urgency is higher
+
+Option value of waiting = E[NPV(wait)] - NPV(draw now)
+  Positive → defer drawdown
+  Negative → draw now (crisis likely to persist, delay just worsens unmet demand)
+
+Sources:
+  IEA Energy Supply Security 2014, §5.3 (SPR release decision framework)
+  Dixit & Pindyck 1994, "Investment Under Uncertainty" (real options framing)
 """
 from __future__ import annotations
 
@@ -15,12 +25,61 @@ def option_value_of_waiting(
     resolution_days: float,
     refill_cost_premium: float,
     gap_mbpd: float,
+    price_per_bbl: float = 80.0,
+    daily_consumption_mmt: float = 0.56,
 ) -> float:
     """
-    Returns option value (USD/bbl equivalent) of delaying drawdown by `resolution_days`.
-    Positive value → wait. Negative → draw now.
-    Stub — implement binomial option model in Week 2.
+    Returns option value (USD/MMT equivalent) of delaying the drawdown decision
+    by `resolution_days`, given probability `p_crisis_resolves` that the crisis
+    ends within that window.
+
+    Positive → waiting has value (delay drawdown)
+    Negative → draw now (crisis likely to persist)
+
+    Args:
+        p_crisis_resolves:    P(crisis resolved within resolution_days)
+        resolution_days:      observation window before committing to a drawdown
+        refill_cost_premium:  fraction above current price to refill later (e.g. 0.12)
+        gap_mbpd:             supply gap triggering the decision
+        price_per_bbl:        current Brent price (USD/bbl)
+        daily_consumption_mmt: India daily crude consumption (MMT/day)
     """
-    # TODO: model drawdown as irreversible investment (binomial tree over crisis scenarios)
-    # TODO: compare NPV(draw now) vs NPV(wait × p_resolve + draw × (1-p_resolve))
-    return 0.0
+    if gap_mbpd <= 0 or resolution_days <= 0:
+        return 0.0
+
+    _BBL_TO_MMT = 0.000000109
+
+    # Volume needed over the resolution window (MMT)
+    gap_mmt_per_day = gap_mbpd * _BBL_TO_MMT * 1e6
+    volume_needed   = gap_mmt_per_day * resolution_days
+
+    # Cost of drawing down now: price × volume
+    cost_draw_now = price_per_bbl / (_BBL_TO_MMT * 1e6) * volume_needed
+
+    # If we wait and crisis resolves: no drawdown needed → save cost_draw_now
+    # But we bear unmet_demand cost during wait window (partial shortfall)
+    unmet_cost_wait = cost_draw_now * 0.3   # assume ~30% demand destruction / rationing buffers it
+
+    # If we wait and crisis continues: must draw at the end of window anyway,
+    # plus refill premium on what we eventually draw
+    refill_penalty  = cost_draw_now * refill_cost_premium
+
+    # NPV(draw now): just cost_draw_now
+    npv_draw_now = cost_draw_now
+
+    # E[NPV(wait)]: p_resolve × (unmet_cost_wait + 0) + (1-p_resolve) × (unmet_cost_wait + cost_draw_now + refill_penalty)
+    npv_wait = (
+        p_crisis_resolves       * unmet_cost_wait
+        + (1 - p_crisis_resolves) * (unmet_cost_wait + cost_draw_now + refill_penalty)
+    )
+
+    # Option value = savings from waiting (negative = draw now saves money)
+    option_val = npv_draw_now - npv_wait
+    return round(option_val, 2)
+
+
+def waiting_recommendation(option_val: float, threshold: float = 0.0) -> str:
+    """Human-readable recommendation from option value."""
+    if option_val > threshold:
+        return f"WAIT: delaying drawdown saves ~${option_val:,.0f}/MMT equivalent — crisis likely to resolve."
+    return f"DRAW NOW: waiting would cost ~${abs(option_val):,.0f}/MMT more — crisis likely to persist."

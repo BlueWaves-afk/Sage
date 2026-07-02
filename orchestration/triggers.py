@@ -128,47 +128,52 @@ async def _cold_pipeline(client: object, entity: str, score: float) -> None:
     scenario_id = f"cold-{uuid.uuid4().hex[:8]}"
     log.info("[trigger] cold pipeline — '%s' ref=%s", entity, scenario_id)
 
-    # System 2 — the LLM decides the disruption scenario parameters from the live
-    # signal context (NOT a hardcoded full closure), then runs the cascade.
+    # System 2 — LLM decides scenario params from live signals, then runs cascade.
     await _publish_stage(client, "SCENARIO", entity, "running")
+    scenario_params: dict = {}
     try:
         from orchestration.scenario_params import decide_scenario_params
         from scenario_agent.runner import run as run_scenario
-        scenario = await decide_scenario_params(entity)
-        log.info("[trigger] scenario params for '%s': %s", entity, scenario)
-        scenario_id = await run_scenario(trigger_entity=entity, status="confirmed", scenario=scenario)
+        scenario_params = await decide_scenario_params(entity)
+        log.info("[trigger] scenario params for '%s': %s", entity, scenario_params)
+        scenario_id = await run_scenario(trigger_entity=entity, status="confirmed", scenario=scenario_params)
         await _publish_stage(client, "SCENARIO", entity, "done")
     except Exception as exc:
         log.error("[trigger] scenario_agent failed for '%s': %s", entity, exc)
         await _publish_stage(client, "SCENARIO", entity, "error")
         return
 
-    # Systems 3 + 4 in parallel
+    # Systems 3 + 4 run in parallel, both informed by the scenario result.
     await _publish_stage(client, "PROCURE", entity, "running")
     await _publish_stage(client, "RESERVE", entity, "running")
 
     results = await asyncio.gather(
-        _run_procurement(scenario_id),
-        _run_spr(scenario_id),
+        _run_procurement(scenario_id, entity),
+        _run_spr(scenario_id, scenario_params),
         return_exceptions=True,
     )
     for result, label in zip(results, ("PROCURE", "RESERVE")):
-        status = "error" if isinstance(result, Exception) else "done"
-        await _publish_stage(client, label, entity, status)
+        stage_status = "error" if isinstance(result, Exception) else "done"
+        await _publish_stage(client, label, entity, stage_status)
         if isinstance(result, Exception):
             log.error("[trigger] %s failed for '%s': %s", label, entity, result)
 
     log.info("[trigger] cold pipeline complete — '%s' ref=%s", entity, scenario_id)
 
 
-async def _run_procurement(scenario_id: str) -> None:
-    from alt_procurement_agent.runner import run_procurement
-    await run_procurement(scenario_id=scenario_id)
+async def _run_procurement(scenario_id: str, trigger_entity: str) -> None:
+    from alt_procurement_agent.runner import run as run_procurement
+    await run_procurement(scenario_id=scenario_id, trigger_refinery=trigger_entity)
 
 
-async def _run_spr(scenario_id: str) -> None:
-    from reserve_optim_agent.runner import run_spr_optimisation
-    await run_spr_optimisation(scenario_id=scenario_id)
+async def _run_spr(scenario_id: str, scenario_params: dict) -> None:
+    from reserve_optim_agent.runner import run as run_spr
+    await run_spr(
+        scenario_id=scenario_id,
+        gap_mbpd=scenario_params.get("disruption_fraction", 1.0) * 2.19,  # Hormuz dep ~2.19mbpd
+        gap_duration_days=int(scenario_params.get("disruption_days", 30)),
+        escalation_profile=scenario_params.get("escalation_profile", "constant"),
+    )
 
 
 async def _publish_stage(client: object, stage: str, entity: str, status: str) -> None:

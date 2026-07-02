@@ -243,3 +243,30 @@ page   = await get_wiki_page("Strait of Hormuz")         # updated if news/sanct
 - [ ] News: `force_synthesis=False`; discard unresolved; informative `summary`
 - [ ] `observed_at` = event time, not emit time; `signal_id` unique per signal
 - [ ] Container calls `await kb_init()` at boot; `sage-core` consumer is running
+
+---
+
+## Novel-entity promotion — registry growth (wire after System 1 ships)
+
+When System 1 encounters an entity NOT in the registry (a new vessel, an unlisted
+supplier, an emerging port), the graph extraction still creates the node, but it won't
+get a canonical name, wiki page, or `[[wikilink]]` eligibility until promoted.
+
+**What to wire:**
+1. Sanctions sub-agent already has `register_vessel(mmsi, name, operator)` in
+   `knowledge/registry.py:579` — it's defined but never called. Wire it when a new
+   MMSI appears on the SDN list and is not in `REGISTRY`.
+2. For new suppliers or ports surfaced by news/AIS: add `register_entity(entity_id,
+   canonical_name, entity_type, aliases, coordinates)` — same pattern as
+   `register_vessel` but generalised.
+3. After `register_*`, call `synthesize(signal, entity=canonical_name, persist=True)`
+   to seed the initial wiki page from the signal that introduced the entity.
+4. The registry is in-memory and boots from the `.context` bundle. For promoted
+   entities to survive restarts, write them back to
+   `data/india-energy-2026.context/facts/nodes/<type>.csv` (or a separate
+   `facts/nodes/dynamic.csv`) and re-instantiate.
+
+**Why it matters:** without promotion, the knowledge graph grows new nodes from
+signals (correct, happens automatically via Graphiti extraction) but the narrative
+layer (wiki + `[[wikilinks]]`) stays blind to them. Promotion closes that gap so
+the system's understanding — not just its graph — evolves dynamically.
