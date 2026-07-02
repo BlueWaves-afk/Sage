@@ -3,6 +3,9 @@ entity_id: port_vadinar
 aliases:
 - Vadinar
 entity_type: Port
+tags:
+- sage/port
+- risk/calm
 risk_score: 0.0
 risk_band: CALM
 factors:
@@ -10,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-06-30T09:30:05.514495+00:00'
-valid_at: '2026-06-30T09:30:05.514495+00:00'
+last_updated: '2026-07-02T21:15:22.823969+00:00'
+valid_at: '2026-07-02T21:15:22.823969+00:00'
 source_episodes: []
 links_out:
 - refinery_jamnagar
