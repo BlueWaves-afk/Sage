@@ -3,6 +3,9 @@ entity_id: supplier_sonangol
 aliases:
 - Sonangol
 entity_type: Supplier
+tags:
+- sage/supplier
+- risk/calm
 risk_score: 0.0
 risk_band: CALM
 factors:
@@ -10,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-06-30T09:24:36.832659+00:00'
-valid_at: '2026-06-30T09:24:36.832659+00:00'
+last_updated: '2026-07-02T21:10:07.080306+00:00'
+valid_at: '2026-07-02T21:10:07.080306+00:00'
 source_episodes: []
 links_out:
 - corridor_cape
@@ -20,16 +23,10 @@ coordinates: {}
 
 
 ## Profile
-- **[[Sonangol]]** is the national oil company of Angola, headquartered in Luanda. 
-- It plays a pivotal role in the exploration, production, and export of Angola's oil resources.
-- Angola, a significant player in the African oil market, exports approximately 1.1 million barrels per day (mbpd).
+[[Sonangol]] is the national oil company of Angola, established in 1980. It operates across the entire oil supply chain, from exploration and production to refining and distribution. Sonangol holds significant stakes in joint ventures with international oil companies and is a key player in Angola's oil sector, which is crucial to the country's economy.
 
 ## Role
-- Sonangol is crucial in Angola's oil supply chain, managing a substantial portion of the country's oil exports.
-- The company operates both upstream and downstream sectors, including refining and distribution.
-- Sonangol's export routes commonly traverse the **[[Cape of Good Hope]]**, a critical maritime passage for global oil trade.
+Sonangol plays a pivotal role in Angola's oil export strategy, managing a substantial portion of the country's 1.1 million barrels per day (mbpd) of oil exports. The company's operations extend to global markets, with a notable presence in regions such as Europe and Asia. Sonangol's shipping routes often pass through critical maritime chokepoints, including the [[Cape of Good Hope]], underscoring its importance in global oil trade logistics.
 
 ## Risk
-- Geopolitical stability in Angola directly impacts Sonangol's operations and the consistency of oil exports.
-- Market fluctuations and global oil price changes pose financial risks to Sonangol.
-- Environmental regulations and the global shift towards renewable energy sources present long-term strategic challenges.
+Sonangol operates in a high-risk environment characterized by political instability and regulatory challenges within Angola. Despite not being sanctioned, the company faces risks associated with corruption allegations and governance issues. Additionally, fluctuations in global oil prices and the reliance on oil revenues for Angola's economy pose significant financial risks to Sonangol's operations and stability.
