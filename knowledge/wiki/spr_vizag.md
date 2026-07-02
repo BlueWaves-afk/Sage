@@ -3,6 +3,9 @@ entity_id: spr_vizag
 aliases:
 - Vizag SPR
 entity_type: SPRCavern
+tags:
+- sage/sprcavern
+- risk/calm
 risk_score: 0.0
 risk_band: CALM
 factors:
@@ -10,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-06-30T09:31:18.695207+00:00'
-valid_at: '2026-06-30T09:31:18.695207+00:00'
+last_updated: '2026-07-02T21:16:44.070406+00:00'
+valid_at: '2026-07-02T21:16:44.070406+00:00'
 source_episodes: []
 links_out:
 - spr_mangaluru
