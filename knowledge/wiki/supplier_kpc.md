@@ -3,6 +3,9 @@ entity_id: supplier_kpc
 aliases:
 - Kuwait Petroleum Corporation
 entity_type: Supplier
+tags:
+- sage/supplier
+- risk/calm
 risk_score: 0.0
 risk_band: CALM
 factors:
@@ -10,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-06-30T09:22:47.290355+00:00'
-valid_at: '2026-06-30T09:22:47.290355+00:00'
+last_updated: '2026-07-02T21:08:28.367046+00:00'
+valid_at: '2026-07-02T21:08:28.367046+00:00'
 source_episodes: []
 links_out: []
 coordinates: {}
@@ -19,10 +22,10 @@ coordinates: {}
 
 
 ## Overview
-Kuwait Petroleum Corporation (KPC) is the state-owned oil company of [[Kuwait Petroleum Corporation]]. It is headquartered in Kuwait City and focuses on petroleum exploration, production, refining, marketing, and transportation. KPC is a significant player in the global oil market, producing about 7% of the world's total crude oil.
+Kuwait Petroleum Corporation (KPC) is the state-owned oil company of [[Kuwait Petroleum Corporation]]. It is headquartered in Kuwait City and focuses on petroleum exploration, production, refining, marketing, and transportation. KPC is a significant global player, producing about 7% of the world's total crude oil.
 
-## Operations and Subsidiaries
-KPC operates through several subsidiaries, including Kuwait Oil Company (KOC), Kuwait National Petroleum Company (KNPC), Petrochemical Industries Company (PIC), Kuwait Petroleum International, Kuwait Foreign Petroleum Exploration Company (KUFPEC), and Kuwait Gulf Oil Company. These subsidiaries handle various aspects of the oil supply chain, from exploration and production to refining and marketing.
+## Export Capacity
+KPC has a daily export capacity of 2.0 million barrels per day (mbpd). The company is not currently under any sanctions.
 
 ## Recent Developments
-In January 2025, KPC discovered an estimated 800 million barrels of medium-density oil and 600 billion standard cubic feet of associated gas at the Al-Jlaiaa offshore field. In 2026, due to regional conflicts, KPC implemented a precautionary oil output reduction and temporarily suspended production at the Mina Abdullah and Mina Al-Ahmadi refineries following drone attacks.
+In 2026, due to regional conflict with Iran, KPC implemented a precautionary reduction in oil output and temporarily suspended production at the Mina Abdullah and Mina Al-Ahmadi refineries following drone attacks.
