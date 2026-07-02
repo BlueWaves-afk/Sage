@@ -3,6 +3,9 @@ entity_id: corridor_hormuz
 aliases:
 - Strait of Hormuz
 entity_type: Corridor
+tags:
+- sage/corridor
+- risk/calm
 risk_score: 0.0
 risk_band: CALM
 factors:
@@ -10,35 +13,44 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-06-30T18:01:41.932391+00:00'
-valid_at: '2026-06-30T18:01:36.480903+00:00'
+last_updated: '2026-07-02T21:04:03.681834+00:00'
+valid_at: '2026-07-02T21:04:03.681834+00:00'
 source_episodes: []
 links_out:
-- event_2019_hormuz_attacks
-- refinery_jamnagar
-- refinery_mangaluru
+- supplier_aramco
+- supplier_adnoc
+- supplier_nioc
+- supplier_iraqoil
+- port_vadinar
+- port_sikka
+- port_yanbu
+- port_fujairah
 coordinates:
   lat: 26.5
   lon: 56.4
 ---
 
 
-## Current Assessment
-The [[Strait of Hormuz]] is currently experiencing a projected supply gap of 0.00 mbpd over 0 days, with a significant price impact of $43-$74/bbl. The Strategic Petroleum Reserves (SPR) would last 45.0 days at the projected draw rate, with an inflation impact of 4.58%.
+## Strategic Role
+The [[Strait of Hormuz]] is the world's most critical oil chokepoint. Approximately 20 million
+barrels per day transit the strait — roughly 20% of global petroleum liquids and 25–30% of global
+LNG trade. For India it is the single most important maritime corridor: the bulk of crude from
+[[Saudi Aramco]], [[ADNOC]], [[NIOC]], and the [[Iraqi Oil Ministry]] flows through it before
+reaching [[Vadinar]] and [[Sikka]].
 
-## Historical Pattern
-The current situation shows no significant precedent in terms of supply gap, aligning closely with the [[2019 Tanker Attacks]] in terms of minimal immediate impact but with a notable price impact.
+## Physical Characteristics
+Two 3.2 km navigable lanes separated by a median; minimum depth 27 m (VLCC-capable). Iranian
+territorial waters span the northern edge, Omani waters the southern.
 
-## Affected Entities
-- [[Jamnagar Refinery]]: Peak gap of 0.00 mbpd from day 45.0.
-- [[Mangaluru]]: Peak gap of 0.00 mbpd from day 45.0.
-- Umm Al Nar: Peak gap of 0.00 mbpd from day 45.0.
+## Historical Disruption Events
+The Tanker War (1984–1988) saw 500+ vessels attacked; the 2019 tanker attacks and the 2024
+shadow-fleet surge are the most recent precursors SAGE pattern-matches against.
 
-## Signal Basis
-- System 2 scenario modelling (confirmed) for Strait of Hormuz.
+## Bypass Alternatives
+If Hormuz closes, crude can reroute via [[Yanbu]] (Saudi Petroline, Red Sea) and [[Fujairah]]
+(UAE ADCOP) — see the BYPASS_ROUTE edges from [[Saudi Aramco]] and [[ADNOC]]. Combined alternative
+export capacity (~3.5–5.5 mbpd) is far below the 20 mbpd Hormuz flow.
 
-## Relations
-| Relation         | Entity               | Type               | Strength |
-|------------------|----------------------|--------------------|----------|
-| supply_dependency| [[Jamnagar Refinery]]| refinery           | high     |
-| supply_dependency| [[Mangaluru]]        | refinery           | high     |
+## SAGE Risk Profile
+Primary risk drivers: AIS dark-vessel activity, IRGC naval exercises, US–Iran diplomatic
+temperature. Risk synthesis is forced on any AIS gap exceeding 4 hours in the strait corridor.
