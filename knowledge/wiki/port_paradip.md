@@ -3,6 +3,9 @@ entity_id: port_paradip
 aliases:
 - Paradip Port
 entity_type: Port
+tags:
+- sage/port
+- risk/calm
 risk_score: 0.0
 risk_band: CALM
 factors:
@@ -10,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-06-30T09:31:09.528015+00:00'
-valid_at: '2026-06-30T09:31:09.528015+00:00'
+last_updated: '2026-07-02T21:16:34.055644+00:00'
+valid_at: '2026-07-02T21:16:34.055644+00:00'
 source_episodes: []
 links_out: []
 coordinates:
@@ -21,10 +24,17 @@ coordinates:
 
 
 ## Profile
-[[Paradip Port]] is a major maritime gateway located on the eastern coast of India, at the confluence of the Mahanadi River and the Bay of Bengal. Its geographical coordinates are 20.26 latitude and 86.67 longitude. The port is engineered to accommodate vessels with a draft of up to 18.0 meters, facilitating the handling of large crude carriers and product tankers.
+- **Name:** Paradip Port
+- **Location:** Latitude 20.26, Longitude 86.67
+- **Draft:** Maximum draft of 18.0 meters
+- **Congestion:** Reports indicate no significant congestion (0.0)
 
 ## Role
-[[Paradip Port]] serves as a critical node in India's oil supply chain, enabling the import and export of petroleum products. Its strategic location and deep-water capabilities make it an essential asset for energy security, supporting the operational needs of refineries and distribution networks across the region.
+- **Strategic Importance:** Paradip Port serves as a critical gateway for India's eastern coast, facilitating the import and export of various commodities, including petroleum products.
+- **Capacity:** The port's deep draft allows it to accommodate large vessels, enhancing its capability to handle significant volumes of oil and gas shipments.
+- **Economic Impact:** It plays a vital role in supporting India's energy security by ensuring a steady supply of oil and gas, contributing to the nation's economic stability.
 
 ## Risk
-The port exhibits minimal congestion levels, currently at 0.0, which suggests efficient vessel turnaround times and reduced risk of delays in the oil supply chain. However, its exposure to cyclonic activity in the Bay of Bengal poses a potential risk to operations, necessitating robust disaster preparedness and response mechanisms.
+- **Geopolitical:** As a major port, Paradip is susceptible to regional geopolitical tensions which could impact its operations.
+- **Environmental:** Potential risks include cyclones and monsoons, which can affect port activities and safety.
+- **Operational:** Although current congestion is minimal, future expansion or increased trade could lead to operational challenges.
