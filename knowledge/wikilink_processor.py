@@ -222,6 +222,11 @@ def update_frontmatter_risk(
     fm["valid_at"]     = valid_at
     fm["last_updated"] = last_updated
 
+    # Keep the Obsidian risk/<band> colour tag in sync; preserve the sage/<type> tag.
+    tags = [t for t in (fm.get("tags") or []) if not str(t).startswith("risk/")]
+    tags.append(f"risk/{band.lower()}")
+    fm["tags"] = tags
+
     return _reassemble(fm, body)
 
 

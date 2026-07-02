@@ -42,29 +42,75 @@ log = logging.getLogger(__name__)
 
 Status = Literal["speculative", "confirmed"]
 
-# Grade specs for suppliers not in CONFIGURED_FOR edges — lookup by country.
-# Source: crude_grades.csv (api_gravity / sulfur_pct from real assays).
-_SUPPLIER_GRADE: dict[str, tuple[float, float]] = {
-    "Saudi Arabia":         (32.8, 1.96),   # Arab Light representative
-    "Iraq":                 (27.9, 3.00),   # Basrah Medium
-    "United Arab Emirates": (40.2, 0.79),   # Murban
-    "Kuwait":               (31.0, 2.55),   # Kuwait Export Crude
-    "Qatar":                (36.0, 1.40),   # Qatar Marine
-    "Russia":               (31.3, 1.30),   # Urals
-    "Nigeria":              (38.0, 0.37),   # Bonny Light
-    "United States":        (40.0, 0.40),   # WTI Midland
-    "Brazil":               (29.0, 0.40),   # Tupi
-    "Venezuela":            (16.0, 2.50),   # Merey (heavy sour)
-    "Kazakhstan":           (45.0, 0.55),   # CPC Blend
-    "Angola":               (32.0, 0.13),   # Cabinda
+# Compiled fallbacks used only when the bundle can't be loaded. The authoritative
+# values are sourced live from the bundle by the loaders below — nothing here is the
+# source of truth; these mirror crude_grades.csv / bypass_routes.csv for offline safety.
+_DEFAULT_SUPPLIER_GRADE: dict[str, tuple[float, float]] = {
+    "Saudi Arabia":         (32.8, 1.96), "Iraq":                 (27.9, 3.00),
+    "United Arab Emirates": (40.2, 0.79), "Kuwait":               (31.0, 2.55),
+    "Qatar":                (36.0, 1.40), "Russia":               (31.3, 1.30),
+    "Nigeria":              (38.0, 0.37), "United States":        (40.0, 0.40),
+    "Brazil":               (29.0, 0.40), "Venezuela":            (16.0, 2.50),
+    "Kazakhstan":           (45.0, 0.55), "Angola":               (32.0, 0.13),
 }
-
-# Bypass edges (from bundle facts/edges/bypass_routes.csv)
-# Added_days and cost_premium from IEA/Petroline sources.
-_BYPASS_EDGES = [
+_DEFAULT_BYPASS_EDGES = [
     {"src": "Saudi Aramco", "via_corridor": "Suez Canal",        "cost_premium": 2.50, "added_days": 10.0},
     {"src": "ADNOC",         "via_corridor": "Cape of Good Hope", "cost_premium": 1.20, "added_days": 2.0},
 ]
+
+# Which corridor a bypass destination PORT feeds into, for corridor-risk lookup.
+# (bypass_routes.csv models supplier->port; the router is corridor-based, so this
+# maps the physical bypass port to the downstream corridor whose risk applies.)
+_BYPASS_PORT_CORRIDOR = {
+    "Yanbu":    "Suez Canal",         # Petroline -> Red Sea -> Suez
+    "Fujairah": "Cape of Good Hope",  # ADCOP -> Gulf of Oman (open ocean, low risk)
+}
+
+
+def _bundle_path() -> str:
+    return os.environ.get("SAGE_BUNDLE_PATH",
+                          os.environ.get("SAGE_CONTEXT_BUNDLE", "data/india-energy-2026.context"))
+
+
+def _load_supplier_grades() -> dict[str, tuple[float, float]]:
+    """
+    Representative crude assay (API, sulfur) per supplier country, sourced from the
+    bundle's crude_grades.csv (real assays). First grade per origin = the marker grade
+    (e.g. Arab Light for Saudi Arabia). Falls back to the compiled mirror if unavailable.
+    """
+    try:
+        from knowledge.context.loader import load_bundle
+        out: dict[str, tuple[float, float]] = {}
+        for row in load_bundle(_bundle_path()).node_rows.get("CrudeGrade", []):
+            country = (row.get("origin") or "").strip()
+            if country and country not in out:
+                out[country] = (float(row["api_gravity"]), float(row["sulfur_pct"]))
+        return out or _DEFAULT_SUPPLIER_GRADE
+    except Exception:
+        return _DEFAULT_SUPPLIER_GRADE
+
+
+def _load_bypass_edges() -> list[dict]:
+    """
+    Bypass routes sourced from the bundle's bypass_routes.csv — resolves supplier/port
+    entity_ids to canonical names and maps the bypass port to its downstream corridor
+    for risk lookup. cost_premium / added_days come straight from the bundle.
+    """
+    try:
+        from knowledge.context.loader import load_bundle
+        from knowledge.registry import canonical_name
+        out: list[dict] = []
+        for row in load_bundle(_bundle_path()).edge_rows.get("BYPASS_ROUTE", []):
+            src_port = canonical_name(row["dst_entity_id"]) or row["dst_entity_id"]
+            out.append({
+                "src":          canonical_name(row["src_entity_id"]) or row["src_entity_id"],
+                "via_corridor": _BYPASS_PORT_CORRIDOR.get(src_port, "Suez Canal"),
+                "cost_premium": float(row["cost_premium"]),
+                "added_days":   float(row["added_days"]),
+            })
+        return out or _DEFAULT_BYPASS_EDGES
+    except Exception:
+        return _DEFAULT_BYPASS_EDGES
 
 
 async def run(
@@ -88,8 +134,12 @@ async def run(
     if not suppliers:
         log.warning("[procurement] no non-sanctioned suppliers returned from KB")
 
+    # Bundle-sourced supplier assays + bypass routes (no hardcoded values).
+    supplier_grades = _load_supplier_grades()
+    bypass_edges    = _load_bypass_edges()
+
     # Route each supplier to their best open corridor
-    routes = solve_routes(suppliers, corridors, _BYPASS_EDGES, risk_max=corridor_risk_max)
+    routes = solve_routes(suppliers, corridors, bypass_edges, risk_max=corridor_risk_max)
 
     options: list[ProcurementOption] = []
     for supplier in suppliers:
@@ -98,7 +148,7 @@ async def run(
             continue  # all routes blocked for this supplier
 
         country = supplier.country or ""
-        api, sulfur = _SUPPLIER_GRADE.get(country, (32.0, 1.8))
+        api, sulfur = supplier_grades.get(country, (32.0, 1.8))
         compat = best_compatibility(api, sulfur, grade_specs)
 
         options.append(ProcurementOption(
@@ -167,18 +217,27 @@ async def _nova_rationale(opt: ProcurementOption, refinery: str, gap_mbpd: float
         )
 
 
+_DEFAULT_GRADE_NAME = {
+    "Saudi Arabia": "Arab Light", "Iraq": "Basrah Medium", "United Arab Emirates": "Murban",
+    "Kuwait": "Kuwait Export Crude", "Qatar": "Qatar Marine", "Russia": "Urals",
+    "Nigeria": "Bonny Light", "United States": "WTI Midland", "Brazil": "Tupi",
+    "Venezuela": "Merey", "Kazakhstan": "CPC Blend", "Angola": "Cabinda",
+}
+
+
+def _load_grade_names() -> dict[str, str]:
+    """Marker grade NAME per origin country, sourced from crude_grades.csv (first per origin)."""
+    try:
+        from knowledge.context.loader import load_bundle
+        out: dict[str, str] = {}
+        for row in load_bundle(_bundle_path()).node_rows.get("CrudeGrade", []):
+            country = (row.get("origin") or "").strip()
+            if country and country not in out:
+                out[country] = row.get("canonical_name", "Unknown Grade")
+        return out or _DEFAULT_GRADE_NAME
+    except Exception:
+        return _DEFAULT_GRADE_NAME
+
+
 def _grade_name(country: str) -> str:
-    return {
-        "Saudi Arabia":         "Arab Light",
-        "Iraq":                 "Basrah Medium",
-        "United Arab Emirates": "Murban",
-        "Kuwait":               "Kuwait Export Crude",
-        "Qatar":                "Qatar Marine",
-        "Russia":               "Urals",
-        "Nigeria":              "Bonny Light",
-        "United States":        "WTI Midland",
-        "Brazil":               "Tupi",
-        "Venezuela":            "Merey",
-        "Kazakhstan":           "CPC Blend",
-        "Angola":               "Cabinda",
-    }.get(country, "Unknown Grade")
+    return _load_grade_names().get(country, "Unknown Grade")

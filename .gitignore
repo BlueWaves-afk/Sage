@@ -231,3 +231,4 @@ knowledge/wiki/[A-Z]*.md
 
 # Trained surrogate weights (regenerable via scenario_agent/gnn/train.py)
 scenario_agent/gnn/weights/
+.DS_Store

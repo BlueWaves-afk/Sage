@@ -196,6 +196,17 @@ def list_wiki_entities() -> list[str]:
 # render_wiki_page — builds full frontmatter + normalized body
 # ---------------------------------------------------------------------------
 
+def _entity_tags(entity_type: str, risk_band: str) -> list[str]:
+    """
+    Obsidian graph-colouring tags. `sage/<type>` groups nodes by entity type (the
+    default colouring); `risk/<band>` lets the user re-colour by risk band. Lowercased
+    and space-free so they are valid Obsidian tags (e.g. CrudeGrade -> sage/crudegrade).
+    """
+    t = (entity_type or "unknown").lower().replace(" ", "").replace("/", "")
+    b = (risk_band or "calm").lower()
+    return [f"sage/{t}", f"risk/{b}"]
+
+
 def render_wiki_page(
     entity: str,
     synthesized_body: str,
@@ -246,6 +257,9 @@ def render_wiki_page(
         # even though the filename is the entity_id (e.g. corridor_hormuz.md).
         "aliases":         [entity],
         "entity_type":     entity_type,
+        # Tags drive Obsidian graph color groups: sage/<type> colours nodes by entity
+        # type, risk/<band> lets the user re-colour by risk. See .obsidian/graph.json.
+        "tags":            _entity_tags(entity_type, risk_band),
         "risk_score":      round(risk_score, 4),
         "risk_band":       risk_band.upper(),
         "factors":         factors or {"ais": 0.0, "gdelt": 0.0, "price": 0.0, "sanctions": 0.0},
