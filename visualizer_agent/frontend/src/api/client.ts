@@ -1,0 +1,91 @@
+// Thin REST client for the SAGE API gateway.
+// Every call falls back to mock data (from ./mock) on network/HTTP error, so the
+// UI always renders. `live` on the returned envelope tells the UI whether the
+// data came from the backend or the fallback.
+
+import type {
+  RiskScore,
+  Supplier,
+  Route,
+  SprCavern,
+  ProcurementOption,
+  ScenarioOutput,
+  SprSchedule,
+  CopilotAnswer,
+} from "./types";
+import * as mock from "./mock";
+
+const BASE = import.meta.env.VITE_API_BASE ?? "";
+
+export interface Envelope<T> {
+  data: T;
+  live: boolean;
+}
+
+async function get<T>(path: string, fallback: T): Promise<Envelope<T>> {
+  try {
+    const res = await fetch(`${BASE}${path}`, {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = (await res.json()) as T;
+    return { data, live: true };
+  } catch {
+    return { data: fallback, live: false };
+  }
+}
+
+export const api = {
+  health: () => get<{ status: string; kb_ready: boolean }>("/health", { status: "degraded", kb_ready: false }),
+
+  riskScores: () => get<RiskScore[]>("/api/risk-scores", mock.mockRiskScores),
+
+  suppliers: () => get<Supplier[]>("/api/suppliers", mock.mockSuppliers),
+
+  routes: () => get<Route[]>("/api/routes", mock.mockRoutes),
+
+  spr: () => get<SprCavern[]>("/api/spr", mock.mockSpr),
+
+  scenario: () => get<ScenarioOutput>("/api/scenario", mock.mockScenario),
+
+  procurement: () => get<ProcurementOption[]>("/api/procurement", mock.mockProcurement),
+
+  sprSchedule: () => get<SprSchedule>("/api/spr-schedule", mock.mockSprSchedule),
+
+  wiki: (entity: string) =>
+    get<{ entity: string; content: string }>(`/api/wiki/${encodeURIComponent(entity)}`, {
+      entity,
+      content: `# ${entity}\n\n_No wiki page available (backend offline)._`,
+    }),
+
+  accuracy: () => get<{ detection_lead_hours: number; prestage_accuracy: number }>("/api/accuracy", {
+    detection_lead_hours: 120,
+    prestage_accuracy: 0.91,
+  }),
+
+  async copilot(question: string): Promise<Envelope<CopilotAnswer>> {
+    try {
+      const res = await fetch(`${BASE}/api/copilot`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: question }),
+        signal: AbortSignal.timeout(20000),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return { data: (await res.json()) as CopilotAnswer, live: true };
+    } catch {
+      return {
+        data: {
+          answer:
+            "SAGE ranks ADNOC's Murban first because its light-sweet assay closely matches the Jamnagar refinery's configured slate, and the Fujairah land-bypass routes crude to the Gulf of Oman without transiting the elevated-risk Strait of Hormuz — giving it the lowest corridor risk in the option set at a competitive landed cost. (Backend offline — illustrative answer.)",
+          citations: [
+            { entity: "ADNOC", episode_id: "ep_offline" },
+            { entity: "Strait of Hormuz", episode_id: "ep_offline" },
+          ],
+        },
+        live: false,
+      };
+    }
+  },
+};

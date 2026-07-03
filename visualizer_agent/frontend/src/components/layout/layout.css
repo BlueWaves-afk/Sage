@@ -1,0 +1,232 @@
+/* ── Shell grid ─────────────────────────────────────────────────────────── */
+.shell {
+  display: flex;
+  height: 100vh;
+  background: var(--bg-1);
+}
+
+.shell-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.shell-content {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+}
+
+/* ── Sidebar ────────────────────────────────────────────────────────────── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--bg-2);
+  border-right: 1px solid var(--border-1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  flex-shrink: 0;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.side-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--r-md);
+  display: grid;
+  place-items: center;
+  color: var(--text-2);
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.side-btn:hover {
+  color: var(--text-0);
+  background: var(--bg-3);
+}
+
+.side-btn.active {
+  color: var(--cyan);
+  background: var(--cyan-soft);
+  border-color: var(--border-glow);
+  box-shadow: inset 0 0 0 1px rgba(56, 198, 238, 0.2);
+}
+
+.side-gear {
+  margin-top: auto;
+}
+
+/* ── Top bar ────────────────────────────────────────────────────────────── */
+.topbar {
+  height: var(--header-h);
+  flex-shrink: 0;
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--border-1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 22px;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand {
+  font-weight: 800;
+  font-size: 19px;
+  letter-spacing: 0.06em;
+}
+
+.online-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--green);
+  background: var(--green-soft);
+  border: 1px solid rgba(52, 211, 138, 0.3);
+  border-radius: var(--r-pill);
+  padding: 3px 9px;
+}
+
+.online-pill.offline {
+  color: var(--text-2);
+  background: transparent;
+  border-color: var(--border-2);
+}
+
+.online-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  color: var(--green);
+  animation: pulse-dot 2s infinite;
+}
+
+.online-pill.offline .online-dot {
+  color: var(--text-3);
+  animation: none;
+}
+
+.topbar-divider {
+  width: 1px;
+  height: 22px;
+  background: var(--border-2);
+}
+
+.topbar-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-0);
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+.trust-tag {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--text-2);
+}
+.trust-tag b {
+  color: var(--cyan-dim);
+}
+
+.operator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.operator-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.2;
+}
+
+.operator-name {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.operator-role {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--text-2);
+  font-family: var(--font-mono);
+}
+
+.operator-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-sm);
+  background: var(--cyan-soft);
+  border: 1px solid var(--border-glow);
+  display: grid;
+  place-items: center;
+  color: var(--cyan);
+}
+
+/* ── Status bar ─────────────────────────────────────────────────────────── */
+.statusbar {
+  height: var(--statusbar-h);
+  flex-shrink: 0;
+  background: var(--bg-2);
+  border-top: 1px solid var(--border-1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 22px;
+  font-size: 11px;
+}
+
+.statusbar-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.status-word {
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  font-size: 11px;
+}
+
+.statusbar-sep {
+  width: 1px;
+  height: 16px;
+  background: var(--border-2);
+}
+
+.statusbar-item {
+  color: var(--text-2);
+}
+
+.statusbar-right {
+  color: var(--text-3);
+}
+
+@media (max-width: 900px) {
+  .trust-tag,
+  .statusbar-right {
+    display: none;
+  }
+}

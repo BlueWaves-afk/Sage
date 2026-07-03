@@ -1,0 +1,115 @@
+/* ── Panel ──────────────────────────────────────────────────────────────── */
+.panel {
+  background: linear-gradient(180deg, var(--bg-3), var(--bg-2));
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--border-1);
+}
+
+.panel-body {
+  padding: 16px;
+  flex: 1;
+  min-height: 0;
+}
+
+.panel-body.flush {
+  padding: 0;
+}
+
+/* ── Stat card ──────────────────────────────────────────────────────────── */
+.statcard {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.statcard-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.statcard-icon {
+  color: var(--text-2);
+  display: inline-flex;
+}
+
+.statcard-value {
+  font-size: 25px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+}
+
+.statcard-sub {
+  font-size: 11px;
+  color: var(--text-2);
+}
+
+/* ── Badge ──────────────────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: var(--r-sm);
+  text-transform: uppercase;
+}
+
+.badge-cyan { color: var(--cyan); background: var(--cyan-soft); }
+.badge-green { color: var(--green); background: var(--green-soft); }
+.badge-amber { color: var(--amber); background: var(--amber-soft); }
+.badge-coral { color: var(--coral); background: rgba(251, 122, 104, 0.12); }
+.badge-red { color: var(--red); background: var(--red-soft); }
+.badge-muted { color: var(--text-2); background: rgba(127, 146, 171, 0.1); }
+
+.badge-outline {
+  background: transparent;
+  border: 1px solid currentColor;
+}
+
+/* ── Meter ──────────────────────────────────────────────────────────────── */
+.meter {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--bg-4);
+  overflow: hidden;
+}
+
+.meter-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.6s ease;
+}
+
+.meter-cyan { background: linear-gradient(90deg, var(--cyan-dim), var(--cyan)); }
+.meter-green { background: linear-gradient(90deg, #1f8f5e, var(--green)); }
+.meter-amber { background: linear-gradient(90deg, #b87a12, var(--amber)); }
+.meter-coral { background: linear-gradient(90deg, #c8503f, var(--coral)); }
+.meter-red { background: linear-gradient(90deg, #a52c2c, var(--red)); }
+
+.offline-hint {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-sm);
+  padding: 1px 6px;
+}

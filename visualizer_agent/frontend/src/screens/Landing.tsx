@@ -1,0 +1,128 @@
+import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import Globe from "../components/Globe";
+import { api } from "../api/hooks";
+import {
+  IconGlobe,
+  IconBrain,
+  IconFlask,
+  IconChart,
+  IconShield,
+  IconRss,
+  IconAlert,
+  IconGear,
+} from "../components/icons";
+import "./landing.css";
+
+const FEATURES = [
+  { icon: IconGlobe, title: "Live Geopolitical Monitoring", desc: "Global event tracking and impact assessment." },
+  { icon: IconBrain, title: "AI Narrative Synthesis", desc: "Contextualizing deep intelligence at scale." },
+  { icon: IconFlask, title: "Simulation Sandbox", desc: "Anticipatory modeling for supply shocks." },
+  { icon: IconChart, title: "Procurement Intel", desc: "Adaptive intelligence for market maneuvers." },
+  { icon: IconShield, title: "Reserve Optimization", desc: "Strategic management of energy assets." },
+];
+
+export default function Landing() {
+  const nav = useNavigate();
+  const [live, setLive] = useState(false);
+
+  useEffect(() => {
+    api.health().then((env) => setLive(env.live && env.data.kb_ready));
+  }, []);
+
+  return (
+    <div className="landing">
+      <header className="landing-top">
+        <div className="landing-brand">
+          <span className="brand">SAGE</span>
+          <span className={`landing-power${live ? " on" : ""}`}>
+            <span className="landing-power-dot" />
+          </span>
+        </div>
+        <div className="landing-top-right">
+          <span className="trust-tag">
+            SECURE <b>•</b> TRUSTED <b>•</b> SOVEREIGN
+          </span>
+          <IconGear width={18} height={18} className="c-muted" />
+        </div>
+      </header>
+
+      <main className="landing-main">
+        <p className="landing-eyebrow">Autonomous Intelligence for National Energy Security</p>
+        <h1 className="landing-title">SAGE</h1>
+        <p className="landing-sub">AI-Driven Energy Supply Chain Resilience</p>
+
+        <div className="landing-globe">
+          <Globe size={560} />
+        </div>
+
+        <div className="landing-stats">
+          <div className="landing-stat card">
+            <div className="landing-stat-head">
+              <IconRss width={14} height={14} />
+              <span className="label-sm">Monitoring Sources</span>
+            </div>
+            <div className="landing-stat-value">24 Live Intelligence Feeds</div>
+            <div className="landing-stat-underline" />
+          </div>
+          <div className="landing-stat card">
+            <div className="landing-stat-head">
+              <IconAlert width={14} height={14} />
+              <span className="label-sm">Threat Level</span>
+            </div>
+            <div className="landing-stat-value c-coral">Medium</div>
+            <div className="landing-stat-sub">Elevated Monitoring</div>
+          </div>
+          <div className="landing-stat card">
+            <div className="landing-stat-head">
+              <IconShield width={14} height={14} />
+              <span className="label-sm">SPR Coverage</span>
+            </div>
+            <div className="landing-stat-value">9.5 Days</div>
+            <div className="landing-stat-sub">Strategic Petroleum Reserve</div>
+          </div>
+          <div className="landing-stat card">
+            <div className="landing-stat-head">
+              <IconChart width={14} height={14} />
+              <span className="label-sm">AI Readiness</span>
+            </div>
+            <div className="landing-stat-value c-cyan">Ready</div>
+            <div className="landing-stat-sub">Systems Operational</div>
+          </div>
+        </div>
+
+        <div className="landing-features">
+          {FEATURES.map(({ icon: Icon, title, desc }) => (
+            <div key={title} className="landing-feature">
+              <Icon width={18} height={18} className="c-cyan" />
+              <div className="landing-feature-title">{title}</div>
+              <div className="landing-feature-desc">{desc}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="landing-cta">
+          <button className="btn-launch" onClick={() => nav("/command")}>
+            Launch Command Center
+          </button>
+          <div className="label-sm landing-cta-sub">Enter Operational Dashboard</div>
+        </div>
+
+        <div className="landing-telemetry mono">
+          <span>SYS_INIT: 0x48FA2</span>
+          <span>CRYPT_ACTIVE: SHA-512</span>
+          <span>GEO_SYNC: {live ? "VERIFIED" : "PENDING"}</span>
+          <span>LATENCY: 14MS</span>
+        </div>
+      </main>
+
+      <footer className="landing-foot">
+        <div>
+          <div className="landing-foot-brand">SAGE • NATIONAL DEFENSE AI</div>
+          <div className="landing-foot-sub">Powered by Amazon Bedrock, Graphiti, LangGraph, and AWS</div>
+        </div>
+        <div className="landing-foot-copy">© 2026 SAGE SYSTEMS. SOVEREIGN ASSET DEFENSE.</div>
+      </footer>
+    </div>
+  );
+}

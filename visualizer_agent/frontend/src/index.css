@@ -1,0 +1,171 @@
+/* ============================================================================
+   SAGE Design System — extracted from the Figma "National Defense AI" design.
+   Dark command-center aesthetic: deep navy, cyan accents, monospace telemetry.
+   ========================================================================== */
+
+:root {
+  /* ── Surfaces (deep navy stack) ──────────────────────────────────────── */
+  --bg-0: #060b14;          /* app background, deepest */
+  --bg-1: #0a111e;          /* page background */
+  --bg-2: #0d1626;          /* panel / rail background */
+  --bg-3: #0f1a2b;          /* card fill */
+  --bg-4: #13233a;          /* elevated card / hover */
+  --bg-glass: rgba(15, 26, 43, 0.72);
+
+  /* ── Borders & lines ─────────────────────────────────────────────────── */
+  --border-1: #182740;
+  --border-2: #21344f;
+  --border-glow: rgba(56, 198, 238, 0.35);
+
+  /* ── Brand / accents ─────────────────────────────────────────────────── */
+  --cyan: #38c6ee;          /* primary accent — buttons, active, links */
+  --cyan-bright: #5bd7f7;
+  --cyan-dim: #2a93b4;
+  --cyan-soft: rgba(56, 198, 238, 0.12);
+  --blue: #2f6bff;
+
+  /* ── Status / threat semantics ───────────────────────────────────────── */
+  --green: #34d38a;         /* online / nominal / good */
+  --green-soft: rgba(52, 211, 138, 0.12);
+  --amber: #f5a623;         /* medium / elevated / caution */
+  --amber-soft: rgba(245, 166, 35, 0.12);
+  --coral: #fb7a68;         /* medium threat label */
+  --red: #ef4b4b;           /* critical / high */
+  --red-soft: rgba(239, 75, 75, 0.14);
+
+  /* ── Text ────────────────────────────────────────────────────────────── */
+  --text-0: #eef3fa;        /* primary / near-white */
+  --text-1: #c3d0e0;        /* secondary */
+  --text-2: #7f92ab;        /* muted labels */
+  --text-3: #4e6079;        /* dim / telemetry */
+
+  /* ── Typography ──────────────────────────────────────────────────────── */
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", ui-monospace, Menlo, monospace;
+
+  /* ── Radii & shadows ─────────────────────────────────────────────────── */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-pill: 999px;
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.02) inset,
+    0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-glow: 0 0 24px rgba(56, 198, 238, 0.25);
+
+  /* ── Layout ──────────────────────────────────────────────────────────── */
+  --sidebar-w: 66px;
+  --header-h: 62px;
+  --statusbar-h: 40px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg-1);
+  color: var(--text-0);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: var(--cyan);
+  text-decoration: none;
+}
+
+/* ── Utility primitives ────────────────────────────────────────────────── */
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.label-sm {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.stat-value {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+.card {
+  background: linear-gradient(180deg, var(--bg-3), var(--bg-2));
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-card);
+}
+
+.card-pad {
+  padding: 16px 18px;
+}
+
+/* Colour helpers */
+.c-cyan { color: var(--cyan); }
+.c-green { color: var(--green); }
+.c-amber { color: var(--amber); }
+.c-coral { color: var(--coral); }
+.c-red { color: var(--red); }
+.c-muted { color: var(--text-2); }
+.c-dim { color: var(--text-3); }
+
+/* Scrollbars — thin, on-theme */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--border-2);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--cyan-dim); }
+
+/* Focus ring */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+/* ── Keyframes ──────────────────────────────────────────────────────────── */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 currentColor; }
+  70% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(52, 211, 138, 0); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}

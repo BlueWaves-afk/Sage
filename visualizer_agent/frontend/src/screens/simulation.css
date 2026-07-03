@@ -1,0 +1,313 @@
+.sim {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Control bar */
+.sim-controls {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 14px 18px;
+}
+.sim-scenario,
+.sim-mode {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sim-scenario-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--bg-4);
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-md);
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.sim-scrubber {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 200px;
+}
+.sim-scrubber-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-2);
+}
+.sim-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--cyan), var(--bg-4));
+  outline: none;
+}
+.sim-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--cyan);
+  border: 3px solid var(--bg-1);
+  box-shadow: 0 0 10px var(--cyan);
+  cursor: pointer;
+}
+.btn-run {
+  background: linear-gradient(180deg, var(--cyan-bright), var(--cyan));
+  color: #05233a;
+  border: none;
+  border-radius: var(--r-md);
+  padding: 11px 20px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  box-shadow: 0 0 20px rgba(56, 198, 238, 0.35);
+}
+
+/* Dual maps */
+.sim-maps {
+  display: grid;
+  grid-template-columns: 1fr 1fr 220px;
+  gap: 16px;
+  height: 440px;
+}
+.sim-map {
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+}
+.sim-map-tag {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-1);
+  background: var(--bg-glass);
+  border: 1px solid var(--border-2);
+  padding: 6px 12px;
+  border-radius: var(--r-sm);
+}
+.sim-map-tag.predict {
+  color: var(--red);
+  border-color: rgba(239, 75, 75, 0.4);
+  background: rgba(40, 12, 16, 0.72);
+}
+.sim-map-predict {
+  box-shadow: 0 0 0 1px rgba(239, 75, 75, 0.3), 0 0 30px rgba(239, 75, 75, 0.15);
+}
+.sim-map-threat {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--red);
+  background: var(--bg-glass);
+  border: 1px solid rgba(239, 75, 75, 0.4);
+  padding: 5px 10px;
+  border-radius: var(--r-sm);
+}
+.sim-blip {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--red);
+  color: var(--red);
+  animation: pulse-dot 1.4s infinite;
+}
+.sim-telemetry {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  z-index: 2;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  min-width: 190px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sim-telemetry-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-1);
+}
+
+/* Layers panel */
+.sim-layers {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: auto;
+}
+.sim-layers .label { margin-bottom: 8px; }
+.sim-layer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  cursor: pointer;
+}
+.sim-layer-name { font-size: 14px; color: var(--text-1); }
+.sim-check {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  border: 1px solid var(--border-2);
+  background: var(--bg-1);
+  display: grid;
+  place-items: center;
+  color: #05233a;
+}
+.sim-check.on { background: var(--cyan); border-color: var(--cyan); }
+.sim-check.coral.on { background: var(--coral); border-color: var(--coral); }
+.sim-layer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+.sim-layer-btn {
+  background: var(--bg-3);
+  border: 1px solid var(--border-2);
+  color: var(--text-1);
+  border-radius: var(--r-md);
+  padding: 10px 12px;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.sim-layer-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+
+/* Lower panels */
+.sim-lower {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.sim-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.sim-chain {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sim-chain li {
+  font-size: 14px;
+  color: var(--text-1);
+  line-height: 1.5;
+}
+.sim-chain li::marker { color: var(--cyan); }
+.sim-assumption {
+  font-size: 14px;
+  color: var(--text-1);
+  line-height: 1.6;
+  margin: 10px 0 14px;
+}
+.sim-why {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--cyan);
+}
+
+.sim-action {
+  border: 1px solid var(--border-glow);
+  box-shadow: 0 0 0 1px rgba(56, 198, 238, 0.15), var(--shadow-card);
+}
+.sim-action-item {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border-1);
+}
+.sim-action-item:last-child { border-bottom: none; }
+.sim-action-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.sim-action-item p {
+  font-size: 13px;
+  color: var(--text-1);
+  line-height: 1.55;
+  margin: 0;
+  padding-left: 25px;
+}
+
+/* Horizon timeline */
+.sim-horizon-track {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  padding: 8px 0;
+}
+.sim-horizon-track::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  top: 12px;
+  height: 1px;
+  background: var(--border-2);
+}
+.sim-horizon-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  position: relative;
+  flex: 1;
+}
+.sim-horizon-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--cyan);
+  z-index: 1;
+  box-shadow: 0 0 8px var(--cyan);
+}
+.sim-horizon-dot.crit { background: var(--coral); box-shadow: 0 0 8px var(--coral); }
+.sim-horizon-hour {
+  font-size: 13px;
+  font-weight: 700;
+}
+.sim-horizon-label { font-size: 12px; color: var(--text-2); }
+
+@media (max-width: 1200px) {
+  .sim-maps { grid-template-columns: 1fr; height: auto; }
+  .sim-map { height: 320px; }
+  .sim-lower { grid-template-columns: 1fr; }
+  .sim-controls { flex-wrap: wrap; gap: 14px; }
+}
