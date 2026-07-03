@@ -6,11 +6,11 @@ import type { RiskScore } from "../api/types";
 import { useTheme, basemapFor } from "../theme";
 
 const RISK_RGB: Record<string, [number, number, number]> = {
-  CALM: [52, 211, 138],
-  WATCH: [245, 200, 60],
-  ELEVATED: [245, 166, 35],
-  ACTION: [239, 120, 60],
-  CRITICAL: [239, 75, 75],
+  CALM: [63, 184, 127],
+  WATCH: [217, 180, 60],
+  ELEVATED: [217, 154, 43],
+  ACTION: [217, 122, 99],
+  CRITICAL: [216, 82, 79],
 };
 
 // India's key discharge hub, for supply arcs.
@@ -37,14 +37,14 @@ export default function MapView({
       id: "risk-nodes",
       data: geoNodes,
       getPosition: (d) => [d.lon!, d.lat!],
-      getRadius: (d) => 30000 + d.score * 90000,
+      getRadius: (d) => 20000 + d.score * 60000,
       radiusUnits: "meters",
-      getFillColor: (d) => [...(RISK_RGB[d.band] ?? RISK_RGB.WATCH), 180],
+      getFillColor: (d) => [...(RISK_RGB[d.band] ?? RISK_RGB.WATCH), 220],
       getLineColor: (d) => [...(RISK_RGB[d.band] ?? RISK_RGB.WATCH), 255],
-      lineWidthMinPixels: 1.5,
+      lineWidthMinPixels: 1,
       stroked: true,
-      radiusMinPixels: 6,
-      radiusMaxPixels: 40,
+      radiusMinPixels: 4,
+      radiusMaxPixels: 26,
       pickable: true,
     });
 
@@ -53,26 +53,29 @@ export default function MapView({
       data: geoNodes,
       getPosition: (d) => [d.lon!, d.lat!],
       getText: (d) => d.entity,
-      getSize: 11,
-      getColor: [200, 216, 232, 220],
-      getPixelOffset: [0, -18],
+      getSize: 10,
+      getColor: [184, 188, 198, 235],
+      getPixelOffset: [0, -16],
       fontFamily: "Inter, sans-serif",
+      fontWeight: 600,
       getTextAnchor: "middle",
       background: true,
-      getBackgroundColor: [10, 18, 30, 160],
+      getBackgroundColor: [16, 16, 20, 210],
       backgroundPadding: [4, 2],
     });
 
+    // Thin, flat, low-opacity supply routes — functional reference lines, not
+    // decorative glowing arcs. No curvature (height 0) to avoid overlapping bloom.
     const supplyArcs = arcs
       ? new ArcLayer<RiskScore>({
           id: "supply-arcs",
           data: geoNodes.filter((n) => n.entity.includes("Strait") || n.entity.includes("Bab")),
           getSourcePosition: (d) => [d.lon!, d.lat!],
           getTargetPosition: () => JAMNAGAR,
-          getSourceColor: (d) => [...(RISK_RGB[d.band] ?? RISK_RGB.WATCH), 200],
-          getTargetColor: [56, 198, 238, 200],
-          getWidth: (d) => 1.5 + d.score * 3,
-          getHeight: 0.4,
+          getSourceColor: [110, 140, 175, 90],
+          getTargetColor: [110, 140, 175, 90],
+          getWidth: 1,
+          getHeight: 0,
         })
       : null;
 
@@ -90,12 +93,12 @@ export default function MapView({
           ? {
               html: `<b>${(object as RiskScore).entity}</b><br/>${(object as RiskScore).band} — ${((object as RiskScore).score * 100).toFixed(0)}%`,
               style: {
-                background: "#0f1a2b",
-                color: "#eef3fa",
-                fontSize: "12px",
-                padding: "6px 10px",
-                borderRadius: "6px",
-                border: "1px solid #21344f",
+                background: "#131318",
+                color: "#eef0f4",
+                fontSize: "11px",
+                padding: "5px 8px",
+                borderRadius: "3px",
+                border: "1px solid #34343f",
               },
             }
           : null

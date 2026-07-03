@@ -1,14 +1,14 @@
 .rp {
-  padding: 18px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
 }
 
 .rp-proc-body {
   display: grid;
-  grid-template-columns: 340px 1fr;
-  gap: 24px;
+  grid-template-columns: 320px 1fr;
+  gap: 16px;
 }
 
 .rp-radar-wrap {
@@ -67,19 +67,17 @@
 .rp-option {
   background: var(--bg-3);
   border: 1px solid var(--border-1);
-  border-radius: var(--r-md);
-  padding: 14px 16px;
-  transition: transform var(--dur-mid) var(--ease-out-expo),
-    border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
+  border-left: 2px solid transparent;
+  border-radius: var(--r-sm);
+  padding: 8px 10px;
+  transition: border-color var(--dur-fast) ease, background var(--dur-fast) ease;
 }
 .rp-option:hover {
-  transform: translateX(3px);
   border-color: var(--border-2);
-  box-shadow: var(--shadow-lift);
+  background: var(--bg-4);
 }
 .rp-option.top {
-  border-color: var(--border-glow);
-  box-shadow: inset 0 0 0 1px rgba(56, 198, 238, 0.15);
+  border-left-color: var(--cyan);
 }
 .rp-option-head {
   display: flex;
@@ -149,15 +147,14 @@
 .rp-bar {
   width: 60%;
   max-width: 54px;
-  background: linear-gradient(180deg, var(--cyan), var(--cyan-dim));
-  border-radius: 6px 6px 0 0;
+  background: var(--cyan-dim);
+  border-radius: 2px 2px 0 0;
   position: relative;
   min-height: 8px;
   display: flex;
   justify-content: center;
   transform-origin: bottom;
-  animation: bar-grow var(--dur-slow) var(--ease-out-expo) backwards;
-  box-shadow: 0 0 20px -6px var(--cyan);
+  animation: bar-grow var(--dur-mid) var(--ease-out-expo) backwards;
 }
 .rp-bar-col:nth-child(1) .rp-bar { animation-delay: 60ms; }
 .rp-bar-col:nth-child(2) .rp-bar { animation-delay: 130ms; }
@@ -169,7 +166,7 @@
   to { transform: scaleY(1); opacity: 1; }
 }
 .rp-bar.warn {
-  background: linear-gradient(180deg, var(--amber), #b87a12);
+  background: var(--amber);
 }
 .rp-bar-value {
   position: absolute;
@@ -195,8 +192,8 @@
 .rp-memo {
   background: var(--bg-3);
   border: 1px solid var(--border-1);
-  border-radius: var(--r-md);
-  padding: 16px;
+  border-radius: var(--r-sm);
+  padding: 10px;
 }
 .rp-memo p {
   font-size: 13px;

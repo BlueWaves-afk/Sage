@@ -17,18 +17,13 @@ export default function PipelineBar() {
       </span>
       <div className="pipeline-track">
         {WS_STAGES.map((stage, i) => (
-          <div key={stage} className="pipeline-node-wrap">
-            <div
-              className={`pipeline-node${i === activeIdx ? " active" : ""}${
-                i < activeIdx ? " done" : ""
-              }`}
-            >
-              <span className="pipeline-dot" />
-              <span className="pipeline-name">{stage}</span>
-            </div>
-            {i < WS_STAGES.length - 1 && (
-              <span className={`pipeline-link${i < activeIdx ? " done" : ""}`} />
-            )}
+          <div
+            key={stage}
+            className={`pipeline-chevron${i === activeIdx ? " active" : ""}${
+              i < activeIdx ? " done" : ""
+            }${i === 0 ? " first" : ""}`}
+          >
+            <span className="pipeline-name">{stage}</span>
           </div>
         ))}
       </div>

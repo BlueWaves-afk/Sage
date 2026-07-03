@@ -4,119 +4,108 @@
    ========================================================================== */
 
 :root {
-  /* ── Surfaces (deep navy stack) ──────────────────────────────────────── */
-  --bg-0: #060b14;          /* app background, deepest */
-  --bg-1: #0a111e;          /* page background */
-  --bg-2: #0d1626;          /* panel / rail background */
-  --bg-3: #0f1a2b;          /* card fill */
-  --bg-4: #13233a;          /* elevated card / hover */
-  --bg-glass: rgba(15, 26, 43, 0.72);
+  /* ── Surfaces (flat, near-black — Bloomberg-terminal register) ───────── */
+  --bg-0: #0a0a0c;          /* app background, deepest */
+  --bg-1: #0a0a0c;          /* page background — flat, no radial glow */
+  --bg-2: #101014;          /* panel / rail background */
+  --bg-3: #131318;          /* card fill */
+  --bg-4: #1a1a20;          /* elevated card / hover */
+  --bg-glass: rgba(16, 16, 20, 0.94);
 
-  /* ── Borders & lines ─────────────────────────────────────────────────── */
-  --border-1: #182740;
-  --border-2: #21344f;
-  --border-glow: rgba(56, 198, 238, 0.35);
+  /* ── Borders & lines — hard edges, muted slate, no glow ──────────────── */
+  --border-1: #26262e;
+  --border-2: #34343f;
+  --border-glow: #3a3a46;   /* kept as a name for compat; now a plain border, not a glow colour */
 
   /* ── Brand / accents ─────────────────────────────────────────────────── */
-  --cyan: #38c6ee;          /* primary accent — buttons, active, links */
-  --cyan-bright: #5bd7f7;
-  --cyan-dim: #2a93b4;
-  --cyan-soft: rgba(56, 198, 238, 0.12);
+  --cyan: #4bb8dd;          /* primary accent — buttons, active, links */
+  --cyan-bright: #6cc8e8;
+  --cyan-dim: #35899f;
+  --cyan-soft: rgba(75, 184, 221, 0.1);
   --blue: #2f6bff;
 
   /* ── Status / threat semantics ───────────────────────────────────────── */
-  --green: #34d38a;         /* online / nominal / good */
-  --green-soft: rgba(52, 211, 138, 0.12);
-  --amber: #f5a623;         /* medium / elevated / caution */
-  --amber-soft: rgba(245, 166, 35, 0.12);
-  --coral: #fb7a68;         /* medium threat label */
-  --red: #ef4b4b;           /* critical / high */
-  --red-soft: rgba(239, 75, 75, 0.14);
+  --green: #3fb87f;         /* online / nominal / good */
+  --green-soft: rgba(63, 184, 127, 0.1);
+  --amber: #d99a2b;         /* medium / elevated / caution */
+  --amber-soft: rgba(217, 154, 43, 0.1);
+  --coral: #d97a63;         /* medium threat label */
+  --red: #d8524f;           /* critical / high */
+  --red-soft: rgba(216, 82, 79, 0.1);
 
   /* ── Text ────────────────────────────────────────────────────────────── */
-  --text-0: #eef3fa;        /* primary / near-white */
-  --text-1: #c3d0e0;        /* secondary */
-  --text-2: #7f92ab;        /* muted labels */
-  --text-3: #4e6079;        /* dim / telemetry */
+  --text-0: #eef0f4;        /* primary / near-white */
+  --text-1: #b8bcc6;        /* secondary */
+  --text-2: #7d818c;        /* muted labels */
+  --text-3: #55585f;        /* dim / telemetry */
 
   /* ── Typography ──────────────────────────────────────────────────────── */
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", "SF Mono", ui-monospace, Menlo, monospace;
 
-  /* ── Radii & shadows ─────────────────────────────────────────────────── */
-  --r-sm: 6px;
-  --r-md: 10px;
-  --r-lg: 14px;
+  /* ── Radii & shadows — flat by default, no glow ──────────────────────── */
+  --r-sm: 3px;
+  --r-md: 4px;
+  --r-lg: 6px;
   --r-pill: 999px;
-  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.02) inset,
-    0 8px 24px rgba(0, 0, 0, 0.35);
-  --shadow-glow: 0 0 24px rgba(56, 198, 238, 0.25);
-  /* Layered elevation for premium depth (ambient + key + contact) */
-  --shadow-lift: 0 1px 0 rgba(255, 255, 255, 0.04) inset,
-    0 2px 6px rgba(0, 0, 0, 0.35), 0 18px 44px -12px rgba(0, 0, 0, 0.6);
-  /* Hairline top-edge highlight — the signature "expensive card" sheen */
-  --edge-top: linear-gradient(
-    90deg,
-    transparent,
-    rgba(120, 210, 245, 0.45),
-    transparent
-  );
+  --shadow-card: none;
+  --shadow-glow: none;
+  --shadow-lift: none;
+  /* Kept for backward compatibility with older markup; no longer glowing. */
+  --edge-top: transparent;
 
   /* ── Motion tokens (unify rhythm across the whole app) ───────────────── */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);   /* premium enter */
   --ease-in-quart: cubic-bezier(0.5, 0, 0.75, 0);   /* exit */
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* overshoot press */
-  --dur-fast: 160ms;
-  --dur-mid: 260ms;
-  --dur-slow: 420ms;
+  --dur-fast: 120ms;
+  --dur-mid: 180ms;
+  --dur-slow: 260ms;
 
   /* ── Layout ──────────────────────────────────────────────────────────── */
-  --sidebar-w: 66px;
-  --header-h: 62px;
-  --statusbar-h: 40px;
+  --sidebar-w: 56px;
+  --header-h: 48px;
+  --statusbar-h: 32px;
 }
 
 /* ── Light theme overrides ─────────────────────────────────────────────────
    Applied via <html data-theme="light">. Only tokens change — every component
    reads these variables, so the whole app re-themes with no per-component work. */
 :root[data-theme="light"] {
-  --bg-0: #e9eef5;
-  --bg-1: #eef3f9;
+  --bg-0: #f4f5f7;
+  --bg-1: #f4f5f7;
   --bg-2: #ffffff;
   --bg-3: #ffffff;
-  --bg-4: #eef3fa;
-  --bg-glass: rgba(255, 255, 255, 0.78);
+  --bg-4: #eef0f4;
+  --bg-glass: rgba(255, 255, 255, 0.94);
 
-  --border-1: #dbe3ee;
-  --border-2: #c3d0e0;
-  --border-glow: rgba(14, 127, 168, 0.4);
+  --border-1: #dcdee3;
+  --border-2: #c7cad2;
+  --border-glow: #b7bac2;
 
   --cyan: #0e7fa8;
   --cyan-bright: #12a0cf;
   --cyan-dim: #0b6f95;
-  --cyan-soft: rgba(14, 127, 168, 0.1);
+  --cyan-soft: rgba(14, 127, 168, 0.08);
 
   --green: #0f8a57;
-  --green-soft: rgba(15, 138, 87, 0.12);
+  --green-soft: rgba(15, 138, 87, 0.1);
   --amber: #b5730a;
-  --amber-soft: rgba(181, 115, 10, 0.12);
-  --coral: #d1503f;
-  --red: #cf3636;
-  --red-soft: rgba(207, 54, 54, 0.12);
+  --amber-soft: rgba(181, 115, 10, 0.1);
+  --coral: #b8452f;
+  --red: #b8302f;
+  --red-soft: rgba(184, 48, 47, 0.1);
 
-  --text-0: #101a2b;
-  --text-1: #33425a;
-  --text-2: #5f6f88;
-  --text-3: #8a99ad;
+  --text-0: #14161a;
+  --text-1: #3c3f46;
+  --text-2: #6b6e76;
+  --text-3: #94969e;
 
-  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.7) inset,
-    0 6px 20px rgba(30, 50, 90, 0.08);
-  --shadow-lift: 0 1px 0 rgba(255, 255, 255, 0.8) inset,
-    0 2px 6px rgba(30, 50, 90, 0.08), 0 18px 40px -14px rgba(30, 50, 90, 0.22);
-  --edge-top: linear-gradient(90deg, transparent, rgba(14, 127, 168, 0.3), transparent);
+  --shadow-card: none;
+  --shadow-lift: none;
+  --edge-top: transparent;
 }
 
-/* The deep-radial page glow is dark-only; soften it for light. */
 :root[data-theme="light"] body {
   background: var(--bg-1);
 }
@@ -153,52 +142,41 @@ a {
   font-variant-numeric: tabular-nums;
 }
 
+/* Structural labels — ALL CAPS, small, muted. Data is what should pop. */
 .label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-2);
 }
 
 .label-sm {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--text-2);
 }
 
 .stat-value {
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 700;
   letter-spacing: -0.01em;
   line-height: 1.1;
+  font-variant-numeric: tabular-nums;
 }
 
 .card {
   position: relative;
-  background: linear-gradient(180deg, var(--bg-3), var(--bg-2));
+  background: var(--bg-3);
   border: 1px solid var(--border-1);
   border-radius: var(--r-md);
-  box-shadow: var(--shadow-card);
-}
-
-/* Signature top-edge sheen on every card — a hairline light catch. */
-.card::before,
-.panel::before {
-  content: "";
-  position: absolute;
-  inset: 0 12% auto 12%;
-  height: 1px;
-  background: var(--edge-top);
-  opacity: 0.5;
-  pointer-events: none;
-  border-radius: var(--r-md);
+  box-shadow: none;
 }
 
 .card-pad {
-  padding: 16px 18px;
+  padding: 8px 10px;
 }
 
 /* Colour helpers */
@@ -229,8 +207,8 @@ input:focus-visible {
 
 /* ── Keyframes ──────────────────────────────────────────────────────────── */
 @keyframes pulse-dot {
-  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 currentColor; }
-  70% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(52, 211, 138, 0); }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
 
 @keyframes glow-pulse {
@@ -275,29 +253,22 @@ input:focus-visible {
 .stagger > *:nth-child(7) { animation-delay: 370ms; }
 .stagger > *:nth-child(8) { animation-delay: 425ms; }
 
-/* Frosted-glass surface for overlays / floating panels. */
+/* Solid surface for overlays / floating panels — no blur, hard edge. */
 .glass {
   background: var(--bg-glass);
-  backdrop-filter: blur(14px) saturate(1.2);
-  -webkit-backdrop-filter: blur(14px) saturate(1.2);
-  border: 1px solid rgba(120, 160, 200, 0.16);
+  border: 1px solid var(--border-2);
 }
 
-/* Interactive lift — spring-eased hover for clickable cards. */
+/* Interactive affordance for clickable cards — border brightens, no glow/lift. */
 .lift {
-  transition: transform var(--dur-mid) var(--ease-out-expo),
-    box-shadow var(--dur-mid) var(--ease-out-expo),
-    border-color var(--dur-fast) ease;
-  will-change: transform;
+  transition: border-color var(--dur-fast) ease, background var(--dur-fast) ease;
 }
 .lift:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-lift);
   border-color: var(--border-2);
+  background: var(--bg-4);
 }
 .lift:active {
-  transform: translateY(-1px) scale(0.995);
-  transition-duration: var(--dur-fast);
+  background: var(--bg-3);
 }
 
 /* Press feedback for buttons/chips. */

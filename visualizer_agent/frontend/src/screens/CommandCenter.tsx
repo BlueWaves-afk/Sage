@@ -78,7 +78,7 @@ export default function CommandCenter() {
 
   const kpis: Kpi[] = useMemo(() => [
     { label: "Threat Level", value: dash?.threat_level ?? "—", tone: threatTone },
-    { label: "Brent Crude (EIA ref)", num: dash?.brent_usd_bbl ?? undefined, prefix: "$", decimals: 2, tone: "", up: true, value: dash?.brent_usd_bbl == null ? "—" : undefined },
+    { label: "Brent Crude", num: dash?.brent_usd_bbl ?? undefined, prefix: "$", decimals: 2, tone: "", up: true, value: dash?.brent_usd_bbl == null ? "—" : undefined, sub: "EIA REF" },
     { label: "SPR Coverage", num: dash?.spr_coverage_pct ?? undefined, suffix: "%", decimals: 1, tone: "", value: dash?.spr_coverage_pct == null ? "—" : undefined },
     { label: "Active Alerts", num: dash?.active_alerts ?? 0, tone: (dash?.active_alerts ?? 0) > 0 ? "c-amber" : "c-green", warn: (dash?.active_alerts ?? 0) > 0 },
     { label: "Tracked Entities", num: dash?.monitoring_entities ?? 0, tone: "", sub: "KB NODES" },
@@ -206,11 +206,9 @@ export default function CommandCenter() {
                   <Skel w="100%" h={13} /> <Skel w="96%" h={13} /> <Skel w="70%" h={13} />
                 </div>
               ) : briefLive && brief ? (
-                <p className="cc-narrative">"{brief}"</p>
+                <p className="cc-narrative">{brief}</p>
               ) : (
-                <p className="cc-narrative c-muted">
-                  No reconciled assessment in the knowledge base yet.
-                </p>
+                <p className="cc-status-line mono">[STATUS: AWAITING SYNTHESIS]</p>
               )}
               <div className="label-sm cc-brief-sec">Threat Assessment</div>
               <div className="cc-threat">

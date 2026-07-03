@@ -1,14 +1,8 @@
-import "./ambient.css";
-
-// Slow-drifting aurora blobs + fine grid texture behind content. Purely
-// decorative depth — sits at z-index 0, pointer-events none, respects
-// reduced-motion (the drift animation is disabled by the global media query).
-export default function AmbientBackground({ variant = "default" }: { variant?: "default" | "alert" }) {
-  return (
-    <div className={`ambient ambient-${variant}`} aria-hidden="true">
-      <span className="ambient-blob ambient-blob-1" />
-      <span className="ambient-blob ambient-blob-2" />
-      <span className="ambient-grid" />
-    </div>
-  );
+// Intentionally a no-op. Enterprise dashboards read best on a flat, solid
+// background — the earlier glowing-blob + grid-texture treatment read as an
+// "AI-generated concept" rather than an industrial tool, per design review.
+// Kept as a component (rather than deleting the import sites) so re-enabling
+// a subtle background later is a one-line change.
+export default function AmbientBackground(_props: { variant?: "default" | "alert" }) {
+  return null;
 }

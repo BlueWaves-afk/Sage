@@ -1,8 +1,8 @@
 .gi {
   display: grid;
-  grid-template-columns: 1fr 440px;
-  gap: 18px;
-  padding: 18px;
+  grid-template-columns: 1fr 380px;
+  gap: 10px;
+  padding: 10px;
   height: 100%;
   min-height: 0;
 }
@@ -10,13 +10,13 @@
 .gi-map-col {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   min-width: 0;
 }
 
 .gi-breadcrumb {
-  font-size: 12px;
-  letter-spacing: 0.08em;
+  font-size: 11px;
+  letter-spacing: 0.04em;
   color: var(--text-2);
 }
 .gi-sep { color: var(--text-3); margin: 0 4px; }
@@ -24,28 +24,25 @@
 .gi-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 4px;
 }
 .gi-tab {
   background: var(--bg-3);
   border: 1px solid var(--border-1);
   color: var(--text-1);
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 500;
-  padding: 8px 16px;
-  border-radius: var(--r-md);
+  padding: 5px 10px;
+  border-radius: var(--r-sm);
   cursor: pointer;
-  transition: transform var(--dur-fast) var(--ease-spring),
-    border-color var(--dur-fast) ease, color var(--dur-fast) ease,
-    background var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
+  transition: border-color var(--dur-fast) ease, color var(--dur-fast) ease,
+    background var(--dur-fast) ease;
 }
-.gi-tab:hover { border-color: var(--border-2); transform: translateY(-1px); }
-.gi-tab:active { transform: scale(0.96); }
+.gi-tab:hover { border-color: var(--border-2); }
 .gi-tab.active {
   background: var(--cyan-soft);
-  border-color: var(--border-glow);
+  border-color: var(--cyan-dim);
   color: var(--cyan);
-  box-shadow: 0 0 0 1px rgba(56, 198, 238, 0.2), 0 0 18px -6px var(--cyan);
 }
 
 .gi-map {
@@ -62,20 +59,20 @@
   display: inline-flex;
   background: var(--bg-3);
   border: 1px solid var(--border-1);
-  border-radius: var(--r-md);
-  padding: 3px;
+  border-radius: var(--r-sm);
+  padding: 2px;
   gap: 2px;
 }
 .gi-colorby-btn {
   background: transparent;
   border: none;
   color: var(--text-2);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  padding: 6px 14px;
-  border-radius: var(--r-sm);
+  padding: 4px 10px;
+  border-radius: 2px;
   cursor: pointer;
-  transition: all var(--dur-fast) ease;
+  transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
 }
 .gi-colorby-btn.on {
   background: var(--cyan-soft);
@@ -85,49 +82,49 @@
 /* Legend + hint overlays on the map */
 .gi-legend {
   position: absolute;
-  left: 14px;
-  bottom: 14px;
+  left: 10px;
+  bottom: 10px;
   z-index: 2;
-  border-radius: var(--r-md);
-  padding: 12px 14px;
+  border-radius: var(--r-sm);
+  padding: 8px 10px;
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 5px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-2);
 }
 .gi-legend-item {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 11px;
+  gap: 7px;
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   color: var(--text-1);
 }
 .gi-legend-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  box-shadow: 0 0 8px currentColor;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
 }
 .gi-hint {
   position: absolute;
-  right: 14px;
-  top: 14px;
+  right: 10px;
+  top: 10px;
   z-index: 2;
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-2);
   background: var(--bg-glass);
-  backdrop-filter: blur(8px);
   border: 1px solid var(--border-2);
-  border-radius: var(--r-pill);
-  padding: 6px 12px;
+  border-radius: var(--r-sm);
+  padding: 4px 9px;
 }
 
 /* Hubs list */
 .gi-hubs {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 .gi-hub {
   display: flex;
@@ -135,36 +132,35 @@
   justify-content: space-between;
   background: var(--bg-3);
   border: 1px solid var(--border-1);
-  border-radius: var(--r-md);
-  padding: 11px 14px;
+  border-radius: var(--r-sm);
+  padding: 7px 9px;
   cursor: pointer;
-  transition: transform var(--dur-fast) var(--ease-out-expo),
-    border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
+  transition: border-color var(--dur-fast) ease, background var(--dur-fast) ease;
 }
 .gi-hub:hover {
-  transform: translateX(3px);
-  border-color: var(--border-glow);
-  box-shadow: 0 0 20px -8px var(--cyan);
+  border-color: var(--border-2);
+  background: var(--bg-4);
 }
-.gi-hub-name { font-size: 14px; font-weight: 600; }
+.gi-hub-name { font-size: 12px; font-weight: 600; }
 .gi-hub-deg {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--cyan);
   background: var(--cyan-soft);
-  padding: 2px 9px;
-  border-radius: var(--r-pill);
+  padding: 1px 7px;
+  border-radius: var(--r-sm);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Briefing */
 .gi-brief {
-  background: linear-gradient(180deg, var(--bg-3), var(--bg-2));
+  background: var(--bg-3);
   border: 1px solid var(--border-1);
   border-radius: var(--r-md);
-  padding: 20px;
+  padding: 12px;
   overflow: auto;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 12px;
 }
 .gi-brief-head {
   display: flex;
@@ -174,151 +170,140 @@
 .gi-brief-title {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
-  font-size: 19px;
+  gap: 7px;
+  font-size: 11px;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 .gi-ver {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--text-3);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.06em;
 }
 
 .gi-section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
 }
 .gi-situation {
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 13px;
+  line-height: 1.55;
   color: var(--text-1);
   margin: 0;
-  padding-left: 12px;
-  border-left: 2px solid var(--cyan-dim);
+  padding-left: 9px;
+  border-left: 2px solid var(--border-2);
 }
 
 .gi-metrics {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 8px;
 }
 .gi-metric {
-  padding: 14px 16px;
+  padding: 8px 10px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
 }
-.gi-metric-amber { border-left: 3px solid var(--amber); }
+.gi-metric-amber { border-left: 2px solid var(--amber); }
 .gi-metric-value {
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 700;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
+  font-variant-numeric: tabular-nums;
 }
 .gi-blip {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--amber);
   animation: pulse-dot 1.8s infinite;
-  color: var(--amber);
 }
 
 .gi-evidence {
   display: flex;
-  gap: 10px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 .gi-evidence-chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: var(--bg-3);
+  gap: 5px;
+  background: var(--bg-4);
   border: 1px solid var(--border-2);
-  border-radius: var(--r-md);
-  padding: 8px 14px;
-  font-size: 13px;
+  border-radius: var(--r-sm);
+  padding: 5px 10px;
+  font-size: 11px;
 }
 .gi-updated {
   display: flex;
   justify-content: space-between;
-  font-size: 10px;
-  letter-spacing: 0.08em;
+  font-size: 9px;
+  letter-spacing: 0.04em;
   color: var(--text-3);
 }
 
 .gi-why {
   width: 100%;
-  background: var(--bg-3);
+  background: var(--bg-4);
   border: 1px solid var(--border-2);
   color: var(--text-0);
-  border-radius: var(--r-md);
-  padding: 13px;
-  font-size: 14px;
+  border-radius: var(--r-sm);
+  padding: 8px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 9px;
-  transition: all 0.15s ease;
+  gap: 7px;
+  transition: border-color var(--dur-fast) ease, color var(--dur-fast) ease;
 }
 .gi-why:hover {
   border-color: var(--cyan);
   color: var(--cyan);
-  box-shadow: 0 0 22px -8px var(--cyan);
 }
-.gi-why:active { transform: scale(0.985); }
 
 .gi-network {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
-.gi-node-wrap { display: flex; align-items: center; gap: 6px; flex: 1; }
+.gi-node-wrap { display: flex; align-items: center; gap: 4px; flex: 1; }
 .gi-node {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
 }
 .gi-node-dot {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--r-md);
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-sm);
   background: var(--bg-4);
   border: 1px solid var(--border-2);
   display: grid;
   place-items: center;
-  transition: transform var(--dur-mid) var(--ease-out-expo),
-    border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
+  transition: border-color var(--dur-fast) ease;
 }
 .gi-node:hover .gi-node-dot {
-  transform: translateY(-3px);
-  border-color: var(--border-glow);
-  box-shadow: 0 0 18px -4px var(--cyan);
+  border-color: var(--cyan-dim);
 }
 .gi-node-dot::after {
   content: "";
-  width: 14px;
-  height: 14px;
-  border-radius: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
   background: var(--cyan-dim);
-  box-shadow: 0 0 10px rgba(56, 198, 238, 0.5);
-}
-.gi-node-link {
-  animation: flow-pulse 2.4s ease-in-out infinite;
-}
-@keyframes flow-pulse {
-  0%, 100% { opacity: 0.35; transform: translateX(0); }
-  50% { opacity: 1; transform: translateX(3px); }
 }
 .gi-node-name {
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   color: var(--text-2);
   text-align: center;
 }
@@ -333,34 +318,35 @@
 .gi-tl-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 0;
+  gap: 10px;
+  padding: 5px 0;
   position: relative;
 }
 .gi-tl-item::before {
   content: "";
   position: absolute;
-  left: 4px;
-  top: 18px;
-  bottom: -8px;
+  left: 3px;
+  top: 15px;
+  bottom: -5px;
   width: 1px;
   background: var(--border-2);
 }
 .gi-tl-item:last-child::before { display: none; }
 .gi-tl-dot {
-  width: 9px;
-  height: 9px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: currentColor;
   z-index: 1;
   flex-shrink: 0;
 }
 .gi-tl-time {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-3);
-  width: 62px;
+  width: 56px;
+  font-variant-numeric: tabular-nums;
 }
-.gi-tl-label { font-size: 13px; font-weight: 600; }
+.gi-tl-label { font-size: 12px; font-weight: 600; }
 
 @media (max-width: 1200px) {
   .gi { grid-template-columns: 1fr; height: auto; }

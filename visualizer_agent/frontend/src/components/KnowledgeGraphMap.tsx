@@ -45,7 +45,7 @@ export default function KnowledgeGraphMap({
   const { theme } = useTheme();
 
   const light = theme === "light";
-  const edgeIdle: [number, number, number, number] = light ? [70, 110, 150, 70] : [110, 140, 175, 55];
+  const edgeIdle: [number, number, number, number] = light ? [70, 110, 150, 50] : [110, 140, 175, 38];
   const labelText: [number, number, number, number] = light ? [30, 45, 70, 255] : [210, 224, 240, 235];
   const labelOutline: [number, number, number, number] = light ? [255, 255, 255, 255] : [8, 14, 24, 255];
 
@@ -81,16 +81,21 @@ export default function KnowledgeGraphMap({
       updateTriggers: { getColor: [hoverId, selectedId, theme], getWidth: [hoverId, selectedId] },
     });
 
-    // Soft halo only under the hovered/selected node.
-    const focusNode = placed.find((n) => n.id === (hoverId ?? selectedId));
-    const halo = new ScatterplotLayer<GraphNode>({
-      id: "kg-halo",
+    // Selection ring — a plain outlined circle, not a soft glow blob. Reads as
+    // a precise selection indicator rather than decorative bloom.
+    const focusNode = placed.find((n) => n.id === selectedId);
+    const selectionRing = new ScatterplotLayer<GraphNode>({
+      id: "kg-selection-ring",
       data: focusNode ? [focusNode] : [],
       getPosition: (d) => [d.lon!, d.lat!],
-      getRadius: (d) => radius(d) + 6,
+      getRadius: (d) => radius(d) + 5,
       radiusUnits: "pixels",
-      getFillColor: [56, 198, 238, 45],
-      stroked: false,
+      getFillColor: [0, 0, 0, 0],
+      getLineColor: [75, 184, 221, 255],
+      lineWidthUnits: "pixels",
+      getLineWidth: 1,
+      stroked: true,
+      filled: false,
       pickable: false,
     });
 
@@ -148,7 +153,7 @@ export default function KnowledgeGraphMap({
       } as any),
     });
 
-    return [edges, halo, nodes, labels];
+    return [edges, selectionRing, nodes, labels];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [graph, onNodeClick, selectedId, colorBy, hoverId, theme]);
 
@@ -165,12 +170,12 @@ export default function KnowledgeGraphMap({
                 (object as GraphNode).band
               } ${((object as GraphNode).score * 100).toFixed(0)}% · ${(object as GraphNode).degree} links`,
               style: {
-                background: "#0f1a2b",
-                color: "#eef3fa",
-                fontSize: "12px",
-                padding: "6px 10px",
-                borderRadius: "6px",
-                border: "1px solid #21344f",
+                background: "#131318",
+                color: "#eef0f4",
+                fontSize: "11px",
+                padding: "5px 8px",
+                borderRadius: "3px",
+                border: "1px solid #34343f",
               },
             }
           : null

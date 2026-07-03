@@ -1,89 +1,78 @@
 .pipeline {
   display: flex;
   align-items: center;
-  gap: 18px;
-  padding: 10px 16px;
+  gap: 12px;
+  padding: 6px 10px;
   background: var(--bg-2);
   border: 1px solid var(--border-1);
-  border-radius: var(--r-md);
+  border-radius: var(--r-sm);
 }
 
 .pipeline-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   white-space: nowrap;
 }
 
 .pipeline-conn {
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 700;
-  padding: 1px 6px;
-  border-radius: var(--r-pill);
+  padding: 1px 5px;
+  border-radius: var(--r-sm);
+  border: 1px solid currentColor;
 }
 .pipeline-conn.on { color: var(--green); background: var(--green-soft); }
 .pipeline-conn.sim { color: var(--amber); background: var(--amber-soft); }
 
 .pipeline-track {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   flex: 1;
 }
 
-.pipeline-node-wrap {
-  display: flex;
-  align-items: center;
+/* Chevron / breadcrumb stages — solid fill when active, muted outline otherwise. */
+.pipeline-chevron {
+  position: relative;
   flex: 1;
-}
-
-.pipeline-node {
   display: flex;
   align-items: center;
-  gap: 7px;
-  white-space: nowrap;
-}
-
-.pipeline-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--bg-4);
+  justify-content: center;
+  height: 22px;
+  margin-left: -8px;
+  padding: 0 14px;
+  background: var(--bg-3);
   border: 1px solid var(--border-2);
-  flex-shrink: 0;
-  transition: all 0.25s ease;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 0 100%, 8px 50%);
+  transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease;
+}
+.pipeline-chevron.first {
+  margin-left: 0;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 0 100%);
 }
 
 .pipeline-name {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   color: var(--text-2);
-  transition: color 0.25s ease;
+  transition: color var(--dur-fast) ease;
+  z-index: 1;
 }
 
-.pipeline-node.done .pipeline-dot {
-  background: var(--cyan-dim);
-  border-color: var(--cyan-dim);
+.pipeline-chevron.done {
+  background: var(--bg-4);
+  border-color: var(--border-2);
+}
+.pipeline-chevron.done .pipeline-name {
+  color: var(--text-1);
 }
 
-.pipeline-node.active .pipeline-dot {
+.pipeline-chevron.active {
   background: var(--cyan);
   border-color: var(--cyan);
-  box-shadow: 0 0 10px var(--cyan);
+  z-index: 2;
 }
-
-.pipeline-node.active .pipeline-name {
-  color: var(--cyan);
-}
-
-.pipeline-link {
-  height: 2px;
-  flex: 1;
-  margin: 0 8px;
-  background: var(--border-2);
-  transition: background 0.25s ease;
-}
-
-.pipeline-link.done {
-  background: var(--cyan-dim);
+.pipeline-chevron.active .pipeline-name {
+  color: var(--bg-0);
 }

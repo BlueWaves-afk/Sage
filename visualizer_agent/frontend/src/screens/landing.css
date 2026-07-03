@@ -1,16 +1,12 @@
 .landing {
   min-height: 100vh;
   position: relative;
-  background:
-    radial-gradient(ellipse 80% 50% at 50% 30%, rgba(24, 60, 110, 0.35), transparent 70%),
-    var(--bg-0);
+  background: var(--bg-0);
   display: flex;
   flex-direction: column;
 }
 :root[data-theme="light"] .landing {
-  background:
-    radial-gradient(ellipse 80% 50% at 50% 30%, rgba(14, 127, 168, 0.1), transparent 70%),
-    var(--bg-1);
+  background: var(--bg-1);
 }
 .landing > *:not(.ambient) {
   position: relative;
@@ -22,7 +18,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 32px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border-1);
 }
 
 .landing-brand {
@@ -51,12 +48,11 @@
 }
 .landing-power.on {
   background: var(--cyan-soft);
-  border-color: var(--border-glow);
+  border-color: var(--cyan-dim);
 }
 .landing-power.on .landing-power-dot {
   left: 17px;
   background: var(--cyan);
-  box-shadow: 0 0 8px var(--cyan);
 }
 
 .landing-top-right {
@@ -83,7 +79,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px 32px 40px;
+  padding: 16px 24px 28px;
   max-width: 1180px;
   margin: 0 auto;
   width: 100%;
@@ -99,31 +95,14 @@
 }
 
 .landing-title {
-  font-size: 84px;
+  font-size: 72px;
   font-weight: 800;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   margin: 0;
-  background: linear-gradient(
-    100deg,
-    #a9c9e6 0%,
-    #eaf6ff 42%,
-    #ffffff 50%,
-    #eaf6ff 58%,
-    #a9c9e6 100%
-  );
-  background-size: 220% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 0 60px rgba(56, 198, 238, 0.3));
-  animation: title-shine 6s ease-in-out infinite;
-}
-@keyframes title-shine {
-  0%, 100% { background-position: 130% 0; }
-  50% { background-position: -30% 0; }
+  color: var(--text-0);
 }
 
-/* Globe orbit rings + scan sweep */
+/* Globe orbit rings — thin reference lines, no scan sweep / glow */
 .landing-globe {
   position: relative;
   display: grid;
@@ -132,45 +111,31 @@
 .globe-orbit {
   position: absolute;
   border-radius: 50%;
-  border: 1px solid rgba(90, 190, 235, 0.16);
+  border: 1px solid var(--border-1);
   pointer-events: none;
 }
 .globe-orbit-1 {
   width: 108%;
   height: 108%;
   border-style: dashed;
-  animation: orbit 60s linear infinite;
 }
 .globe-orbit-2 {
   width: 122%;
   height: 122%;
-  border-color: rgba(90, 190, 235, 0.09);
-  animation: orbit 90s linear infinite reverse;
+  border-color: var(--border-1);
 }
 .globe-orbit-1::after {
   content: "";
   position: absolute;
-  top: -4px;
+  top: -3px;
   left: 50%;
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--cyan);
-  box-shadow: 0 0 12px var(--cyan);
 }
 .globe-scan {
-  position: absolute;
-  width: 84%;
-  height: 84%;
-  border-radius: 50%;
-  background: conic-gradient(
-    from 0deg,
-    transparent 0deg,
-    rgba(56, 198, 238, 0.12) 35deg,
-    transparent 70deg
-  );
-  animation: orbit 8s linear infinite;
-  pointer-events: none;
+  display: none;
 }
 
 .landing-sub {
@@ -182,53 +147,54 @@
 
 .landing-globe {
   margin: 8px 0 24px;
-  filter: drop-shadow(0 0 60px rgba(40, 130, 200, 0.3));
 }
 
 .landing-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  gap: 8px;
   width: 100%;
   max-width: 1080px;
 }
 
 .landing-stat {
-  padding: 16px 18px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  align-items: flex-start;
+  gap: 4px;
 }
 .landing-stat-head {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   color: var(--text-2);
 }
 .landing-stat-value {
-  font-size: 21px;
+  font-size: 18px;
   font-weight: 700;
   line-height: 1.2;
+  font-variant-numeric: tabular-nums;
 }
 .landing-stat-sub {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-2);
 }
 .landing-stat-underline {
   height: 2px;
   width: 100%;
-  background: linear-gradient(90deg, var(--cyan), transparent);
+  background: var(--cyan-dim);
   margin-top: 2px;
 }
 
 .landing-features {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 24px;
+  gap: 16px;
   width: 100%;
   max-width: 1080px;
-  margin: 40px 0;
-  padding-top: 28px;
+  margin: 24px 0;
+  padding-top: 18px;
   border-top: 1px solid var(--border-1);
 }
 .landing-feature-title {
@@ -255,32 +221,23 @@
 .btn-launch {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(180deg, var(--cyan-bright), var(--cyan));
-  color: #05233a;
-  font-size: 17px;
+  background: var(--cyan);
+  color: var(--bg-0);
+  font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0.01em;
-  border: none;
-  border-radius: var(--r-md);
-  padding: 16px 90px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  border: 1px solid var(--cyan-dim);
+  border-radius: var(--r-sm);
+  padding: 12px 56px;
   cursor: pointer;
-  box-shadow: 0 0 30px rgba(56, 198, 238, 0.4), 0 8px 24px -6px rgba(56, 198, 238, 0.5);
-  transition: transform var(--dur-mid) var(--ease-out-expo),
-    box-shadow var(--dur-mid) var(--ease-out-expo);
+  transition: background var(--dur-fast) ease;
 }
 .btn-launch:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 0 54px rgba(56, 198, 238, 0.7), 0 14px 30px -8px rgba(56, 198, 238, 0.6);
+  background: var(--cyan-bright);
 }
 .btn-launch-sheen {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 40%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
-  animation: sheen 4.5s ease-in-out infinite;
-  pointer-events: none;
+  display: none;
 }
 .landing-cta-sub {
   letter-spacing: 0.24em;
