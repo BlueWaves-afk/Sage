@@ -72,6 +72,31 @@
   bottom: 14px;
   z-index: 2;
 }
+.cc-map-badge {
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-1);
+  border-radius: var(--r-pill);
+  padding: 6px 12px;
+}
+.cc-map-badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-3);
+}
+.cc-map-badge-dot.on {
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: pulse-dot 2s infinite;
+  color: var(--green);
+}
 .cc-bottlenecks {
   background: var(--bg-glass);
   backdrop-filter: blur(8px);

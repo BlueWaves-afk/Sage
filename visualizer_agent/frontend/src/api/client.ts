@@ -12,6 +12,8 @@ import type {
   ScenarioOutput,
   SprSchedule,
   CopilotAnswer,
+  GraphData,
+  WikiPage,
 } from "./types";
 import * as mock from "./mock";
 
@@ -40,6 +42,8 @@ export const api = {
   health: () => get<{ status: string; kb_ready: boolean }>("/health", { status: "degraded", kb_ready: false }),
 
   riskScores: () => get<RiskScore[]>("/api/risk-scores", mock.mockRiskScores),
+
+  graph: () => get<GraphData>("/api/graph", mock.mockGraph),
 
   suppliers: () => get<Supplier[]>("/api/suppliers", mock.mockSuppliers),
 

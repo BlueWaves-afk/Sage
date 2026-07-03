@@ -1,51 +1,107 @@
-import { useState } from "react";
-import MapView from "../components/MapView";
-import { Panel, Badge, Meter } from "../components/ui/ui";
+import { useMemo, useState } from "react";
+import KnowledgeGraphMap from "../components/KnowledgeGraphMap";
+import WikiDrawer from "../components/WikiDrawer";
+import { Panel, Badge, Meter, OfflineHint } from "../components/ui/ui";
 import { IconBrain, IconCheck } from "../components/icons";
 import { api, useApi } from "../api/hooks";
+import type { GraphNode } from "../api/types";
 import "./intelligence.css";
 
-const LAYERS = ["Ships", "Ports", "Pipelines", "Shipping Routes", "Risk Nodes", "Refineries", "SPR"];
-const NETWORK = ["HORMUZ", "SAUDI ARABIA", "JAMNAGAR", "INDIAN SPR"];
-const TIMELINE = [
-  { time: "08:00", label: "US Sanctions", tone: "c-cyan" },
-  { time: "10:45", label: "Vessel Delay", tone: "c-muted" },
-  { time: "12:30", label: "Brent Spike", tone: "c-coral" },
-  { time: "CURRENT", label: "Risk Alert", tone: "c-cyan" },
+// Entity types double as the map's layer filters.
+const TYPE_FILTERS = ["Corridor", "Supplier", "Refinery", "CrudeGrade", "Port", "SPRCavern", "Authority", "GeoEvent"];
+const TYPE_LABEL: Record<string, string> = {
+  Corridor: "Corridors",
+  Supplier: "Suppliers",
+  Refinery: "Refineries",
+  CrudeGrade: "Crude Grades",
+  Port: "Ports",
+  SPRCavern: "SPR",
+  Authority: "Authorities",
+  GeoEvent: "Events",
+};
+const BAND_LEGEND: [string, string][] = [
+  ["CALM", "#2a9d8f"],
+  ["WATCH", "#e9c46a"],
+  ["ELEVATED", "#f4a261"],
+  ["ACTION", "#e76f51"],
+  ["CRITICAL", "#e63946"],
 ];
 
 export default function GlobalIntelligence() {
-  const [activeLayers, setActiveLayers] = useState<string[]>(["Ships", "Pipelines", "Shipping Routes"]);
-  const { data: risk } = useApi(api.riskScores);
+  const { data: graph, live } = useApi(api.graph);
+  const [active, setActive] = useState<string[]>(TYPE_FILTERS);
+  const [colorBy, setColorBy] = useState<"risk" | "type">("risk");
+  const [selected, setSelected] = useState<GraphNode | null>(null);
 
-  const toggle = (l: string) =>
-    setActiveLayers((a) => (a.includes(l) ? a.filter((x) => x !== l) : [...a, l]));
+  const toggle = (t: string) =>
+    setActive((a) => (a.includes(t) ? a.filter((x) => x !== t) : [...a, t]));
+
+  const filtered = useMemo(() => {
+    if (!graph) return { nodes: [], edges: [] };
+    const nodes = graph.nodes.filter((n) => active.includes(n.type));
+    const ids = new Set(nodes.map((n) => n.id));
+    const edges = graph.edges.filter((e) => ids.has(e.source) && ids.has(e.target));
+    return { nodes, edges };
+  }, [graph, active]);
+
+  const hubs = useMemo(
+    () => [...(graph?.nodes ?? [])].sort((a, b) => b.degree - a.degree).slice(0, 4),
+    [graph]
+  );
 
   return (
     <div className="gi">
       {/* Map column */}
       <div className="gi-map-col">
         <div className="gi-breadcrumb mono">
-          WORLD <span className="gi-sep">›</span> MIDDLE EAST <span className="gi-sep">›</span>{" "}
-          PERSIAN GULF <span className="gi-sep">›</span>{" "}
-          <span className="c-cyan">STRAIT OF HORMUZ</span>
+          KNOWLEDGE GRAPH <span className="gi-sep">›</span> GEOSPATIAL VIEW{" "}
+          <span className="gi-sep">›</span>{" "}
+          <span className="c-cyan">{filtered.nodes.length} NODES · {filtered.edges.length} EDGES</span>
+          <OfflineHint live={live} />
         </div>
         <div className="gi-tabs">
-          {LAYERS.map((l) => (
+          {TYPE_FILTERS.map((t) => (
             <button
-              key={l}
-              className={`gi-tab${activeLayers.includes(l) ? " active" : ""}`}
-              onClick={() => toggle(l)}
+              key={t}
+              className={`gi-tab${active.includes(t) ? " active" : ""}`}
+              onClick={() => toggle(t)}
             >
-              {l}
+              {TYPE_LABEL[t]}
             </button>
           ))}
+          <div className="gi-colorby">
+            <button
+              className={`gi-colorby-btn${colorBy === "risk" ? " on" : ""}`}
+              onClick={() => setColorBy("risk")}
+            >
+              Risk
+            </button>
+            <button
+              className={`gi-colorby-btn${colorBy === "type" ? " on" : ""}`}
+              onClick={() => setColorBy("type")}
+            >
+              Type
+            </button>
+          </div>
         </div>
         <div className="gi-map card">
-          <MapView
-            nodes={risk ?? []}
-            initialView={{ longitude: 56.4, latitude: 26.5, zoom: 6 }}
+          <KnowledgeGraphMap
+            graph={filtered}
+            colorBy={colorBy}
+            selectedId={selected?.id ?? null}
+            onNodeClick={setSelected}
           />
+          {colorBy === "risk" && (
+            <div className="gi-legend glass">
+              <span className="label-sm">Risk Band</span>
+              {BAND_LEGEND.map(([name, c]) => (
+                <span key={name} className="gi-legend-item">
+                  <span className="gi-legend-dot" style={{ background: c }} /> {name}
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="gi-hint mono">Click any node to open its wiki page</div>
         </div>
       </div>
 
@@ -61,23 +117,37 @@ export default function GlobalIntelligence() {
         <div className="gi-section">
           <div className="label-sm">Current Situation</div>
           <p className="gi-situation">
-            Recent naval exercises in the northern corridor, combined with regional policy shifts, have
-            introduced a 15% increase in transit latency. Sentiment analysis of carrier-owner
-            communications indicates growing caution regarding insurance premium stability for Q3.
+            The knowledge graph tracks {graph?.nodes.length ?? 0} entities — corridors, suppliers,
+            refineries, crude grades, ports, reserves and authorities — linked by{" "}
+            {graph?.edges.length ?? 0} structural relationships. Node colour reflects live fused risk;
+            size reflects connectivity. Select a node to read its reconciled wiki assessment.
           </p>
         </div>
 
         <div className="gi-metrics">
           <div className="gi-metric card gi-metric-amber">
-            <div className="label-sm">Threat Level</div>
+            <div className="label-sm">Highest Risk</div>
             <div className="gi-metric-value c-amber">
-              ELEVATED <span className="gi-blip" />
+              {(graph?.nodes ?? []).reduce((m, n) => (n.score > m.score ? n : m), { score: 0, band: "CALM" } as GraphNode).band}
+              <span className="gi-blip" />
             </div>
           </div>
           <div className="gi-metric card">
-            <div className="label-sm">Confidence</div>
-            <div className="gi-metric-value c-cyan">94%</div>
-            <Meter value={0.94} />
+            <div className="label-sm">Graph Coverage</div>
+            <div className="gi-metric-value c-cyan">{live ? "LIVE" : "DEMO"}</div>
+            <Meter value={live ? 1 : 0.4} />
+          </div>
+        </div>
+
+        <div className="gi-section">
+          <div className="label-sm">Most Connected Hubs</div>
+          <div className="gi-hubs">
+            {hubs.map((n) => (
+              <button key={n.id} className="gi-hub" onClick={() => setSelected(n)}>
+                <span className="gi-hub-name">{n.name}</span>
+                <span className="gi-hub-deg mono">{n.degree}</span>
+              </button>
+            ))}
           </div>
         </div>
 
@@ -91,43 +161,13 @@ export default function GlobalIntelligence() {
             ))}
           </div>
           <div className="gi-updated mono">
-            <span>LAST UPDATED: 14:22:08 UTC</span>
-            <span>SYNCED 2M AGO</span>
-          </div>
-        </div>
-
-        <button className="gi-why">
-          <IconBrain width={15} height={15} /> Why does SAGE think this?
-        </button>
-
-        <div className="gi-section">
-          <div className="label-sm">Connected Network</div>
-          <div className="gi-network">
-            {NETWORK.map((n, i) => (
-              <div key={n} className="gi-node-wrap">
-                <div className="gi-node">
-                  <span className="gi-node-dot" />
-                  <span className="gi-node-name">{n}</span>
-                </div>
-                {i < NETWORK.length - 1 && <span className="gi-node-link">›</span>}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="gi-section">
-          <div className="label-sm">Event Timeline</div>
-          <div className="gi-timeline">
-            {TIMELINE.map((e) => (
-              <div key={e.label} className="gi-tl-item">
-                <span className={`gi-tl-dot ${e.tone}`} />
-                <span className="gi-tl-time mono">{e.time}</span>
-                <span className={`gi-tl-label ${e.tone}`}>{e.label}</span>
-              </div>
-            ))}
+            <span>SOURCE: FALKORDB GRAPH</span>
+            <span>{live ? "SYNCED" : "CACHED"}</span>
           </div>
         </div>
       </aside>
+
+      <WikiDrawer node={selected} onClose={() => setSelected(null)} />
     </div>
   );
 }

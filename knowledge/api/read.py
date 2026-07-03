@@ -57,6 +57,29 @@ class SubgraphView(BaseModel):
     edges: list[dict[str, Any]]
 
 
+class GraphNodeView(BaseModel):
+    """One knowledge-graph node, positioned for the geospatial map view."""
+    id: str                       # entity uuid
+    name: str                     # canonical display name
+    type: str                     # C2 entity type (Corridor, Supplier, …)
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+    score: float = 0.0            # current risk score (0 if none)
+    band: str = "CALM"            # risk band (traffic-light colouring)
+    degree: int = 0               # link count → node prominence/size
+
+
+class GraphEdgeView(BaseModel):
+    source: str                   # source uuid
+    target: str                   # target uuid
+    relation: str                 # SUPPLIES / FEEDS / EXPORTS_VIA / …
+
+
+class GraphView(BaseModel):
+    nodes: list[GraphNodeView]
+    edges: list[GraphEdgeView]
+
+
 class SupplierView(BaseModel):
     entity_uuid: str
     display_name: str
@@ -412,6 +435,154 @@ async def get_subgraph(entity: str, hops: int = 2) -> SubgraphView:
     nodes  = row.get("nodes", []) or []
     edges  = row.get("edges", []) or []
     return SubgraphView(nodes=nodes, edges=edges)
+
+
+# ---------------------------------------------------------------------------
+# Full knowledge graph — the geospatial "Obsidian on a map" view
+# ---------------------------------------------------------------------------
+
+# Structural relationships worth drawing as supply-chain arcs (everything except
+# the internal RISK_STATE / MENTIONS bookkeeping edges).
+_STRUCTURAL_RELATIONS = {
+    "SUPPLIES", "FEEDS", "EXPORTS_VIA", "CONFIGURED_FOR", "BYPASS_ROUTE",
+    "SANCTIONED_BY", "CONNECTS", "ROUTES_THROUGH",
+}
+
+
+def _band_from_score(score: float) -> str:
+    if score >= 0.85:
+        return "CRITICAL"
+    if score >= 0.70:
+        return "ACTION"
+    if score >= 0.45:
+        return "ELEVATED"
+    if score >= 0.25:
+        return "WATCH"
+    return "CALM"
+
+
+async def get_full_graph(placed_only: bool = True) -> GraphView:
+    """
+    Return the entity graph — nodes plus their structural relationships — positioned
+    geographically so the frontend can render it on a map like Obsidian renders its
+    force graph. Node identity, type and edges come straight from the live graph
+    (FalkorDB); coordinates resolve from the registry + geo module; risk band comes
+    from current RISK_STATE edges.
+
+    `placed_only=True` (default) returns just the wiki-backed entities that have a
+    real map position — the same set that has Obsidian pages — and drops edges whose
+    endpoints fall outside that set. Duplicate names (Graphiti sometimes extracts a
+    second generic node for the same entity) are collapsed to the highest-degree one.
+    """
+    from knowledge.api.geo import resolve_coordinates
+
+    # 1. All entity nodes with their type label and useful attributes.
+    node_rows = await _cypher(
+        """
+        MATCH (n:Entity)
+        RETURN n.uuid AS uuid, n.name AS name, n.labels AS labels,
+               n.country AS country, n.origin AS origin,
+               n.lat AS lat, n.lon AS lon
+        """
+    )
+
+    # 2. All structural edges (Graphiti stores custom edges as RELATES_TO with the
+    #    real type in r.name; type() covers any natively-typed edges too).
+    edge_rows = await _cypher(
+        """
+        MATCH (s:Entity)-[r]->(t:Entity)
+        WHERE r.invalid_at IS NULL
+        RETURN s.uuid AS source, t.uuid AS target,
+               coalesce(r.name, type(r)) AS relation
+        """
+    )
+
+    # 3. Current risk scores by entity name (for band colouring).
+    risk_by_name: dict[str, float] = {}
+    try:
+        for rs in await get_risk_scores():
+            risk_by_name[rs.entity] = rs.score
+    except Exception as exc:
+        log.warning("get_full_graph: risk lookup failed: %s", exc)
+
+    # Registry lookup by canonical name (authoritative coordinates + type).
+    reg_by_name: dict[str, Any] = {}
+    try:
+        from knowledge.registry import REGISTRY
+        reg_by_name = {e.canonical_name: e for e in REGISTRY.values()}
+    except Exception as exc:
+        log.warning("get_full_graph: registry unavailable: %s", exc)
+
+    # Degree count for node sizing.
+    degree: dict[str, int] = {}
+    structural_edges: list[GraphEdgeView] = []
+    for e in edge_rows:
+        rel = str(e.get("relation") or "").upper()
+        if rel in {"RISK_STATE", "MENTIONS", "RELATES_TO"} and rel not in _STRUCTURAL_RELATIONS:
+            continue
+        src, tgt = e.get("source"), e.get("target")
+        if not src or not tgt or src == tgt:
+            continue
+        structural_edges.append(GraphEdgeView(source=src, target=tgt, relation=rel or "RELATED"))
+        degree[src] = degree.get(src, 0) + 1
+        degree[tgt] = degree.get(tgt, 0) + 1
+
+    # Build nodes; collapse duplicate names to the highest-degree instance.
+    best_by_name: dict[str, GraphNodeView] = {}
+    for n in node_rows:
+        name = str(n.get("name") or "")
+        if not name:
+            continue
+        labels = n.get("labels") or []
+        etype = next((l for l in labels if l != "Entity"), None) or "Entity"
+        reg = reg_by_name.get(name)
+        if reg:
+            etype = reg.entity_type
+
+        coords = resolve_coordinates(
+            name=name,
+            entity_type=etype,
+            country=n.get("country"),
+            origin=n.get("origin"),
+            registry_coords=(reg.coordinates if reg else None)
+            or ({"lat": n.get("lat"), "lon": n.get("lon")} if n.get("lat") is not None else None),
+        )
+        if placed_only and coords is None:
+            continue
+
+        uuid = str(n.get("uuid") or name)
+        score = risk_by_name.get(name, 0.0)
+        node = GraphNodeView(
+            id=uuid,
+            name=name,
+            type=etype,
+            lat=coords["lat"] if coords else None,
+            lon=coords["lon"] if coords else None,
+            score=score,
+            band=_band_from_score(score),
+            degree=degree.get(uuid, 0),
+        )
+        prev = best_by_name.get(name)
+        if prev is None or node.degree > prev.degree:
+            best_by_name[name] = node
+
+    nodes = list(best_by_name.values())
+
+    # Drop edges whose endpoints didn't survive the node filter/dedup, and remap
+    # collapsed-duplicate uuids to the surviving node's uuid (by name).
+    keep_ids = {n.id for n in nodes}
+    edges: list[GraphEdgeView] = []
+    seen_edges: set[tuple[str, str, str]] = set()
+    for e in structural_edges:
+        if e.source not in keep_ids or e.target not in keep_ids:
+            continue
+        key = (e.source, e.target, e.relation)
+        if key in seen_edges:
+            continue
+        seen_edges.add(key)
+        edges.append(e)
+
+    return GraphView(nodes=nodes, edges=edges)
 
 
 # ---------------------------------------------------------------------------

@@ -107,6 +107,18 @@ async def risk_scores() -> list:
     return [s.model_dump() for s in scores]
 
 
+@app.get("/api/graph")
+async def knowledge_graph() -> dict:
+    """
+    The full knowledge graph, geographically positioned — every entity node plus
+    its structural relationships. Drives the map's node-link visualization (the
+    geospatial equivalent of the Obsidian wiki graph).
+    """
+    from knowledge.api.read import get_full_graph
+    g = await get_full_graph()
+    return g.model_dump()
+
+
 # ---------------------------------------------------------------------------
 # Supply chain state endpoints (System 3/4 readers)
 # ---------------------------------------------------------------------------

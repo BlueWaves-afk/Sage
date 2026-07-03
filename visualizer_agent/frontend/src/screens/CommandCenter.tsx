@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import MapView from "../components/MapView";
+import KnowledgeGraphMap from "../components/KnowledgeGraphMap";
+import WikiDrawer from "../components/WikiDrawer";
 import PipelineBar from "../components/PipelineBar";
 import AmbientBackground from "../components/AmbientBackground";
 import AnimatedNumber from "../components/AnimatedNumber";
 import { Panel, Badge, Meter, OfflineHint } from "../components/ui/ui";
+import type { GraphNode } from "../api/types";
 import { IconRss, IconAnchor, IconChart, IconAlert, IconBot } from "../components/icons";
 import { api } from "../api/hooks";
 import { useApi } from "../api/hooks";
@@ -49,7 +52,9 @@ const KPIS: Kpi[] = [
 
 export default function CommandCenter() {
   const nav = useNavigate();
-  const { data: risk, live } = useApi(api.riskScores);
+  const { data: graph, live: graphLive } = useApi(api.graph);
+  const { live } = useApi(api.riskScores);
+  const [selected, setSelected] = useState<GraphNode | null>(null);
 
   return (
     <div className="cc">
@@ -78,7 +83,17 @@ export default function CommandCenter() {
         <div className="cc-main">
           <div className="cc-map-row">
             <div className="cc-map card">
-              <MapView nodes={risk ?? []} />
+              <KnowledgeGraphMap
+                graph={graph ?? { nodes: [], edges: [] }}
+                selectedId={selected?.id ?? null}
+                onNodeClick={setSelected}
+                initialView={{ longitude: 52, latitude: 24, zoom: 3.3 }}
+              />
+              <div className="cc-map-badge glass mono">
+                <span className={`cc-map-badge-dot ${graphLive ? "on" : ""}`} />
+                {graph?.nodes.length ?? 0} nodes · {graph?.edges.length ?? 0} edges ·{" "}
+                {graphLive ? "LIVE KB" : "DEMO"}
+              </div>
               <div className="cc-map-overlay">
                 <div className="cc-bottlenecks">
                   <div className="label-sm">Maritime Bottlenecks</div>
@@ -221,6 +236,8 @@ export default function CommandCenter() {
           </Panel>
         </div>
       </div>
+
+      <WikiDrawer node={selected} onClose={() => setSelected(null)} />
     </div>
   );
 }

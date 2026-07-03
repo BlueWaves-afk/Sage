@@ -82,6 +82,33 @@ export interface CopilotAnswer {
   citations: { entity: string; episode_id: string }[];
 }
 
+export interface GraphNode {
+  id: string;
+  name: string;
+  type: string; // Corridor | Supplier | Refinery | CrudeGrade | Port | SPRCavern | Authority | GeoEvent
+  lat: number | null;
+  lon: number | null;
+  score: number;
+  band: RiskBand;
+  degree: number;
+}
+
+export interface GraphEdge {
+  source: string;
+  target: string;
+  relation: string;
+}
+
+export interface GraphData {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+}
+
+export interface WikiPage {
+  entity: string;
+  content: string;
+}
+
 export interface PipelineState {
   stage:
     | "SENSE"

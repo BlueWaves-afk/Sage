@@ -1,0 +1,116 @@
+.wd-scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 7, 14, 0.5);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-mid) ease;
+  z-index: 40;
+}
+.wd-scrim.open { opacity: 1; pointer-events: auto; }
+
+.wd {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: 440px;
+  max-width: 92vw;
+  background: linear-gradient(180deg, var(--bg-3), var(--bg-2));
+  border-left: 1px solid var(--border-2);
+  box-shadow: -24px 0 60px -20px rgba(0, 0, 0, 0.7);
+  transform: translateX(100%);
+  transition: transform var(--dur-slow) var(--ease-out-expo);
+  z-index: 41;
+  display: flex;
+  flex-direction: column;
+  padding: 22px;
+}
+.wd.open { transform: translateX(0); }
+
+.wd-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.wd-type { color: var(--cyan); }
+.wd-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 4px 0 0;
+}
+.wd-close {
+  background: var(--bg-4);
+  border: 1px solid var(--border-2);
+  color: var(--text-1);
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.wd-close:hover { border-color: var(--cyan); color: var(--cyan); }
+
+.wd-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-1);
+}
+.wd-meta-item { font-size: 12px; color: var(--text-2); }
+.wd-offline {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--amber);
+}
+
+.wd-body {
+  flex: 1;
+  overflow: auto;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-1);
+}
+.wd-body h2 { font-size: 18px; margin: 18px 0 8px; color: var(--text-0); }
+.wd-body h3 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--cyan);
+  margin: 20px 0 8px;
+}
+.wd-body h4 { font-size: 14px; margin: 14px 0 6px; color: var(--text-0); }
+.wd-body p { margin: 0 0 12px; }
+.wd-body ul { margin: 0 0 14px; padding-left: 18px; }
+.wd-body li { margin-bottom: 6px; }
+.wd-body li::marker { color: var(--cyan); }
+.wd-body code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--bg-1);
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: var(--cyan-bright);
+}
+.wd-body .wikilink {
+  color: var(--cyan);
+  border-bottom: 1px dashed var(--cyan-dim);
+  cursor: default;
+}
+
+.wd-skeleton { display: flex; flex-direction: column; gap: 12px; }
+.wd-sk-line { height: 14px; width: 100%; }
+.wd-sk-line.short { width: 60%; }
+
+.wd-foot {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-1);
+  color: var(--text-3);
+}

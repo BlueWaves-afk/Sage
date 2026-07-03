@@ -56,6 +56,105 @@
   min-height: 400px;
 }
 
+/* Color-by toggle */
+.gi-colorby {
+  margin-left: auto;
+  display: inline-flex;
+  background: var(--bg-3);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-md);
+  padding: 3px;
+  gap: 2px;
+}
+.gi-colorby-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: all var(--dur-fast) ease;
+}
+.gi-colorby-btn.on {
+  background: var(--cyan-soft);
+  color: var(--cyan);
+}
+
+/* Legend + hint overlays on the map */
+.gi-legend {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  z-index: 2;
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.gi-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-1);
+}
+.gi-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 8px currentColor;
+}
+.gi-hint {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  z-index: 2;
+  font-size: 11px;
+  color: var(--text-2);
+  background: var(--bg-glass);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-pill);
+  padding: 6px 12px;
+}
+
+/* Hubs list */
+.gi-hubs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.gi-hub {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-3);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-md);
+  padding: 11px 14px;
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-out-expo),
+    border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
+}
+.gi-hub:hover {
+  transform: translateX(3px);
+  border-color: var(--border-glow);
+  box-shadow: 0 0 20px -8px var(--cyan);
+}
+.gi-hub-name { font-size: 14px; font-weight: 600; }
+.gi-hub-deg {
+  font-size: 12px;
+  color: var(--cyan);
+  background: var(--cyan-soft);
+  padding: 2px 9px;
+  border-radius: var(--r-pill);
+}
+
 /* Briefing */
 .gi-brief {
   background: linear-gradient(180deg, var(--bg-3), var(--bg-2));
