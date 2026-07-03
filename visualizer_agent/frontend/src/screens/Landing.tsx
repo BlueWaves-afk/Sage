@@ -2,7 +2,8 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Globe from "../components/Globe";
 import AmbientBackground from "../components/AmbientBackground";
-import { api } from "../api/hooks";
+import { Kb, Skel } from "../components/ui/ui";
+import { api, useApi } from "../api/hooks";
 import {
   IconGlobe,
   IconBrain,
@@ -26,10 +27,15 @@ const FEATURES = [
 export default function Landing() {
   const nav = useNavigate();
   const [live, setLive] = useState(false);
+  const { data: dash, live: dashLive } = useApi(api.dashboard);
 
   useEffect(() => {
     api.health().then((env) => setLive(env.live && env.data.kb_ready));
   }, []);
+
+  const threatTone =
+    dash?.threat_level === "CRITICAL" || dash?.threat_level === "HIGH" ? "c-coral" :
+    dash?.threat_level === "MEDIUM" ? "c-coral" : "c-green";
 
   return (
     <div className="landing">
@@ -71,9 +77,13 @@ export default function Landing() {
           <div className="landing-stat card">
             <div className="landing-stat-head">
               <IconRss width={14} height={14} />
-              <span className="label-sm">Monitoring Sources</span>
+              <span className="label-sm">Tracked Entities</span>
             </div>
-            <div className="landing-stat-value">24 Live Intelligence Feeds</div>
+            <div className="landing-stat-value">
+              <Kb live={dashLive} skel={<Skel w={140} h={20} />}>
+                {dash?.monitoring_entities} KB Entities
+              </Kb>
+            </div>
             <div className="landing-stat-underline" />
           </div>
           <div className="landing-stat card">
@@ -81,15 +91,23 @@ export default function Landing() {
               <IconAlert width={14} height={14} />
               <span className="label-sm">Threat Level</span>
             </div>
-            <div className="landing-stat-value c-coral">Medium</div>
-            <div className="landing-stat-sub">Elevated Monitoring</div>
+            <div className={`landing-stat-value ${threatTone}`}>
+              <Kb live={dashLive} skel={<Skel w={90} h={20} />}>
+                {dash?.threat_level}
+              </Kb>
+            </div>
+            <div className="landing-stat-sub">Fused risk assessment</div>
           </div>
           <div className="landing-stat card">
             <div className="landing-stat-head">
               <IconShield width={14} height={14} />
               <span className="label-sm">SPR Coverage</span>
             </div>
-            <div className="landing-stat-value">9.5 Days</div>
+            <div className="landing-stat-value">
+              <Kb live={dashLive} skel={<Skel w={110} h={20} />}>
+                {dash?.spr_coverage_pct}% Filled
+              </Kb>
+            </div>
             <div className="landing-stat-sub">Strategic Petroleum Reserve</div>
           </div>
           <div className="landing-stat card">
@@ -97,8 +115,12 @@ export default function Landing() {
               <IconChart width={14} height={14} />
               <span className="label-sm">AI Readiness</span>
             </div>
-            <div className="landing-stat-value c-cyan">Ready</div>
-            <div className="landing-stat-sub">Systems Operational</div>
+            <div className={`landing-stat-value ${live ? "c-cyan" : "c-muted"}`}>
+              {live ? "Ready" : <Skel w={80} h={20} />}
+            </div>
+            <div className="landing-stat-sub">
+              {live ? "Systems Operational" : "Connecting to KB…"}
+            </div>
           </div>
         </div>
 

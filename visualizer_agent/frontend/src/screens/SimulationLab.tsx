@@ -1,6 +1,6 @@
 import { useState } from "react";
 import MapView from "../components/MapView";
-import { Panel, Badge } from "../components/ui/ui";
+import { Panel, Badge, Skel, SkeletonBlock } from "../components/ui/ui";
 import { IconPlay, IconCheck, IconExternal, IconShield, IconBrain } from "../components/icons";
 import { api, useApi } from "../api/hooks";
 import type { RiskScore } from "../api/types";
@@ -27,10 +27,17 @@ function escalate(nodes: RiskScore[]): RiskScore[] {
 }
 
 export default function SimulationLab() {
-  const { data: risk } = useApi(api.riskScores);
-  const { data: scenario } = useApi(api.scenario);
+  const { data: risk } = useApi(api.graph);
+  const { data: scenario, live: scenLive } = useApi(api.scenario);
   const [horizon, setHorizon] = useState(48);
-  const nodes = risk ?? [];
+  const nodes = (risk?.nodes ?? []).map((n) => ({
+    entity: n.name,
+    score: n.score,
+    band: n.band,
+    factors: { ais: 0, gdelt: 0, price: 0, sanctions: 0 },
+    lat: n.lat ?? undefined,
+    lon: n.lon ?? undefined,
+  }));
 
   return (
     <div className="sim">
@@ -63,7 +70,7 @@ export default function SimulationLab() {
         </div>
         <div className="sim-mode">
           <span className="label-sm">Mode:</span>
-          <Badge tone="cyan">Sandbox</Badge>
+          <Badge tone={scenLive ? "cyan" : "muted"}>{scenLive ? "Sandbox" : "No live scenario"}</Badge>
         </div>
         <button className="btn-run press">
           <span className="btn-run-sheen" />
@@ -116,58 +123,76 @@ export default function SimulationLab() {
 
       {/* Summary + action */}
       <div className="sim-lower">
-        <Panel className="sim-summary" title="AI Simulation Summary" right={<Badge tone="cyan">{Math.round((scenario?.confidence ?? 0.91) * 100)}% Confidence</Badge>}>
-          <div className="sim-summary-grid">
-            <div>
-              <div className="label-sm">Predicted Chain of Events</div>
-              <ul className="sim-chain">
-                {(scenario?.chain_of_events ?? []).map((e) => (
-                  <li key={e}>{e}</li>
-                ))}
-              </ul>
+        <Panel className="sim-summary" title="AI Simulation Summary" right={scenLive ? <Badge tone="cyan">{Math.round((scenario?.confidence ?? 0) * 100)}% Confidence</Badge> : <Skel w={100} h={22} />}>
+          {scenLive ? (
+            <div className="sim-summary-grid">
+              <div>
+                <div className="label-sm">Predicted Chain of Events</div>
+                <ul className="sim-chain">
+                  {(scenario?.chain_of_events ?? []).map((e) => (
+                    <li key={e}>{e}</li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <div className="label-sm">Key Assumptions</div>
+                <p className="sim-assumption">{scenario?.assumptions?.[0]}</p>
+                <a className="sim-why" href="#">
+                  Why this prediction? <IconExternal width={13} height={13} />
+                </a>
+              </div>
             </div>
-            <div>
-              <div className="label-sm">Key Assumptions</div>
-              <p className="sim-assumption">{scenario?.assumptions?.[0]}</p>
-              <a className="sim-why" href="#">
-                Why this prediction? <IconExternal width={13} height={13} />
-              </a>
-            </div>
-          </div>
+          ) : (
+            <SkeletonBlock note="Run a scenario to populate — no cached System 2 output" />
+          )}
         </Panel>
 
         <Panel
           className="sim-action"
           title="AI Recommended Action"
-          right={<Badge tone="cyan">Priority Action</Badge>}
+          right={scenLive ? <Badge tone="cyan">Priority Action</Badge> : <Skel w={90} h={22} />}
         >
-          <div className="sim-action-item">
-            <div className="sim-action-head">
-              <IconCheck width={16} height={16} className="c-cyan" />
-              <span>UAE Emergency Procurement Cluster</span>
-            </div>
-            <p>
-              Initiate immediate 72-hour purchase window for high-grade crude from UAE storage
-              terminals via land-bypass pipeline to Fujairah.
-            </p>
-          </div>
-          <div className="sim-action-item">
-            <div className="sim-action-head">
-              <IconShield width={16} height={16} className="c-cyan" />
-              <span>Strategic Petroleum Reserve Activation</span>
-            </div>
-            <p>
-              Authorize release of Tier-1 reserves from Vishakhapatnam and Padur to maintain 48-hour
-              refinery continuity.
-            </p>
-          </div>
+          {scenLive ? (
+            <>
+              <div className="sim-action-item">
+                <div className="sim-action-head">
+                  <IconCheck width={16} height={16} className="c-cyan" />
+                  <span>UAE Emergency Procurement Cluster</span>
+                </div>
+                <p>
+                  Initiate immediate 72-hour purchase window for high-grade crude from UAE storage
+                  terminals via land-bypass pipeline to Fujairah.
+                </p>
+              </div>
+              <div className="sim-action-item">
+                <div className="sim-action-head">
+                  <IconShield width={16} height={16} className="c-cyan" />
+                  <span>Strategic Petroleum Reserve Activation</span>
+                </div>
+                <p>
+                  Authorize release of Tier-1 reserves from Vishakhapatnam and Padur to maintain
+                  48-hour refinery continuity.
+                </p>
+              </div>
+            </>
+          ) : (
+            <SkeletonBlock note="Recommended actions appear once System 3/4 run against a scenario" />
+          )}
         </Panel>
       </div>
 
       {/* Impact horizon timeline */}
       <Panel className="sim-horizon" title={<span><IconBrain width={13} height={13} /> Impact Horizon Timeline</span>}>
         <div className="sim-horizon-track">
-          {(scenario?.timeline ?? []).map((t) => (
+          {!scenLive
+            ? [12, 24, 36, 48].map((h) => (
+                <div key={h} className="sim-horizon-item">
+                  <span className="sim-horizon-dot" style={{ opacity: 0.3 }} />
+                  <Skel w={60} h={13} />
+                  <Skel w={90} h={11} />
+                </div>
+              ))
+            : (scenario?.timeline ?? []).map((t) => (
             <div key={t.hour} className="sim-horizon-item">
               <span className={`sim-horizon-dot${t.critical ? " crit" : ""}`} />
               <div className={`sim-horizon-hour${t.critical ? " c-coral" : ""}`}>Hour {t.hour}</div>

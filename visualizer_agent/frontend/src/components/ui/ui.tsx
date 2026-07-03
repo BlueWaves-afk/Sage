@@ -97,3 +97,68 @@ export function OfflineHint({ live }: { live: boolean }) {
   if (live) return null;
   return <span className="offline-hint mono">demo data</span>;
 }
+
+/**
+ * Skeleton placeholder — shown wherever a value has no live knowledge-base
+ * source yet (loading, backend offline, or awaiting System 1). We deliberately
+ * never render fabricated numbers; an empty state animates instead.
+ */
+export function Skel({
+  w = "100%",
+  h = 14,
+  radius = 6,
+  className = "",
+}: {
+  w?: number | string;
+  h?: number | string;
+  radius?: number;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`skeleton ${className}`}
+      style={{
+        display: "inline-block",
+        width: typeof w === "number" ? `${w}px` : w,
+        height: typeof h === "number" ? `${h}px` : h,
+        borderRadius: radius,
+        verticalAlign: "middle",
+      }}
+    />
+  );
+}
+
+/** A few skeleton lines + an honest note, for empty data regions. */
+export function SkeletonBlock({ note, lines = 3 }: { note?: string; lines?: number }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {Array.from({ length: lines }).map((_, i) => (
+        <Skel key={i} w={i === lines - 1 ? "62%" : "100%"} h={13} />
+      ))}
+      {note && (
+        <span className="offline-hint mono" style={{ marginTop: 4, alignSelf: "flex-start" }}>
+          {note}
+        </span>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Render `children` only when the value is genuinely from the KB (`live`), else
+ * a skeleton. `loading` forces the skeleton while a request is in flight.
+ */
+export function Kb({
+  live,
+  loading = false,
+  skel,
+  children,
+}: {
+  live: boolean;
+  loading?: boolean;
+  skel?: ReactNode;
+  children: ReactNode;
+}) {
+  if (loading || !live) return <>{skel ?? <Skel w="70%" />}</>;
+  return <>{children}</>;
+}

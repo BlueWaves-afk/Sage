@@ -1,4 +1,4 @@
-import { Panel, Badge, Meter } from "../components/ui/ui";
+import { Panel, Badge, Skel, SkeletonBlock } from "../components/ui/ui";
 import { IconShield, IconCheck, IconExternal } from "../components/icons";
 import { api, useApi } from "../api/hooks";
 import type { ProcurementOption } from "../api/types";
@@ -70,8 +70,8 @@ function Radar({ options }: { options: ProcurementOption[] }) {
 
 export default function ResponsePlanner() {
   const { data: procurement, live: pLive } = useApi(api.procurement);
-  const { data: schedule } = useApi(api.sprSchedule);
-  const options = procurement ?? [];
+  const { data: schedule, live: sLive } = useApi(api.sprSchedule);
+  const options = pLive ? procurement ?? [] : [];
   const maxReserve = Math.max(...(schedule?.drawdown ?? [{ reserve_days: 10 }]).map((d) => d.reserve_days));
 
   return (
@@ -81,8 +81,11 @@ export default function ResponsePlanner() {
         <Panel
           className="rp-proc"
           title="Alternative Procurement — TOPSIS Ranking"
-          right={<Badge tone={pLive ? "green" : "muted"}>{pLive ? "LIVE" : "DEMO"}</Badge>}
+          right={<Badge tone={pLive ? "green" : "muted"}>{pLive ? "LIVE" : "AWAITING RUN"}</Badge>}
         >
+          {!pLive ? (
+            <SkeletonBlock lines={4} note="TOPSIS ranking appears after System 3 runs against a scenario" />
+          ) : (
           <div className="rp-proc-body">
             <div className="rp-radar-wrap">
               <Radar options={options} />
@@ -116,6 +119,7 @@ export default function ResponsePlanner() {
               ))}
             </div>
           </div>
+          )}
         </Panel>
       </div>
 
@@ -123,8 +127,11 @@ export default function ResponsePlanner() {
       <Panel
         className="rp-spr"
         title={<span><IconShield width={13} height={13} /> Strategic Reserve Drawdown Schedule</span>}
-        right={<Badge tone="green">{Math.round((schedule?.buffer_probability ?? 0.97) * 100)}% above 3-day buffer</Badge>}
+        right={sLive ? <Badge tone="green">{Math.round((schedule?.buffer_probability ?? 0) * 100)}% above 3-day buffer</Badge> : <Skel w={140} h={22} />}
       >
+        {!sLive ? (
+          <SkeletonBlock lines={5} note="Day-by-day drawdown plan appears after System 4 runs against a scenario" />
+        ) : (
         <div className="rp-spr-body">
           <div className="rp-chart">
             {(schedule?.drawdown ?? []).map((d) => (
@@ -151,6 +158,7 @@ export default function ResponsePlanner() {
             </div>
           </div>
         </div>
+        )}
       </Panel>
     </div>
   );
