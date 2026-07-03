@@ -129,9 +129,18 @@ class WikiPage(BaseModel):
     last_updated: Optional[str] = None
 
 
+class CopilotSource(BaseModel):
+    index: int              # 1-based citation number used inline as [n]
+    entity: str             # entity display name (clickable → wiki)
+    type: str = "Entity"    # C2 entity type
+    kind: str = "wiki"      # "wiki" (narrative page) | "graph" (edge fact)
+    snippet: Optional[str] = None
+
+
 class CopilotAnswer(BaseModel):
     answer: str
-    citations: list[str]
+    citations: list[str]              # legacy flat list (kept for compatibility)
+    sources: list[CopilotSource] = []  # numbered, clickable sources (Perplexity-style)
     route: str   # "vector" | "graph" | "hybrid"
     latency_ms: Optional[float] = None
 
@@ -788,18 +797,60 @@ async def copilot_query(q: str) -> CopilotAnswer:
     route      = "graph" if is_complex else "vector"
 
     if is_complex:
-        answer, citations = await _graph_ppr_query(q)
+        answer, citations, sources = await _graph_ppr_query(q)
     else:
-        answer, citations = await _vector_bm25_query(q)
+        answer, citations, sources = await _vector_bm25_query(q)
 
     latency_ms = (time.monotonic() - t0) * 1000
 
     return CopilotAnswer(
         answer=answer,
         citations=citations,
+        sources=sources,
         route=route,
         latency_ms=round(latency_ms, 1),
     )
+
+
+# Perplexity-style answer contract shared by both retrieval paths.
+_COPILOT_STYLE = (
+    "Format your answer as clean Markdown for an intelligence analyst:\n"
+    "- Open with a 1–2 sentence direct answer.\n"
+    "- Use ## short section headings when the answer has multiple parts.\n"
+    "- Use bullet lists for factors and numbered lists for sequences/steps.\n"
+    "- Use a Markdown table when comparing options across attributes.\n"
+    "- **Bold** key entities, numbers, and verdicts.\n"
+    "- Cite sources inline as [n] using the numbered SOURCES list — place the "
+    "marker right after the clause it supports. Only cite numbers that appear in "
+    "SOURCES. Do not invent sources or add a references section.\n"
+    "- If the context is insufficient, say so plainly."
+)
+
+
+def _number_sources(entities: list[str], edge_facts: list[str] | None = None) -> tuple[list[CopilotSource], str]:
+    """
+    Build a numbered, clickable source list (entities first, then key graph facts)
+    and the SOURCES block to hand the LLM so it can cite [n] inline.
+    """
+    try:
+        from knowledge.registry import REGISTRY
+        type_by_name = {e.canonical_name: e.entity_type for e in REGISTRY.values()}
+    except Exception:
+        type_by_name = {}
+
+    sources: list[CopilotSource] = []
+    lines: list[str] = []
+    n = 0
+    for ent in entities:
+        n += 1
+        sources.append(CopilotSource(index=n, entity=ent, type=type_by_name.get(ent, "Entity"), kind="wiki"))
+        lines.append(f"[{n}] {ent} — SAGE wiki assessment")
+    for fact in (edge_facts or [])[:4]:
+        n += 1
+        short = fact if len(fact) < 90 else fact[:87] + "…"
+        sources.append(CopilotSource(index=n, entity=short, type="Relationship", kind="graph", snippet=fact))
+        lines.append(f"[{n}] graph fact: {fact}")
+    return sources, "\n".join(lines)
 
 
 def _entities_in_query(q: str) -> list[str]:
@@ -844,7 +895,7 @@ def _wiki_context(entities: list[str]) -> tuple[list[str], list[str]]:
     return blocks, cites
 
 
-async def _vector_bm25_query(q: str) -> tuple[str, list[str]]:
+async def _vector_bm25_query(q: str) -> tuple[str, list[str], list[CopilotSource]]:
     """
     Simple path: entity-aware wiki retrieval + Graphiti hybrid search (vector +
     BM25), then Nova synthesis. Used for factual lookups: "What is Hormuz's risk?",
@@ -855,11 +906,15 @@ async def _vector_bm25_query(q: str) -> tuple[str, list[str]]:
     g = _get_graphiti()
 
     # Entity-aware retrieval: pull reconciled wiki narrative for named entities.
-    wiki_blocks, wiki_cites = _wiki_context(_entities_in_query(q))
+    entities = _entities_in_query(q)
+    wiki_blocks, wiki_cites = _wiki_context(entities)
 
     edges = await g.search(query=q, num_results=10)
     facts     = [getattr(e, "fact", str(e)) for e in edges]
     edge_cites = [str(getattr(e, "uuid", "")) for e in edges if getattr(e, "uuid", "")]
+
+    # Numbered, clickable sources (entities that had wiki pages + top facts).
+    sources, source_block = _number_sources(wiki_cites, facts)
 
     context = "\n".join(wiki_blocks)
     if facts:
@@ -871,14 +926,13 @@ async def _vector_bm25_query(q: str) -> tuple[str, list[str]]:
             "role": "system",
             "content": (
                 "You are the SAGE intelligence copilot for India's oil supply chain. "
-                "Answer the user's question concisely using only the provided context. "
-                "If the context doesn't contain enough information, say so. "
-                "Do not speculate beyond what the context states."
+                "Answer using only the provided context. Do not speculate beyond it.\n\n"
+                + _COPILOT_STYLE
             ),
         },
         {
             "role": "user",
-            "content": f"Context:\n{context}\n\nQuestion: {q}",
+            "content": f"CONTEXT:\n{context}\n\nSOURCES:\n{source_block}\n\nQUESTION: {q}",
         },
     ]
 
@@ -890,10 +944,10 @@ async def _vector_bm25_query(q: str) -> tuple[str, list[str]]:
         log.warning("Copilot LLM call failed: %s — returning raw facts", exc)
         answer = context or "No relevant information found in the knowledge base."
 
-    return answer.strip(), citations
+    return answer.strip(), citations, sources
 
 
-async def _graph_ppr_query(q: str) -> tuple[str, list[str]]:
+async def _graph_ppr_query(q: str) -> tuple[str, list[str], list[CopilotSource]]:
     """
     Complex path: semantic search + graph traversal for multi-hop reasoning.
 
@@ -963,6 +1017,9 @@ async def _graph_ppr_query(q: str) -> tuple[str, list[str]]:
     all_facts    = list(dict.fromkeys(all_facts))[:20]
     all_citations = list(dict.fromkeys(wiki_cites + all_citations))
 
+    # Numbered clickable sources (wiki entities + key graph facts).
+    sources, source_block = _number_sources(wiki_cites, all_facts)
+
     context = ""
     if wiki_blocks:
         context += "Entity assessments:\n" + "\n".join(wiki_blocks) + "\n\n"
@@ -972,16 +1029,15 @@ async def _graph_ppr_query(q: str) -> tuple[str, list[str]]:
         {
             "role": "system",
             "content": (
-                "You are the SAGE intelligence copilot. You specialise in multi-hop "
-                "reasoning over India's oil supply chain knowledge graph. "
-                "Answer the user's question by synthesising the provided graph facts. "
-                "Explain causal chains and cascade effects where relevant. "
-                "Be analytical and precise. Cite specific entities and relationships."
+                "You are the SAGE intelligence copilot specialising in multi-hop "
+                "reasoning over India's oil supply chain knowledge graph. Synthesise "
+                "the provided assessments and graph facts; explain causal chains and "
+                "cascade effects. Use only the provided context.\n\n" + _COPILOT_STYLE
             ),
         },
         {
             "role": "user",
-            "content": f"Graph context ({len(all_facts)} facts):\n{context}\n\nQuestion: {q}",
+            "content": f"CONTEXT:\n{context}\n\nSOURCES:\n{source_block}\n\nQUESTION: {q}",
         },
     ]
 
@@ -993,7 +1049,7 @@ async def _graph_ppr_query(q: str) -> tuple[str, list[str]]:
         log.warning("Graph PPR LLM call failed: %s — returning facts", exc)
         answer = context or "No relevant graph context found."
 
-    return answer.strip(), all_citations
+    return answer.strip(), all_citations, sources
 
 
 # ---------------------------------------------------------------------------

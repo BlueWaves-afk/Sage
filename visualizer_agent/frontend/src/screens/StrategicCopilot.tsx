@@ -1,32 +1,32 @@
 import { useRef, useState } from "react";
 import { IconBot, IconSend, IconUser, IconBrain } from "../components/icons";
+import { MarkdownBody } from "../components/copilot/MarkdownBody";
+import WikiDrawer from "../components/WikiDrawer";
 import { api } from "../api/hooks";
-import type { CopilotAnswer } from "../api/types";
+import type { CopilotAnswer, CopilotSource, GraphNode } from "../api/types";
 import "./copilot.css";
 
-interface Msg {
-  role: "user" | "sage";
-  text: string;
-  citations?: CopilotAnswer["citations"];
-  live?: boolean;
-}
+interface UserMsg { role: "user"; text: string }
+interface SageMsg { role: "sage"; answer: CopilotAnswer; live: boolean }
+type Msg = UserMsg | SageMsg;
 
 const SUGGESTIONS = [
-  "Why is ADNOC ranked first for Jamnagar?",
-  "What is the current risk at the Strait of Hormuz?",
-  "Summarise the Red Sea situation and its price impact.",
-  "How many days of SPR cover remain under the Hormuz scenario?",
+  "Compare India's alternative crude suppliers if Hormuz closes",
+  "Why is the Strait of Hormuz critical for India?",
+  "Is NIOC sanctioned, and by whom?",
+  "How would a Hormuz closure cascade to Jamnagar and the SPR?",
 ];
 
+// Open the wiki drawer for a cited entity (explainability — see the source).
+function sourceToNode(entity: string, type: string): GraphNode {
+  return { id: entity, name: entity, type, lat: null, lon: null, score: 0, band: "CALM", degree: 0 };
+}
+
 export default function StrategicCopilot() {
-  const [msgs, setMsgs] = useState<Msg[]>([
-    {
-      role: "sage",
-      text: "Strategic Copilot online. I answer over SAGE's live knowledge graph — every response is grounded in source episodes and carries citations. How can I assist your assessment?",
-    },
-  ]);
+  const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [drawerNode, setDrawerNode] = useState<GraphNode | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   const send = async (q: string) => {
@@ -36,9 +36,13 @@ export default function StrategicCopilot() {
     setMsgs((m) => [...m, { role: "user", text: question }]);
     setBusy(true);
     const { data, live } = await api.copilot(question);
-    setMsgs((m) => [...m, { role: "sage", text: data.answer, citations: data.citations, live }]);
+    setMsgs((m) => [...m, { role: "sage", answer: data, live }]);
     setBusy(false);
     requestAnimationFrame(() => endRef.current?.scrollIntoView({ behavior: "smooth" }));
+  };
+
+  const openSource = (s: CopilotSource) => {
+    if (s.kind === "wiki") setDrawerNode(sourceToNode(s.entity, s.type));
   };
 
   return (
@@ -54,59 +58,48 @@ export default function StrategicCopilot() {
         </div>
 
         <div className="cp-thread">
-          {msgs.map((m, i) => (
-            <div key={i} className={`cp-msg cp-msg-${m.role}`}>
-              <div className="cp-avatar">
-                {m.role === "sage" ? <IconBot width={16} height={16} /> : <IconUser width={16} height={16} />}
-              </div>
-              <div className="cp-bubble">
-                <p>{m.text}</p>
-                {m.citations && m.citations.length > 0 && (
-                  <div className="cp-citations">
-                    <span className="label-sm">Cited from graph</span>
-                    <div className="cp-citation-chips">
-                      {m.citations.map((c, j) => (
-                        <span key={j} className="cp-citation">
-                          {c.entity} <span className="mono cp-cite-id">{c.episode_id}</span>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {m.live === false && <span className="cp-offline mono">backend offline — illustrative</span>}
-              </div>
+          {msgs.length === 0 && (
+            <div className="cp-empty">
+              <div className="cp-empty-icon"><IconBot width={26} height={26} /></div>
+              <h2>Ask SAGE anything</h2>
+              <p>Grounded in the live knowledge graph — every answer is cited to entities and graph facts.</p>
             </div>
-          ))}
+          )}
+
+          {msgs.map((m, i) =>
+            m.role === "user" ? (
+              <div key={i} className="cp-msg cp-msg-user">
+                <div className="cp-avatar"><IconUser width={16} height={16} /></div>
+                <div className="cp-bubble">{m.text}</div>
+              </div>
+            ) : (
+              <SageAnswer key={i} msg={m} onCite={openSource} />
+            )
+          )}
+
           {busy && (
             <div className="cp-msg cp-msg-sage">
               <div className="cp-avatar"><IconBot width={16} height={16} /></div>
-              <div className="cp-bubble">
-                <span className="cp-typing">
-                  <span /><span /><span />
-                </span>
+              <div className="cp-answer">
+                <div className="cp-searching">
+                  <span className="cp-typing"><span /><span /><span /></span>
+                  Searching the knowledge graph…
+                </div>
               </div>
             </div>
           )}
           <div ref={endRef} />
         </div>
 
-        {msgs.length <= 1 && (
+        {msgs.length === 0 && (
           <div className="cp-suggestions">
             {SUGGESTIONS.map((s) => (
-              <button key={s} className="cp-suggestion" onClick={() => send(s)}>
-                {s}
-              </button>
+              <button key={s} className="cp-suggestion" onClick={() => send(s)}>{s}</button>
             ))}
           </div>
         )}
 
-        <form
-          className="cp-input-row"
-          onSubmit={(e) => {
-            e.preventDefault();
-            send(input);
-          }}
-        >
+        <form className="cp-input-row" onSubmit={(e) => { e.preventDefault(); send(input); }}>
           <input
             className="cp-input"
             placeholder="Ask SAGE about risk, routes, reserves, or scenarios…"
@@ -117,6 +110,71 @@ export default function StrategicCopilot() {
             <IconSend width={17} height={17} />
           </button>
         </form>
+      </div>
+
+      <WikiDrawer node={drawerNode} onClose={() => setDrawerNode(null)} />
+    </div>
+  );
+}
+
+function SageAnswer({ msg, onCite }: { msg: SageMsg; onCite: (s: CopilotSource) => void }) {
+  const { answer, live } = msg;
+  const [copied, setCopied] = useState(false);
+  const routeLabel = answer.route === "graph" ? "Graph PPR (multi-hop)" : answer.route === "vector" ? "Vector + BM25" : "Hybrid";
+
+  const copy = () => {
+    navigator.clipboard.writeText(answer.answer.replace(/\[\d+\]/g, "")).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    });
+  };
+
+  return (
+    <div className="cp-msg cp-msg-sage">
+      <div className="cp-avatar"><IconBot width={16} height={16} /></div>
+      <div className="cp-answer">
+        {/* Route / provenance strip */}
+        <div className="cp-route">
+          <span className={`cp-route-badge ${answer.route}`}>{routeLabel}</span>
+          {answer.latency_ms != null && (
+            <span className="cp-route-meta mono">{(answer.latency_ms / 1000).toFixed(1)}s</span>
+          )}
+          {!live && <span className="cp-route-meta mono c-amber">offline</span>}
+        </div>
+
+        <MarkdownBody text={answer.answer} sources={answer.sources} onCite={onCite} />
+
+        {/* Sources (Perplexity-style numbered, clickable) */}
+        {answer.sources.length > 0 && (
+          <div className="cp-sources">
+            <div className="cp-sources-head label-sm">
+              Sources · {answer.sources.length}
+            </div>
+            <div className="cp-source-list">
+              {answer.sources.map((s) => (
+                <button
+                  key={s.index}
+                  className={`cp-source ${s.kind}`}
+                  onClick={() => onCite(s)}
+                  title={s.kind === "wiki" ? "Open wiki assessment" : s.snippet ?? ""}
+                >
+                  <span className="cp-source-num">{s.index}</span>
+                  <span className="cp-source-body">
+                    <span className="cp-source-title">{s.entity}</span>
+                    <span className="cp-source-meta">
+                      {s.type} · {s.kind === "wiki" ? "wiki assessment" : "graph fact"}
+                    </span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Action bar */}
+        <div className="cp-actions">
+          <button className="cp-action" onClick={copy}>{copied ? "Copied" : "Copy"}</button>
+        </div>
       </div>
     </div>
   );

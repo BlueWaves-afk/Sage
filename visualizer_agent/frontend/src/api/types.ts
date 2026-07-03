@@ -77,9 +77,20 @@ export interface IntelItem {
   tone: "info" | "warn" | "good" | "crit";
 }
 
+export interface CopilotSource {
+  index: number;
+  entity: string;
+  type: string;
+  kind: "wiki" | "graph";
+  snippet?: string | null;
+}
+
 export interface CopilotAnswer {
   answer: string;
-  citations: { entity: string; episode_id: string }[];
+  citations: string[];
+  sources: CopilotSource[];
+  route: "vector" | "graph" | "hybrid";
+  latency_ms?: number;
 }
 
 export interface GraphNode {

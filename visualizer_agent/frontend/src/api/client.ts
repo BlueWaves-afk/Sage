@@ -85,11 +85,13 @@ export const api = {
       return {
         data: {
           answer:
-            "SAGE ranks ADNOC's Murban first because its light-sweet assay closely matches the Jamnagar refinery's configured slate, and the Fujairah land-bypass routes crude to the Gulf of Oman without transiting the elevated-risk Strait of Hormuz — giving it the lowest corridor risk in the option set at a competitive landed cost. (Backend offline — illustrative answer.)",
-          citations: [
-            { entity: "ADNOC", episode_id: "ep_offline" },
-            { entity: "Strait of Hormuz", episode_id: "ep_offline" },
+            "**SAGE ranks ADNOC's Murban first** for Jamnagar.\n\n## Why\n- Its light-sweet assay closely matches Jamnagar's configured slate [1].\n- The **Fujairah land-bypass** routes crude to the Gulf of Oman without transiting the elevated-risk Strait of Hormuz [2] — the lowest corridor risk in the set.\n\n_(Backend offline — illustrative answer.)_",
+          citations: ["ADNOC", "Strait of Hormuz"],
+          sources: [
+            { index: 1, entity: "ADNOC", type: "Supplier", kind: "wiki" },
+            { index: 2, entity: "Strait of Hormuz", type: "Corridor", kind: "wiki" },
           ],
+          route: "graph" as const,
         },
         live: false,
       };

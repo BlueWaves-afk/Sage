@@ -265,25 +265,10 @@ async def wiki(entity: str) -> dict:
 
 @app.post("/api/copilot")
 async def copilot(body: dict) -> dict:
-    """EA-GraphRAG routed copilot endpoint."""
-    import re as _re
-
+    """EA-GraphRAG routed copilot endpoint (Perplexity-style: markdown + numbered sources)."""
     q = body.get("query") or body.get("question") or ""
     answer = await copilot_query(q)
-    out = answer.model_dump()
-
-    # Structure flat citation strings into {entity, episode_id} for the UI.
-    # UUID-shaped strings are episode/edge ids; the rest are entity names.
-    uuid_re = _re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-", _re.I)
-    structured = []
-    for c in out.get("citations", []):
-        s = str(c)
-        if uuid_re.match(s):
-            structured.append({"entity": "graph edge", "episode_id": s[:8]})
-        else:
-            structured.append({"entity": s, "episode_id": "wiki"})
-    out["citations"] = structured
-    return out
+    return answer.model_dump()
 
 
 # ---------------------------------------------------------------------------
