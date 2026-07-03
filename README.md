@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/banner.png" alt="SAGE Banner" width="100%" />
+
 # SAGE — AI-Driven Energy Supply Chain Resilience
 
 ### Synthesis-first Agentic Graph-Enhanced knowledge architecture for India's crude oil import risk.
