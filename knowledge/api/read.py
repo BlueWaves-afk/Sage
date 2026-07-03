@@ -802,22 +802,69 @@ async def copilot_query(q: str) -> CopilotAnswer:
     )
 
 
+def _entities_in_query(q: str) -> list[str]:
+    """Resolve any tracked-entity names mentioned in the query to canonical names."""
+    try:
+        from knowledge.registry import ALIAS_TO_ENTITY, canonical_name
+    except Exception:
+        return []
+    ql = f" {q.lower()} "
+    found: list[str] = []
+    for alias, eid in ALIAS_TO_ENTITY.items():
+        if len(alias) < 4:
+            continue
+        if f" {alias} " in ql or ql.strip().endswith(alias) or alias in ql:
+            cn = canonical_name(eid)
+            if cn and cn not in found:
+                found.append(cn)
+    return found[:5]
+
+
+def _wiki_context(entities: list[str]) -> tuple[list[str], list[str]]:
+    """
+    Load the reconciled wiki page for each named entity and pull its narrative
+    sections (the LLM-synthesised prose). Returns (context_blocks, citations).
+    """
+    from knowledge.synthesis import load_wiki_page
+
+    blocks: list[str] = []
+    cites: list[str] = []
+    for ent in entities:
+        try:
+            content = load_wiki_page(ent)
+        except Exception:
+            continue
+        if not content or "No wiki" in content[:40]:
+            continue
+        # Strip YAML frontmatter, keep the prose body.
+        body = re.sub(r"^---[\s\S]*?---", "", content).strip()
+        if body:
+            blocks.append(f"[{ent}]\n{body[:900]}")
+            cites.append(ent)
+    return blocks, cites
+
+
 async def _vector_bm25_query(q: str) -> tuple[str, list[str]]:
     """
-    Simple path: Graphiti hybrid search (vector + BM25), then Nova Lite synthesis.
-    Used for factual lookups: "What is the current risk score for Hormuz?",
+    Simple path: entity-aware wiki retrieval + Graphiti hybrid search (vector +
+    BM25), then Nova synthesis. Used for factual lookups: "What is Hormuz's risk?",
     "Is NIOC sanctioned?", "What is Jamnagar's capacity?"
     """
     from knowledge.connection import _get_graphiti
-    from knowledge.bedrock import nova_pro
 
     g = _get_graphiti()
 
+    # Entity-aware retrieval: pull reconciled wiki narrative for named entities.
+    wiki_blocks, wiki_cites = _wiki_context(_entities_in_query(q))
+
     edges = await g.search(query=q, num_results=10)
     facts     = [getattr(e, "fact", str(e)) for e in edges]
-    citations = [str(getattr(e, "uuid", "")) for e in edges if getattr(e, "uuid", "")]
+    edge_cites = [str(getattr(e, "uuid", "")) for e in edges if getattr(e, "uuid", "")]
 
-    context = "\n".join(f"- {f}" for f in facts[:8])
+    context = "\n".join(wiki_blocks)
+    if facts:
+        context += "\n\nRelated facts:\n" + "\n".join(f"- {f}" for f in facts[:8])
+    citations = wiki_cites + edge_cites
 
     messages = [
         {
@@ -862,6 +909,10 @@ async def _graph_ppr_query(q: str) -> tuple[str, list[str]]:
     from knowledge.connection import _get_graphiti
 
     g = _get_graphiti()
+
+    # Step 0: entity-aware wiki retrieval — the reconciled narrative that holds
+    # the "why/how" descriptive content graph edge-facts don't capture.
+    wiki_blocks, wiki_cites = _wiki_context(_entities_in_query(q))
 
     # Step 1: anchor entities via semantic search
     seed_edges = await g.search(query=q, num_results=5)
@@ -910,9 +961,12 @@ async def _graph_ppr_query(q: str) -> tuple[str, list[str]]:
 
     # Deduplicate
     all_facts    = list(dict.fromkeys(all_facts))[:20]
-    all_citations = list(dict.fromkeys(all_citations))
+    all_citations = list(dict.fromkeys(wiki_cites + all_citations))
 
-    context = "\n".join(f"- {f}" for f in all_facts)
+    context = ""
+    if wiki_blocks:
+        context += "Entity assessments:\n" + "\n".join(wiki_blocks) + "\n\n"
+    context += "Graph relationships:\n" + "\n".join(f"- {f}" for f in all_facts)
 
     messages = [
         {

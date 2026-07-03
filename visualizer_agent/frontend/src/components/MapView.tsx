@@ -3,9 +3,7 @@ import DeckGL from "@deck.gl/react";
 import { ScatterplotLayer, ArcLayer, TextLayer } from "@deck.gl/layers";
 import { Map } from "react-map-gl/maplibre";
 import type { RiskScore } from "../api/types";
-
-// Free CARTO dark basemap — no API token required.
-const MAP_STYLE = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
+import { useTheme, basemapFor } from "../theme";
 
 const RISK_RGB: Record<string, [number, number, number]> = {
   CALM: [52, 211, 138],
@@ -31,6 +29,7 @@ export default function MapView({
   initialView = { longitude: 55, latitude: 22, zoom: 3.4 },
   interactive = true,
 }: MapViewProps) {
+  const { theme } = useTheme();
   const layers = useMemo(() => {
     const geoNodes = nodes.filter((n) => n.lat != null && n.lon != null);
 
@@ -103,7 +102,7 @@ export default function MapView({
       }
       style={{ position: "absolute", top: "0", left: "0", right: "0", bottom: "0" }}
     >
-      <Map reuseMaps mapStyle={MAP_STYLE} attributionControl={false} />
+      <Map reuseMaps mapStyle={basemapFor(theme)} attributionControl={false} />
     </DeckGL>
   );
 }

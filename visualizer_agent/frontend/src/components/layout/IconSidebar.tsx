@@ -6,7 +6,10 @@ import {
   IconShield,
   IconBot,
   IconGear,
+  IconSun,
+  IconMoon,
 } from "../icons";
+import { useTheme } from "../../theme";
 import "./layout.css";
 
 const NAV = [
@@ -18,6 +21,7 @@ const NAV = [
 ];
 
 export default function IconSidebar() {
+  const { theme, toggle } = useTheme();
   return (
     <nav className="sidebar">
       <div className="sidebar-nav">
@@ -32,9 +36,18 @@ export default function IconSidebar() {
           </NavLink>
         ))}
       </div>
-      <NavLink to="/command" className="side-btn side-gear" title="Settings">
-        <IconGear />
-      </NavLink>
+      <div className="sidebar-foot">
+        <button
+          className="side-btn press"
+          onClick={toggle}
+          title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+        >
+          {theme === "dark" ? <IconSun /> : <IconMoon />}
+        </button>
+        <NavLink to="/command" className="side-btn" title="Settings">
+          <IconGear />
+        </NavLink>
+      </div>
     </nav>
   );
 }

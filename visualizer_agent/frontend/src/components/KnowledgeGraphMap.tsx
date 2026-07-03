@@ -4,8 +4,7 @@ import { ScatterplotLayer, LineLayer, TextLayer } from "@deck.gl/layers";
 import { CollisionFilterExtension } from "@deck.gl/extensions";
 import { Map as BaseMap } from "react-map-gl/maplibre";
 import type { GraphData, GraphNode } from "../api/types";
-
-const MAP_STYLE = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
+import { useTheme, basemapFor } from "../theme";
 
 // Risk-band → colour (traffic-light gradient, matching the Obsidian graph config).
 const BAND_RGB: Record<string, [number, number, number]> = {
@@ -43,6 +42,12 @@ export default function KnowledgeGraphMap({
   colorBy = "risk",
 }: KnowledgeGraphMapProps) {
   const [hoverId, setHoverId] = useState<string | null>(null);
+  const { theme } = useTheme();
+
+  const light = theme === "light";
+  const edgeIdle: [number, number, number, number] = light ? [70, 110, 150, 70] : [110, 140, 175, 55];
+  const labelText: [number, number, number, number] = light ? [30, 45, 70, 255] : [210, 224, 240, 235];
+  const labelOutline: [number, number, number, number] = light ? [255, 255, 255, 255] : [8, 14, 24, 255];
 
   const layers = useMemo(() => {
     const placed = graph.nodes.filter((n) => n.lat != null && n.lon != null);
@@ -70,10 +75,10 @@ export default function KnowledgeGraphMap({
       data: edgeData,
       getSourcePosition: (d) => [d.s.lon!, d.s.lat!],
       getTargetPosition: (d) => [d.t.lon!, d.t.lat!],
-      getColor: (d) => (d.active ? [90, 200, 240, 200] : [110, 140, 175, 55]),
+      getColor: (d) => (d.active ? [56, 160, 210, 220] : edgeIdle),
       getWidth: (d) => (d.active ? 1.6 : 0.7),
       widthUnits: "pixels",
-      updateTriggers: { getColor: [hoverId, selectedId], getWidth: [hoverId, selectedId] },
+      updateTriggers: { getColor: [hoverId, selectedId, theme], getWidth: [hoverId, selectedId] },
     });
 
     // Soft halo only under the hovered/selected node.
@@ -122,14 +127,15 @@ export default function KnowledgeGraphMap({
       getPosition: (d) => [d.lon!, d.lat!],
       getText: (d) => d.name,
       getSize: 11,
-      getColor: [210, 224, 240, 235],
+      getColor: labelText,
       getPixelOffset: (d) => [0, -(radius(d) + 8)],
       getTextAnchor: "middle",
       getAlignmentBaseline: "bottom",
       fontFamily: "Inter, sans-serif",
       fontWeight: 600,
       outlineWidth: 3,
-      outlineColor: [8, 14, 24, 255],
+      outlineColor: labelOutline,
+      updateTriggers: { getColor: [theme] },
       fontSettings: { sdf: true },
       // Collision filtering: priority = connectivity so hubs keep their labels
       // (props typed loosely — they belong to CollisionFilterExtension).
@@ -143,7 +149,8 @@ export default function KnowledgeGraphMap({
     });
 
     return [edges, halo, nodes, labels];
-  }, [graph, onNodeClick, selectedId, colorBy, hoverId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [graph, onNodeClick, selectedId, colorBy, hoverId, theme]);
 
   return (
     <DeckGL
@@ -170,7 +177,7 @@ export default function KnowledgeGraphMap({
       }
       style={{ position: "absolute", top: "0", left: "0", right: "0", bottom: "0" }}
     >
-      <BaseMap reuseMaps mapStyle={MAP_STYLE} attributionControl={false} />
+      <BaseMap reuseMaps mapStyle={basemapFor(theme)} attributionControl={false} />
     </DeckGL>
   );
 }

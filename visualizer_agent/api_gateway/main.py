@@ -125,12 +125,17 @@ async def dashboard() -> dict:
     routes = await get_routes(risk_max=1.1)          # include all corridors
     spr = await get_spr_state()
 
+    # Derive band from the numeric score — the stored `band` string can be a stale
+    # seed artifact (e.g. score 0.0 tagged "elevated"); the score is the truth.
+    from knowledge.api.read import _band_from_score
+
     def band_rank(b: str) -> int:
         return {"CALM": 0, "WATCH": 1, "ELEVATED": 2, "ACTION": 3, "CRITICAL": 4}.get(b.upper(), 0)
 
-    max_band = max((s.band.upper() for s in scores), key=band_rank, default="CALM")
+    derived = [_band_from_score(s.score) for s in scores]
+    max_band = max(derived, key=band_rank, default="CALM")
     threat = {"CALM": "LOW", "WATCH": "LOW", "ELEVATED": "MEDIUM", "ACTION": "HIGH", "CRITICAL": "CRITICAL"}[max_band]
-    active_alerts = sum(1 for s in scores if band_rank(s.band.upper()) >= 1)
+    active_alerts = sum(1 for b in derived if band_rank(b) >= 2)  # ELEVATED or worse
 
     # SPR coverage = total fill / total capacity across caverns.
     cap = sum((c.capacity_mmt or 0) for c in spr)
@@ -261,8 +266,24 @@ async def wiki(entity: str) -> dict:
 @app.post("/api/copilot")
 async def copilot(body: dict) -> dict:
     """EA-GraphRAG routed copilot endpoint."""
-    answer = await copilot_query(body.get("question", ""))
-    return answer.model_dump()
+    import re as _re
+
+    q = body.get("query") or body.get("question") or ""
+    answer = await copilot_query(q)
+    out = answer.model_dump()
+
+    # Structure flat citation strings into {entity, episode_id} for the UI.
+    # UUID-shaped strings are episode/edge ids; the rest are entity names.
+    uuid_re = _re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-", _re.I)
+    structured = []
+    for c in out.get("citations", []):
+        s = str(c)
+        if uuid_re.match(s):
+            structured.append({"entity": "graph edge", "episode_id": s[:8]})
+        else:
+            structured.append({"entity": s, "episode_id": "wiki"})
+    out["citations"] = structured
+    return out
 
 
 # ---------------------------------------------------------------------------

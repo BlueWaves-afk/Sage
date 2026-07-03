@@ -4,6 +4,7 @@ import Globe from "../components/Globe";
 import AmbientBackground from "../components/AmbientBackground";
 import { Kb, Skel } from "../components/ui/ui";
 import { api, useApi } from "../api/hooks";
+import { useTheme } from "../theme";
 import {
   IconGlobe,
   IconBrain,
@@ -12,7 +13,8 @@ import {
   IconShield,
   IconRss,
   IconAlert,
-  IconGear,
+  IconSun,
+  IconMoon,
 } from "../components/icons";
 import "./landing.css";
 
@@ -27,6 +29,7 @@ const FEATURES = [
 export default function Landing() {
   const nav = useNavigate();
   const [live, setLive] = useState(false);
+  const { theme, toggle } = useTheme();
   const { data: dash, live: dashLive } = useApi(api.dashboard);
 
   useEffect(() => {
@@ -51,7 +54,13 @@ export default function Landing() {
           <span className="trust-tag">
             SECURE <b>•</b> TRUSTED <b>•</b> SOVEREIGN
           </span>
-          <IconGear width={18} height={18} className="c-muted" />
+          <button
+            className="landing-theme-btn press"
+            onClick={toggle}
+            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {theme === "dark" ? <IconSun width={18} height={18} /> : <IconMoon width={18} height={18} />}
+          </button>
         </div>
       </header>
 

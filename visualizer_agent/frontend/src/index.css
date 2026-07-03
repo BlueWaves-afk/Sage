@@ -76,6 +76,51 @@
   --statusbar-h: 40px;
 }
 
+/* ── Light theme overrides ─────────────────────────────────────────────────
+   Applied via <html data-theme="light">. Only tokens change — every component
+   reads these variables, so the whole app re-themes with no per-component work. */
+:root[data-theme="light"] {
+  --bg-0: #e9eef5;
+  --bg-1: #eef3f9;
+  --bg-2: #ffffff;
+  --bg-3: #ffffff;
+  --bg-4: #eef3fa;
+  --bg-glass: rgba(255, 255, 255, 0.78);
+
+  --border-1: #dbe3ee;
+  --border-2: #c3d0e0;
+  --border-glow: rgba(14, 127, 168, 0.4);
+
+  --cyan: #0e7fa8;
+  --cyan-bright: #12a0cf;
+  --cyan-dim: #0b6f95;
+  --cyan-soft: rgba(14, 127, 168, 0.1);
+
+  --green: #0f8a57;
+  --green-soft: rgba(15, 138, 87, 0.12);
+  --amber: #b5730a;
+  --amber-soft: rgba(181, 115, 10, 0.12);
+  --coral: #d1503f;
+  --red: #cf3636;
+  --red-soft: rgba(207, 54, 54, 0.12);
+
+  --text-0: #101a2b;
+  --text-1: #33425a;
+  --text-2: #5f6f88;
+  --text-3: #8a99ad;
+
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 6px 20px rgba(30, 50, 90, 0.08);
+  --shadow-lift: 0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 2px 6px rgba(30, 50, 90, 0.08), 0 18px 40px -14px rgba(30, 50, 90, 0.22);
+  --edge-top: linear-gradient(90deg, transparent, rgba(14, 127, 168, 0.3), transparent);
+}
+
+/* The deep-radial page glow is dark-only; soften it for light. */
+:root[data-theme="light"] body {
+  background: var(--bg-1);
+}
+
 * {
   box-sizing: border-box;
 }

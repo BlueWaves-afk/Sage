@@ -4,8 +4,12 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./index.css";
 import "maplibre-gl/dist/maplibre-gl.css";
 
+import { ThemeProvider, applyThemeAttr, initialTheme } from "./theme";
 import AppShell from "./components/layout/AppShell";
 import Landing from "./screens/Landing";
+
+// Apply the saved theme before first paint to avoid a flash.
+applyThemeAttr(initialTheme());
 import CommandCenter from "./screens/CommandCenter";
 import GlobalIntelligence from "./screens/GlobalIntelligence";
 import SimulationLab from "./screens/SimulationLab";
@@ -28,6 +32,8 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <ThemeProvider>
+      <RouterProvider router={router} />
+    </ThemeProvider>
   </React.StrictMode>
 );

@@ -83,8 +83,12 @@
   animation: reveal-up var(--dur-mid) var(--ease-out-expo);
 }
 
-.side-gear {
+.sidebar-foot {
   margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
 }
 
 /* ── Top bar ────────────────────────────────────────────────────────────── */
