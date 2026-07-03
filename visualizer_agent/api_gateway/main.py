@@ -107,6 +107,78 @@ async def risk_scores() -> list:
     return [s.model_dump() for s in scores]
 
 
+@app.get("/api/dashboard")
+async def dashboard() -> dict:
+    """
+    Aggregated command-center summary derived entirely from the knowledge base:
+      - threat level + active alerts  ← current RISK_STATE bands
+      - SPR coverage                  ← get_spr_state() fill levels
+      - maritime bottlenecks          ← get_routes() corridor risk
+      - Brent reference               ← provenance-tracked bundle (EIA-STEO)
+      - monitoring entities           ← live graph node count
+    Fields that require System 1 live feeds (spot price, news volume) are flagged
+    with `source` so the UI can label them honestly.
+    """
+    import os
+
+    scores = await get_risk_scores()
+    routes = await get_routes(risk_max=1.1)          # include all corridors
+    spr = await get_spr_state()
+
+    def band_rank(b: str) -> int:
+        return {"CALM": 0, "WATCH": 1, "ELEVATED": 2, "ACTION": 3, "CRITICAL": 4}.get(b.upper(), 0)
+
+    max_band = max((s.band.upper() for s in scores), key=band_rank, default="CALM")
+    threat = {"CALM": "LOW", "WATCH": "LOW", "ELEVATED": "MEDIUM", "ACTION": "HIGH", "CRITICAL": "CRITICAL"}[max_band]
+    active_alerts = sum(1 for s in scores if band_rank(s.band.upper()) >= 1)
+
+    # SPR coverage = total fill / total capacity across caverns.
+    cap = sum((c.capacity_mmt or 0) for c in spr)
+    fill = sum((c.current_fill_mmt or 0) for c in spr)
+    spr_pct = round(100 * fill / cap, 1) if cap else None
+
+    # Corridor status from risk score.
+    def corridor_status(risk: float | None) -> str:
+        r = risk or 0.0
+        return "BLOCKED" if r >= 0.7 else "CONTESTED" if r >= 0.45 else "NOMINAL"
+
+    bottlenecks = [
+        {"name": c.display_name, "status": corridor_status(c.risk_score), "risk": c.risk_score}
+        for c in routes
+    ]
+
+    # Brent reference from the provenance-tracked bundle (real, EIA-STEO).
+    brent = None
+    brent_source = None
+    try:
+        from knowledge.context.loader import load_bundle
+        bundle_path = os.environ.get("SAGE_BUNDLE_PATH", "data/india-energy-2026.context")
+        ep = load_bundle(bundle_path).economics_params
+        row = ep.get("baseline_brent_usd_per_bbl", {})
+        brent = float(row.get("value"))
+        brent_source = row.get("source")
+    except Exception as exc:
+        log.warning("dashboard: brent reference unavailable: %s", exc)
+
+    # Graph size = number of tracked KB entities.
+    try:
+        from knowledge.api.read import get_full_graph
+        node_count = len((await get_full_graph()).nodes)
+    except Exception:
+        node_count = len(scores)
+
+    return {
+        "threat_level": threat,
+        "active_alerts": active_alerts,
+        "spr_coverage_pct": spr_pct,
+        "brent_usd_bbl": brent,
+        "brent_source": brent_source,
+        "monitoring_entities": node_count,
+        "bottlenecks": bottlenecks,
+        "top_risk_entity": scores[0].entity if scores else None,
+    }
+
+
 @app.get("/api/graph")
 async def knowledge_graph() -> dict:
     """

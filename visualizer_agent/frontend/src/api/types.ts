@@ -109,6 +109,23 @@ export interface WikiPage {
   content: string;
 }
 
+export interface Bottleneck {
+  name: string;
+  status: "NOMINAL" | "CONTESTED" | "BLOCKED";
+  risk: number | null;
+}
+
+export interface DashboardSummary {
+  threat_level: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+  active_alerts: number;
+  spr_coverage_pct: number | null;
+  brent_usd_bbl: number | null;
+  brent_source: string | null;
+  monitoring_entities: number;
+  bottlenecks: Bottleneck[];
+  top_risk_entity: string | null;
+}
+
 export interface PipelineState {
   stage:
     | "SENSE"

@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@deck.gl/core": "^9.0.27",
+    "@deck.gl/extensions": "^9.3.6",
     "@deck.gl/layers": "^9.0.27",
     "@deck.gl/react": "^9.0.27",
     "maplibre-gl": "^4.7.1",

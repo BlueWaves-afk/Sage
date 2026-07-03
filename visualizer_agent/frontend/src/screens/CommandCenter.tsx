@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import KnowledgeGraphMap from "../components/KnowledgeGraphMap";
 import WikiDrawer from "../components/WikiDrawer";
@@ -41,27 +41,47 @@ type Kpi = {
   sub?: string;
 };
 
-const KPIS: Kpi[] = [
-  { label: "Threat Level", value: "MEDIUM", tone: "c-amber" },
-  { label: "Brent Crude", num: 82.45, prefix: "$", decimals: 2, tone: "", up: true },
-  { label: "SPR Coverage", num: 94.2, suffix: "%", decimals: 1, tone: "" },
-  { label: "Active Alerts", num: 12, tone: "c-amber", warn: true },
-  { label: "Monitoring Sources", num: 1402, tone: "", sub: "ACTIVE" },
-  { label: "Mode", value: "LIVE", tone: "c-cyan" },
-];
 
 export default function CommandCenter() {
   const nav = useNavigate();
   const { data: graph, live: graphLive } = useApi(api.graph);
-  const { live } = useApi(api.riskScores);
+  const { data: dash, live } = useApi(api.dashboard);
   const [selected, setSelected] = useState<GraphNode | null>(null);
+
+  // AI Situation Brief narrative: pulled live from the highest-risk entity's
+  // reconciled wiki page (its "Current Assessment" paragraph) — not hardcoded.
+  const [brief, setBrief] = useState<string | null>(null);
+  useEffect(() => {
+    const entity = dash?.top_risk_entity;
+    if (!entity) return;
+    api.wiki(entity).then((env) => {
+      const m = env.data.content.match(/##\s*Current Assessment\s*\n([\s\S]*?)(?=\n##|\n---|$)/i);
+      setBrief(m ? m[1].trim() : null);
+    });
+  }, [dash?.top_risk_entity]);
+
+  const threatTone =
+    dash?.threat_level === "CRITICAL" ? "c-red" :
+    dash?.threat_level === "HIGH" ? "c-coral" :
+    dash?.threat_level === "MEDIUM" ? "c-amber" : "c-green";
+
+  const kpis: Kpi[] = useMemo(() => [
+    { label: "Threat Level", value: dash?.threat_level ?? "—", tone: threatTone },
+    { label: "Brent Crude (EIA ref)", num: dash?.brent_usd_bbl ?? undefined, prefix: "$", decimals: 2, tone: "", up: true, value: dash?.brent_usd_bbl == null ? "—" : undefined },
+    { label: "SPR Coverage", num: dash?.spr_coverage_pct ?? undefined, suffix: "%", decimals: 1, tone: "", value: dash?.spr_coverage_pct == null ? "—" : undefined },
+    { label: "Active Alerts", num: dash?.active_alerts ?? 0, tone: (dash?.active_alerts ?? 0) > 0 ? "c-amber" : "c-green", warn: (dash?.active_alerts ?? 0) > 0 },
+    { label: "Tracked Entities", num: dash?.monitoring_entities ?? 0, tone: "", sub: "KB NODES" },
+    { label: "Mode", value: live ? "LIVE" : "OFFLINE", tone: live ? "c-cyan" : "c-muted" },
+  ], [dash, live, threatTone]);
+
+  const bottlenecks = dash?.bottlenecks?.slice(0, 3) ?? [];
 
   return (
     <div className="cc">
       <AmbientBackground />
       {/* KPI row */}
       <div className="cc-kpis stagger">
-        {KPIS.map((k) => (
+        {kpis.map((k) => (
           <div key={k.label} className="cc-kpi card lift">
             <span className="label-sm">{k.label}</span>
             <div className={`cc-kpi-value ${k.tone}`}>
@@ -97,9 +117,14 @@ export default function CommandCenter() {
               <div className="cc-map-overlay">
                 <div className="cc-bottlenecks">
                   <div className="label-sm">Maritime Bottlenecks</div>
-                  <Row name="Hormuz" status="NOMINAL" tone="green" />
-                  <Row name="Red Sea" status="CONTESTED" tone="amber" />
-                  <Row name="Malacca" status="NOMINAL" tone="green" />
+                  {bottlenecks.map((b) => (
+                    <Row
+                      key={b.name}
+                      name={b.name.replace("Strait of ", "").replace("Bab-el-Mandeb", "Red Sea")}
+                      status={b.status}
+                      tone={b.status === "BLOCKED" ? "red" : b.status === "CONTESTED" ? "amber" : "green"}
+                    />
+                  ))}
                 </div>
               </div>
             </div>
@@ -111,20 +136,32 @@ export default function CommandCenter() {
                   <IconBot width={16} height={16} className="c-cyan" /> AI Situation Brief
                 </span>
               }
-              right={<Badge tone="cyan">Confidence: 94%</Badge>}
+              right={<OfflineHint live={live} />}
             >
-              <div className="label-sm">Narrative Summary</div>
+              <div className="label-sm">
+                Narrative Summary{dash?.top_risk_entity ? ` · ${dash.top_risk_entity}` : ""}
+              </div>
               <p className="cc-narrative">
-                "Geopolitical tension in the Red Sea has reached a critical threshold. SAGE models
-                predict a 12% increase in Brent Crude volatility over the next 48 hours. Strategic
-                pivoting of tankers is underway."
+                {brief
+                  ? `"${brief}"`
+                  : dash?.top_risk_entity
+                    ? "Loading reconciled assessment from the knowledge base…"
+                    : "No elevated entity — knowledge base nominal."}
               </p>
               <div className="label-sm cc-brief-sec">Threat Assessment</div>
               <div className="cc-threat">
                 <span>
-                  Supply Disruption <b className="c-red">HIGH</b>
+                  Supply Disruption{" "}
+                  <b className={threatTone}>{dash?.threat_level ?? "—"}</b>
                 </span>
-                <Meter value={0.82} tone="red" />
+                <Meter
+                  value={
+                    dash?.threat_level === "CRITICAL" ? 0.95 :
+                    dash?.threat_level === "HIGH" ? 0.78 :
+                    dash?.threat_level === "MEDIUM" ? 0.55 : 0.2
+                  }
+                  tone={dash?.threat_level === "MEDIUM" ? "amber" : dash?.threat_level === "LOW" ? "green" : "red"}
+                />
               </div>
               <div className="label-sm cc-brief-sec">Supporting Evidence</div>
               <div className="cc-evidence">
@@ -242,11 +279,11 @@ export default function CommandCenter() {
   );
 }
 
-function Row({ name, status, tone }: { name: string; status: string; tone: string }) {
+function Row({ name, status, tone }: { name: string; status: string; tone: "green" | "amber" | "red" }) {
   return (
     <div className="cc-bottleneck-row">
       <span className="cc-bottleneck-name">{name}</span>
-      <Badge tone={tone as "green" | "amber"}>{status}</Badge>
+      <Badge tone={tone}>{status}</Badge>
     </div>
   );
 }

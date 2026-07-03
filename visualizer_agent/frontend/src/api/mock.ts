@@ -13,7 +13,23 @@ import type {
   IntelItem,
   GraphData,
   GraphNode,
+  DashboardSummary,
 } from "./types";
+
+export const mockDashboard: DashboardSummary = {
+  threat_level: "MEDIUM",
+  active_alerts: 2,
+  spr_coverage_pct: 57.2,
+  brent_usd_bbl: 95.0,
+  brent_source: "EIA-STEO",
+  monitoring_entities: 61,
+  bottlenecks: [
+    { name: "Strait of Hormuz", status: "NOMINAL", risk: 0.62 },
+    { name: "Bab-el-Mandeb", status: "CONTESTED", risk: 0.71 },
+    { name: "Strait of Malacca", status: "NOMINAL", risk: 0.18 },
+  ],
+  top_risk_entity: "Strait of Hormuz",
+};
 
 export const mockRiskScores: RiskScore[] = [
   { entity: "Strait of Hormuz", score: 0.62, band: "ELEVATED", factors: { ais: 0.31, gdelt: 0.19, price: 0.12, sanctions: 0.05 }, lat: 26.5, lon: 56.4 },

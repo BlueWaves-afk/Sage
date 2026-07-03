@@ -14,6 +14,7 @@ import type {
   CopilotAnswer,
   GraphData,
   WikiPage,
+  DashboardSummary,
 } from "./types";
 import * as mock from "./mock";
 
@@ -44,6 +45,8 @@ export const api = {
   riskScores: () => get<RiskScore[]>("/api/risk-scores", mock.mockRiskScores),
 
   graph: () => get<GraphData>("/api/graph", mock.mockGraph),
+
+  dashboard: () => get<DashboardSummary>("/api/dashboard", mock.mockDashboard),
 
   suppliers: () => get<Supplier[]>("/api/suppliers", mock.mockSuppliers),
 
