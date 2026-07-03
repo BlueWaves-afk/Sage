@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import MapView from "../components/MapView";
 import PipelineBar from "../components/PipelineBar";
+import AmbientBackground from "../components/AmbientBackground";
+import AnimatedNumber from "../components/AnimatedNumber";
 import { Panel, Badge, Meter, OfflineHint } from "../components/ui/ui";
 import { IconRss, IconAnchor, IconChart, IconAlert, IconBot } from "../components/icons";
 import { api } from "../api/hooks";
@@ -23,12 +25,25 @@ const TONE_CLASS: Record<IntelItem["tone"], string> = {
   crit: "c-red",
 };
 
-const KPIS = [
+type Kpi = {
+  label: string;
+  value?: string;
+  num?: number;
+  prefix?: string;
+  suffix?: string;
+  decimals?: number;
+  tone: string;
+  up?: boolean;
+  warn?: boolean;
+  sub?: string;
+};
+
+const KPIS: Kpi[] = [
   { label: "Threat Level", value: "MEDIUM", tone: "c-amber" },
-  { label: "Brent Crude", value: "$82.45", tone: "", up: true },
-  { label: "SPR Coverage", value: "94.2%", tone: "" },
-  { label: "Active Alerts", value: "12", tone: "c-amber", warn: true },
-  { label: "Monitoring Sources", value: "1,402", tone: "", sub: "ACTIVE" },
+  { label: "Brent Crude", num: 82.45, prefix: "$", decimals: 2, tone: "", up: true },
+  { label: "SPR Coverage", num: 94.2, suffix: "%", decimals: 1, tone: "" },
+  { label: "Active Alerts", num: 12, tone: "c-amber", warn: true },
+  { label: "Monitoring Sources", num: 1402, tone: "", sub: "ACTIVE" },
   { label: "Mode", value: "LIVE", tone: "c-cyan" },
 ];
 
@@ -38,13 +53,18 @@ export default function CommandCenter() {
 
   return (
     <div className="cc">
+      <AmbientBackground />
       {/* KPI row */}
-      <div className="cc-kpis">
+      <div className="cc-kpis stagger">
         {KPIS.map((k) => (
-          <div key={k.label} className="cc-kpi card">
+          <div key={k.label} className="cc-kpi card lift">
             <span className="label-sm">{k.label}</span>
             <div className={`cc-kpi-value ${k.tone}`}>
-              {k.value}
+              {k.num != null ? (
+                <AnimatedNumber value={k.num} prefix={k.prefix} suffix={k.suffix} decimals={k.decimals} />
+              ) : (
+                k.value
+              )}
               {k.up && <span className="c-green cc-kpi-arrow">↗</span>}
               {k.warn && <span className="c-amber cc-kpi-arrow">⚠</span>}
               {k.sub && <span className="cc-kpi-sub">{k.sub}</span>}
@@ -107,7 +127,7 @@ export default function CommandCenter() {
           </div>
 
           {/* Recommendation cards */}
-          <div className="cc-recs">
+          <div className="cc-recs stagger">
             <RecCard
               title="Alternative Procurement"
               priority="Priority 1"
@@ -234,7 +254,7 @@ function RecCard({
   onClick: () => void;
 }) {
   return (
-    <button className={`cc-rec card cc-rec-${tone}`} onClick={onClick}>
+    <button className={`cc-rec card lift cc-rec-${tone}`} onClick={onClick}>
       <div className="cc-rec-head">
         <span className="cc-rec-title">{title}</span>
         <Badge tone={tone === "red" ? "red" : tone === "cyan" ? "cyan" : "muted"}>{priority}</Badge>

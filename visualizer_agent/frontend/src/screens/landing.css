@@ -1,10 +1,15 @@
 .landing {
   min-height: 100vh;
+  position: relative;
   background:
     radial-gradient(ellipse 80% 50% at 50% 30%, rgba(24, 60, 110, 0.35), transparent 70%),
     var(--bg-0);
   display: flex;
   flex-direction: column;
+}
+.landing > *:not(.ambient) {
+  position: relative;
+  z-index: 1;
 }
 
 .landing-top {
@@ -80,11 +85,74 @@
   font-weight: 800;
   letter-spacing: 0.02em;
   margin: 0;
-  background: linear-gradient(180deg, #eaf6ff, #a9c9e6);
+  background: linear-gradient(
+    100deg,
+    #a9c9e6 0%,
+    #eaf6ff 42%,
+    #ffffff 50%,
+    #eaf6ff 58%,
+    #a9c9e6 100%
+  );
+  background-size: 220% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  text-shadow: 0 0 60px rgba(56, 198, 238, 0.25);
+  filter: drop-shadow(0 0 60px rgba(56, 198, 238, 0.3));
+  animation: title-shine 6s ease-in-out infinite;
+}
+@keyframes title-shine {
+  0%, 100% { background-position: 130% 0; }
+  50% { background-position: -30% 0; }
+}
+
+/* Globe orbit rings + scan sweep */
+.landing-globe {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+.globe-orbit {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(90, 190, 235, 0.16);
+  pointer-events: none;
+}
+.globe-orbit-1 {
+  width: 108%;
+  height: 108%;
+  border-style: dashed;
+  animation: orbit 60s linear infinite;
+}
+.globe-orbit-2 {
+  width: 122%;
+  height: 122%;
+  border-color: rgba(90, 190, 235, 0.09);
+  animation: orbit 90s linear infinite reverse;
+}
+.globe-orbit-1::after {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 12px var(--cyan);
+}
+.globe-scan {
+  position: absolute;
+  width: 84%;
+  height: 84%;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(56, 198, 238, 0.12) 35deg,
+    transparent 70deg
+  );
+  animation: orbit 8s linear infinite;
+  pointer-events: none;
 }
 
 .landing-sub {
@@ -167,6 +235,8 @@
 }
 
 .btn-launch {
+  position: relative;
+  overflow: hidden;
   background: linear-gradient(180deg, var(--cyan-bright), var(--cyan));
   color: #05233a;
   font-size: 17px;
@@ -176,12 +246,23 @@
   border-radius: var(--r-md);
   padding: 16px 90px;
   cursor: pointer;
-  box-shadow: 0 0 30px rgba(56, 198, 238, 0.4);
-  transition: all 0.18s ease;
+  box-shadow: 0 0 30px rgba(56, 198, 238, 0.4), 0 8px 24px -6px rgba(56, 198, 238, 0.5);
+  transition: transform var(--dur-mid) var(--ease-out-expo),
+    box-shadow var(--dur-mid) var(--ease-out-expo);
 }
 .btn-launch:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 0 44px rgba(56, 198, 238, 0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 0 54px rgba(56, 198, 238, 0.7), 0 14px 30px -8px rgba(56, 198, 238, 0.6);
+}
+.btn-launch-sheen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  animation: sheen 4.5s ease-in-out infinite;
+  pointer-events: none;
 }
 .landing-cta-sub {
   letter-spacing: 0.24em;

@@ -16,6 +16,11 @@
   flex: 1;
   overflow: auto;
   position: relative;
+  animation: page-in var(--dur-slow) var(--ease-out-expo);
+}
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ── Sidebar ────────────────────────────────────────────────────────────── */
@@ -38,6 +43,7 @@
 }
 
 .side-btn {
+  position: relative;
   width: 42px;
   height: 42px;
   border-radius: var(--r-md);
@@ -45,19 +51,36 @@
   place-items: center;
   color: var(--text-2);
   border: 1px solid transparent;
-  transition: all 0.15s ease;
+  transition: color var(--dur-fast) ease, background var(--dur-fast) ease,
+    transform var(--dur-fast) var(--ease-spring),
+    border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
 }
 
 .side-btn:hover {
   color: var(--text-0);
   background: var(--bg-3);
 }
+.side-btn:active { transform: scale(0.9); }
 
 .side-btn.active {
   color: var(--cyan);
   background: var(--cyan-soft);
   border-color: var(--border-glow);
-  box-shadow: inset 0 0 0 1px rgba(56, 198, 238, 0.2);
+  box-shadow: inset 0 0 0 1px rgba(56, 198, 238, 0.2), 0 0 18px -6px var(--cyan);
+}
+/* Active indicator rail */
+.side-btn.active::before {
+  content: "";
+  position: absolute;
+  left: -13px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  border-radius: 0 3px 3px 0;
+  background: var(--cyan);
+  box-shadow: 0 0 10px var(--cyan);
+  animation: reveal-up var(--dur-mid) var(--ease-out-expo);
 }
 
 .side-gear {

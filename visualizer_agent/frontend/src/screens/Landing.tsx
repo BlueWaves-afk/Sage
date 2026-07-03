@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Globe from "../components/Globe";
+import AmbientBackground from "../components/AmbientBackground";
 import { api } from "../api/hooks";
 import {
   IconGlobe,
@@ -32,6 +33,7 @@ export default function Landing() {
 
   return (
     <div className="landing">
+      <AmbientBackground />
       <header className="landing-top">
         <div className="landing-brand">
           <span className="brand">SAGE</span>
@@ -48,15 +50,24 @@ export default function Landing() {
       </header>
 
       <main className="landing-main">
-        <p className="landing-eyebrow">Autonomous Intelligence for National Energy Security</p>
-        <h1 className="landing-title">SAGE</h1>
-        <p className="landing-sub">AI-Driven Energy Supply Chain Resilience</p>
+        <p className="landing-eyebrow reveal" style={{ "--i": 0 } as React.CSSProperties}>
+          Autonomous Intelligence for National Energy Security
+        </p>
+        <h1 className="landing-title reveal" style={{ "--i": 1 } as React.CSSProperties}>
+          SAGE
+        </h1>
+        <p className="landing-sub reveal" style={{ "--i": 2 } as React.CSSProperties}>
+          AI-Driven Energy Supply Chain Resilience
+        </p>
 
-        <div className="landing-globe">
+        <div className="landing-globe reveal" style={{ "--i": 3 } as React.CSSProperties}>
+          <span className="globe-orbit globe-orbit-1" />
+          <span className="globe-orbit globe-orbit-2" />
+          <span className="globe-scan" />
           <Globe size={560} />
         </div>
 
-        <div className="landing-stats">
+        <div className="landing-stats stagger">
           <div className="landing-stat card">
             <div className="landing-stat-head">
               <IconRss width={14} height={14} />
@@ -91,7 +102,7 @@ export default function Landing() {
           </div>
         </div>
 
-        <div className="landing-features">
+        <div className="landing-features stagger">
           {FEATURES.map(({ icon: Icon, title, desc }) => (
             <div key={title} className="landing-feature">
               <Icon width={18} height={18} className="c-cyan" />
@@ -102,7 +113,8 @@ export default function Landing() {
         </div>
 
         <div className="landing-cta">
-          <button className="btn-launch" onClick={() => nav("/command")}>
+          <button className="btn-launch press" onClick={() => nav("/command")}>
+            <span className="btn-launch-sheen" />
             Launch Command Center
           </button>
           <div className="label-sm landing-cta-sub">Enter Operational Dashboard</div>

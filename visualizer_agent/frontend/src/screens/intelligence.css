@@ -35,13 +35,17 @@
   padding: 8px 16px;
   border-radius: var(--r-md);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: transform var(--dur-fast) var(--ease-spring),
+    border-color var(--dur-fast) ease, color var(--dur-fast) ease,
+    background var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
 }
-.gi-tab:hover { border-color: var(--border-2); }
+.gi-tab:hover { border-color: var(--border-2); transform: translateY(-1px); }
+.gi-tab:active { transform: scale(0.96); }
 .gi-tab.active {
   background: var(--cyan-soft);
   border-color: var(--border-glow);
   color: var(--cyan);
+  box-shadow: 0 0 0 1px rgba(56, 198, 238, 0.2), 0 0 18px -6px var(--cyan);
 }
 
 .gi-map {
@@ -162,7 +166,12 @@
   gap: 9px;
   transition: all 0.15s ease;
 }
-.gi-why:hover { border-color: var(--cyan); color: var(--cyan); }
+.gi-why:hover {
+  border-color: var(--cyan);
+  color: var(--cyan);
+  box-shadow: 0 0 22px -8px var(--cyan);
+}
+.gi-why:active { transform: scale(0.985); }
 
 .gi-network {
   display: flex;
@@ -184,6 +193,13 @@
   border: 1px solid var(--border-2);
   display: grid;
   place-items: center;
+  transition: transform var(--dur-mid) var(--ease-out-expo),
+    border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
+}
+.gi-node:hover .gi-node-dot {
+  transform: translateY(-3px);
+  border-color: var(--border-glow);
+  box-shadow: 0 0 18px -4px var(--cyan);
 }
 .gi-node-dot::after {
   content: "";
@@ -191,6 +207,14 @@
   height: 14px;
   border-radius: 4px;
   background: var(--cyan-dim);
+  box-shadow: 0 0 10px rgba(56, 198, 238, 0.5);
+}
+.gi-node-link {
+  animation: flow-pulse 2.4s ease-in-out infinite;
+}
+@keyframes flow-pulse {
+  0%, 100% { opacity: 0.35; transform: translateX(0); }
+  50% { opacity: 1; transform: translateX(3px); }
 }
 .gi-node-name {
   font-size: 9px;

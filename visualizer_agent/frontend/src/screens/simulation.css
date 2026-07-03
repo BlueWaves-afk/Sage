@@ -61,6 +61,8 @@
   cursor: pointer;
 }
 .btn-run {
+  position: relative;
+  overflow: hidden;
   background: linear-gradient(180deg, var(--cyan-bright), var(--cyan));
   color: #05233a;
   border: none;
@@ -73,6 +75,19 @@
   align-items: center;
   gap: 7px;
   box-shadow: 0 0 20px rgba(56, 198, 238, 0.35);
+  transition: transform var(--dur-fast) var(--ease-spring),
+    box-shadow var(--dur-mid) ease;
+}
+.btn-run:hover { box-shadow: 0 0 34px rgba(56, 198, 238, 0.6); }
+.btn-run-sheen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 45%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  animation: sheen 5s ease-in-out infinite;
+  pointer-events: none;
 }
 
 /* Dual maps */
@@ -108,7 +123,11 @@
   background: rgba(40, 12, 16, 0.72);
 }
 .sim-map-predict {
-  box-shadow: 0 0 0 1px rgba(239, 75, 75, 0.3), 0 0 30px rgba(239, 75, 75, 0.15);
+  animation: predict-glow 3.2s ease-in-out infinite;
+}
+@keyframes predict-glow {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(239, 75, 75, 0.3), 0 0 26px rgba(239, 75, 75, 0.12); }
+  50% { box-shadow: 0 0 0 1px rgba(239, 75, 75, 0.5), 0 0 44px rgba(239, 75, 75, 0.24); }
 }
 .sim-map-threat {
   position: absolute;
@@ -201,7 +220,17 @@
   cursor: pointer;
   transition: all 0.15s ease;
 }
+.sim-layer-btn {
+  transition: transform var(--dur-fast) var(--ease-spring),
+    border-color var(--dur-fast) ease, color var(--dur-fast) ease;
+}
 .sim-layer-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+.sim-layer-btn:active { transform: scale(0.97); }
+.sim-check {
+  transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease,
+    transform var(--dur-fast) var(--ease-spring);
+}
+.sim-layer:hover .sim-check { transform: scale(1.1); }
 
 /* Lower panels */
 .sim-lower {

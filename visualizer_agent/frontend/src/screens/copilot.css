@@ -148,7 +148,18 @@
   cursor: pointer;
   transition: all 0.15s ease;
 }
-.cp-suggestion:hover { border-color: var(--cyan); color: var(--cyan); }
+.cp-suggestion {
+  transition: transform var(--dur-fast) var(--ease-spring),
+    border-color var(--dur-fast) ease, color var(--dur-fast) ease,
+    box-shadow var(--dur-fast) ease;
+}
+.cp-suggestion:hover {
+  border-color: var(--cyan);
+  color: var(--cyan);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px -10px var(--cyan);
+}
+.cp-suggestion:active { transform: scale(0.98); }
 
 .cp-input-row {
   display: flex;
@@ -176,8 +187,25 @@
   display: grid;
   place-items: center;
   cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-spring),
+    box-shadow var(--dur-fast) ease, opacity var(--dur-fast) ease;
 }
+.cp-send:not(:disabled):hover {
+  box-shadow: 0 0 24px -4px var(--cyan);
+  transform: translateY(-1px);
+}
+.cp-send:not(:disabled):active { transform: scale(0.92); }
 .cp-send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Copilot bubbles rise in on arrival */
+.cp-msg { animation: reveal-up var(--dur-mid) var(--ease-out-expo); }
+.cp-bubble {
+  transition: border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
+}
+.cp-msg-sage .cp-bubble:hover {
+  border-color: var(--border-glow);
+  box-shadow: 0 0 24px -12px var(--cyan);
+}
 
 @media (max-width: 700px) {
   .cp-suggestions { grid-template-columns: 1fr; }

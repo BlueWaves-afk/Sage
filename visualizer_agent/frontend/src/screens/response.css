@@ -17,7 +17,22 @@
   align-items: center;
   gap: 12px;
 }
-.radar { width: 300px; height: 300px; }
+.radar {
+  width: 300px;
+  height: 300px;
+  animation: radar-in var(--dur-slow) var(--ease-out-expo);
+}
+@keyframes radar-in {
+  from { opacity: 0; transform: scale(0.9) rotate(-6deg); }
+  to { opacity: 1; transform: scale(1) rotate(0); }
+}
+.radar polygon[fill]:not([fill="none"]) {
+  animation: radar-fill 0.9s var(--ease-out-expo) backwards;
+}
+@keyframes radar-fill {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 .radar-axis {
   fill: var(--text-2);
   font-size: 10px;
@@ -54,6 +69,13 @@
   border: 1px solid var(--border-1);
   border-radius: var(--r-md);
   padding: 14px 16px;
+  transition: transform var(--dur-mid) var(--ease-out-expo),
+    border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
+}
+.rp-option:hover {
+  transform: translateX(3px);
+  border-color: var(--border-2);
+  box-shadow: var(--shadow-lift);
 }
 .rp-option.top {
   border-color: var(--border-glow);
@@ -133,7 +155,18 @@
   min-height: 8px;
   display: flex;
   justify-content: center;
-  transition: height 0.5s ease;
+  transform-origin: bottom;
+  animation: bar-grow var(--dur-slow) var(--ease-out-expo) backwards;
+  box-shadow: 0 0 20px -6px var(--cyan);
+}
+.rp-bar-col:nth-child(1) .rp-bar { animation-delay: 60ms; }
+.rp-bar-col:nth-child(2) .rp-bar { animation-delay: 130ms; }
+.rp-bar-col:nth-child(3) .rp-bar { animation-delay: 200ms; }
+.rp-bar-col:nth-child(4) .rp-bar { animation-delay: 270ms; }
+.rp-bar-col:nth-child(5) .rp-bar { animation-delay: 340ms; }
+@keyframes bar-grow {
+  from { transform: scaleY(0); opacity: 0; }
+  to { transform: scaleY(1); opacity: 1; }
 }
 .rp-bar.warn {
   background: linear-gradient(180deg, var(--amber), #b87a12);

@@ -1,0 +1,49 @@
+.ambient {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ambient-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.5;
+  will-change: transform;
+}
+
+.ambient-blob-1 {
+  width: 46vw;
+  height: 46vw;
+  top: -14vw;
+  left: -8vw;
+  background: radial-gradient(circle, rgba(40, 130, 200, 0.28), transparent 68%);
+  animation: drift-a 22s ease-in-out infinite;
+}
+
+.ambient-blob-2 {
+  width: 40vw;
+  height: 40vw;
+  bottom: -16vw;
+  right: -10vw;
+  background: radial-gradient(circle, rgba(56, 198, 238, 0.18), transparent 66%);
+  animation: drift-b 28s ease-in-out infinite;
+}
+
+.ambient-alert .ambient-blob-2 {
+  background: radial-gradient(circle, rgba(239, 75, 75, 0.16), transparent 66%);
+}
+
+/* Fine engineering grid — very low contrast, adds "instrument" texture. */
+.ambient-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(120, 160, 200, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 160, 200, 0.035) 1px, transparent 1px);
+  background-size: 46px 46px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black, transparent 85%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black, transparent 85%);
+}

@@ -27,7 +27,7 @@ export default function AppShell() {
       <IconSidebar />
       <div className="shell-main">
         <TopBar title={TITLES[pathname] ?? "SAGE"} live={live !== false} />
-        <div className="shell-content">
+        <div className="shell-content" key={pathname}>
           <Outlet />
         </div>
         <StatusBar live={live} />

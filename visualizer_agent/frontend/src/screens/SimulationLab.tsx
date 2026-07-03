@@ -65,7 +65,8 @@ export default function SimulationLab() {
           <span className="label-sm">Mode:</span>
           <Badge tone="cyan">Sandbox</Badge>
         </div>
-        <button className="btn-run">
+        <button className="btn-run press">
+          <span className="btn-run-sheen" />
           <IconPlay width={13} height={13} /> Execute Run
         </button>
       </div>

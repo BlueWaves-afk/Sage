@@ -51,6 +51,24 @@
   --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.02) inset,
     0 8px 24px rgba(0, 0, 0, 0.35);
   --shadow-glow: 0 0 24px rgba(56, 198, 238, 0.25);
+  /* Layered elevation for premium depth (ambient + key + contact) */
+  --shadow-lift: 0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 2px 6px rgba(0, 0, 0, 0.35), 0 18px 44px -12px rgba(0, 0, 0, 0.6);
+  /* Hairline top-edge highlight — the signature "expensive card" sheen */
+  --edge-top: linear-gradient(
+    90deg,
+    transparent,
+    rgba(120, 210, 245, 0.45),
+    transparent
+  );
+
+  /* ── Motion tokens (unify rhythm across the whole app) ───────────────── */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);   /* premium enter */
+  --ease-in-quart: cubic-bezier(0.5, 0, 0.75, 0);   /* exit */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* overshoot press */
+  --dur-fast: 160ms;
+  --dur-mid: 260ms;
+  --dur-slow: 420ms;
 
   /* ── Layout ──────────────────────────────────────────────────────────── */
   --sidebar-w: 66px;
@@ -114,10 +132,24 @@ a {
 }
 
 .card {
+  position: relative;
   background: linear-gradient(180deg, var(--bg-3), var(--bg-2));
   border: 1px solid var(--border-1);
   border-radius: var(--r-md);
   box-shadow: var(--shadow-card);
+}
+
+/* Signature top-edge sheen on every card — a hairline light catch. */
+.card::before,
+.panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 12% auto 12%;
+  height: 1px;
+  background: var(--edge-top);
+  opacity: 0.5;
+  pointer-events: none;
+  border-radius: var(--r-md);
 }
 
 .card-pad {
@@ -168,4 +200,132 @@ input:focus-visible {
 @keyframes rise {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Premium motion + surfaces ─────────────────────────────────────────── */
+
+/* Entrance: reveal-up with the expo-out curve. Stagger via --i on children. */
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.reveal {
+  opacity: 0;
+  animation: reveal-up var(--dur-slow) var(--ease-out-expo) forwards;
+  animation-delay: calc(var(--i, 0) * 55ms);
+}
+
+/* Stagger a container's direct children automatically. */
+.stagger > * {
+  opacity: 0;
+  animation: reveal-up var(--dur-slow) var(--ease-out-expo) forwards;
+}
+.stagger > *:nth-child(1) { animation-delay: 40ms; }
+.stagger > *:nth-child(2) { animation-delay: 95ms; }
+.stagger > *:nth-child(3) { animation-delay: 150ms; }
+.stagger > *:nth-child(4) { animation-delay: 205ms; }
+.stagger > *:nth-child(5) { animation-delay: 260ms; }
+.stagger > *:nth-child(6) { animation-delay: 315ms; }
+.stagger > *:nth-child(7) { animation-delay: 370ms; }
+.stagger > *:nth-child(8) { animation-delay: 425ms; }
+
+/* Frosted-glass surface for overlays / floating panels. */
+.glass {
+  background: var(--bg-glass);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  border: 1px solid rgba(120, 160, 200, 0.16);
+}
+
+/* Interactive lift — spring-eased hover for clickable cards. */
+.lift {
+  transition: transform var(--dur-mid) var(--ease-out-expo),
+    box-shadow var(--dur-mid) var(--ease-out-expo),
+    border-color var(--dur-fast) ease;
+  will-change: transform;
+}
+.lift:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lift);
+  border-color: var(--border-2);
+}
+.lift:active {
+  transform: translateY(-1px) scale(0.995);
+  transition-duration: var(--dur-fast);
+}
+
+/* Press feedback for buttons/chips. */
+.press {
+  transition: transform var(--dur-fast) var(--ease-spring),
+    box-shadow var(--dur-fast) ease, border-color var(--dur-fast) ease,
+    background var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+.press:active {
+  transform: scale(0.96);
+}
+
+/* Skeleton shimmer for loading states. */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-3);
+  border-radius: var(--r-sm);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(120, 160, 200, 0.08),
+    transparent
+  );
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
+/* Sweeping sheen used on primary CTAs. */
+@keyframes sheen {
+  0% { transform: translateX(-120%) skewX(-18deg); }
+  60%, 100% { transform: translateX(220%) skewX(-18deg); }
+}
+
+/* Slow drift for ambient background blobs. */
+@keyframes drift-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(6%, -5%) scale(1.12); }
+}
+@keyframes drift-b {
+  0%, 100% { transform: translate(0, 0) scale(1.05); }
+  50% { transform: translate(-7%, 6%) scale(0.94); }
+}
+
+/* Animated conic ring (globe orbit, loaders). */
+@keyframes orbit {
+  to { transform: rotate(360deg); }
+}
+
+/* Count-up numbers hold tabular width to avoid layout shift. */
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* ── Respect reduced-motion everywhere ─────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .reveal,
+  .stagger > * {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }

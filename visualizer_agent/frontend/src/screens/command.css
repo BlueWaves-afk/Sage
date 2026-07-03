@@ -4,6 +4,11 @@
   flex-direction: column;
   gap: 16px;
   min-height: 100%;
+  position: relative;
+}
+.cc > *:not(.ambient) {
+  position: relative;
+  z-index: 1;
 }
 
 /* KPI row */
@@ -266,12 +271,16 @@
   padding: 6px 12px;
   border-radius: var(--r-pill);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: transform var(--dur-fast) var(--ease-spring),
+    border-color var(--dur-fast) ease, color var(--dur-fast) ease,
+    box-shadow var(--dur-fast) ease;
 }
 .chip:hover {
   border-color: var(--cyan);
   color: var(--cyan);
+  box-shadow: 0 0 0 1px rgba(56, 198, 238, 0.25), 0 0 16px -4px var(--cyan);
 }
+.chip:active { transform: scale(0.95); }
 .cc-copilot-input {
   width: 100%;
   text-align: left;
