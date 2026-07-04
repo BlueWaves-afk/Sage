@@ -1,12 +1,12 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback, useRef } from "react";
 import DeckGL from "@deck.gl/react";
+import { WebMercatorViewport } from "@deck.gl/core";
 import { ScatterplotLayer, LineLayer, TextLayer } from "@deck.gl/layers";
 import { CollisionFilterExtension } from "@deck.gl/extensions";
 import { Map as BaseMap } from "react-map-gl/maplibre";
 import type { GraphData, GraphNode } from "../api/types";
 import { useTheme, basemapFor } from "../theme";
 
-// Risk-band → colour (traffic-light gradient, matching the Obsidian graph config).
 const BAND_RGB: Record<string, [number, number, number]> = {
   CALM: [45, 178, 158],
   WATCH: [233, 196, 106],
@@ -26,27 +26,21 @@ const TYPE_RGB: Record<string, [number, number, number]> = {
   GeoEvent: [244, 162, 97],
 };
 
-// Relationship-type colouring — a "structural" corridor→refinery FEEDS edge reads
-// very differently from a BYPASS_ROUTE (a reroute *around* risk) or an EXPOSES edge
-// (literally how risk propagates from a disrupted corridor to a refinery). Styling
-// every edge identically made the map look like "everything connects to everything";
-// this makes the relationship kind and its risk weight visible at a glance.
+// Relation styles — kept same as before, but base alpha is applied much lower
+// everywhere in the edge rendering so the map reads cleaner at rest.
 const RELATION_STYLE: Record<string, { color: [number, number, number]; width: number }> = {
-  BYPASS_ROUTE: { color: [80, 200, 130], width: 1.6 },       // reroute around risk — green
-  EXPOSES: { color: [230, 90, 70], width: 2.2 },              // risk propagation — red, thick
-  FEEDS: { color: [90, 150, 210], width: 1.1 },                // corridor → port throughput
-  SUPPLIES: { color: [90, 150, 210], width: 1.0 },             // port → refinery throughput
-  EXPORTS_VIA: { color: [140, 160, 190], width: 0.8 },
-  CONFIGURED_FOR: { color: [110, 140, 175], width: 0.5 },      // grade compatibility — least salient
-  SANCTIONED_BY: { color: [220, 130, 60], width: 1.3 },
+  BYPASS_ROUTE: { color: [80, 200, 130], width: 1.5 },
+  EXPOSES:      { color: [230, 90, 70],  width: 2.0 },
+  FEEDS:        { color: [90, 150, 210], width: 1.0 },
+  SUPPLIES:     { color: [90, 150, 210], width: 0.9 },
+  EXPORTS_VIA:  { color: [140, 160, 190], width: 0.7 },
+  CONFIGURED_FOR: { color: [110, 140, 175], width: 0.4 },
+  SANCTIONED_BY: { color: [220, 130, 60], width: 1.2 },
 };
-const DEFAULT_RELATION_STYLE = { color: [110, 140, 175] as [number, number, number], width: 0.7 };
+const DEFAULT_RELATION_STYLE = { color: [110, 140, 175] as [number, number, number], width: 0.6 };
 
 const GREY: [number, number, number] = [110, 114, 122];
 
-/** Blend a colour toward neutral grey — used to visually "grey out" de-emphasised
- * nodes/edges, not just fade their opacity (fading alone reads as "thin", not
- * "de-prioritised", on a dark basemap). */
 function desaturate(rgb: [number, number, number], amount: number): [number, number, number] {
   const a = Math.min(1, Math.max(0, amount));
   return [
@@ -56,14 +50,19 @@ function desaturate(rgb: [number, number, number], amount: number): [number, num
   ];
 }
 
-// Smooth GPU-interpolated "pop" transitions — no manual animation loop needed.
 const POP_TRANSITIONS = {
+  getPosition: { duration: 280, easing: (t: number) => 1 - Math.pow(1 - t, 3) },
   getRadius: { duration: 220, easing: (t: number) => 1 - Math.pow(1 - t, 3) },
   getFillColor: 180,
   getLineColor: 180,
   getLineWidth: 180,
 };
 const EDGE_TRANSITIONS = { getColor: 180, getWidth: 180 };
+
+// How many pixels from the hovered node triggers cluster-spread.
+const CLUSTER_PX = 36;
+// How far apart to push cluster members (pixels).
+const SPREAD_PX = 28;
 
 export interface KnowledgeGraphMapProps {
   graph: GraphData;
@@ -82,12 +81,20 @@ export default function KnowledgeGraphMap({
 }: KnowledgeGraphMapProps) {
   const [hoverId, setHoverId] = useState<string | null>(null);
   const { theme } = useTheme();
-
   const light = theme === "light";
   const labelText: [number, number, number, number] = light ? [30, 45, 70, 255] : [210, 224, 240, 235];
   const labelOutline: [number, number, number, number] = light ? [255, 255, 255, 255] : [8, 14, 24, 255];
 
-  // Adjacency map for the focus/fade interaction — who's a direct neighbour of whom.
+  // Track the live viewport so we can project lat/lon → pixels for cluster detection.
+  const [viewState, setViewState] = useState<{
+    longitude: number; latitude: number; zoom: number;
+    pitch?: number; bearing?: number;
+  }>(initialView);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // jitter: per-node geographic offset (lon, lat) applied when a cluster is spread.
+  const [jitter, setJitter] = useState<Map<string, [number, number]>>(new Map());
+
   const adjacency = useMemo(() => {
     const adj = new Map<string, Set<string>>();
     for (const e of graph.edges) {
@@ -99,6 +106,69 @@ export default function KnowledgeGraphMap({
     return adj;
   }, [graph.edges]);
 
+  // Compute cluster repulsion whenever the hovered node changes.
+  const handleHover = useCallback(
+    (info: { object?: unknown }) => {
+      const node = info.object as GraphNode | undefined;
+      if (!node?.id) {
+        setHoverId(null);
+        setJitter(new Map());
+        return;
+      }
+      setHoverId(node.id);
+
+      const placed = graph.nodes.filter((n) => n.lat != null && n.lon != null);
+      const w = containerRef.current?.clientWidth ?? window.innerWidth;
+      const h = containerRef.current?.clientHeight ?? window.innerHeight;
+
+      const vp = new WebMercatorViewport({
+        width: w,
+        height: h,
+        longitude: viewState.longitude,
+        latitude: viewState.latitude,
+        zoom: viewState.zoom,
+        pitch: viewState.pitch ?? 0,
+        bearing: viewState.bearing ?? 0,
+      });
+
+      const [hx, hy] = vp.project([node.lon!, node.lat!]) as [number, number];
+
+      // Find all nodes that overlap the hovered node on screen.
+      const cluster = placed.filter((n) => {
+        if (n.id === node.id) return false;
+        const [px, py] = vp.project([n.lon!, n.lat!]) as [number, number];
+        return Math.hypot(px - hx, py - hy) < CLUSTER_PX;
+      });
+
+      if (cluster.length === 0) {
+        setJitter(new Map());
+        return;
+      }
+
+      // Spread all cluster members (including the hovered one) evenly around their centroid.
+      const all = [node, ...cluster];
+      const cx = all.reduce((s, n) => {
+        const [px] = vp.project([n.lon!, n.lat!]) as [number, number];
+        return s + px;
+      }, 0) / all.length;
+      const cy = all.reduce((s, n) => {
+        const [, py] = vp.project([n.lon!, n.lat!]) as [number, number];
+        return s + py;
+      }, 0) / all.length;
+
+      const newJitter = new Map<string, [number, number]>();
+      all.forEach((n, i) => {
+        const angle = (2 * Math.PI * i) / all.length - Math.PI / 2;
+        const tx = cx + Math.cos(angle) * SPREAD_PX;
+        const ty = cy + Math.sin(angle) * SPREAD_PX;
+        const [lon, lat] = vp.unproject([tx, ty]) as [number, number];
+        newJitter.set(n.id, [lon - n.lon!, lat - n.lat!]);
+      });
+      setJitter(newJitter);
+    },
+    [graph.nodes, viewState]
+  );
+
   const layers = useMemo(() => {
     const placed = graph.nodes.filter((n) => n.lat != null && n.lon != null);
     const byId = new Map(placed.map((n) => [n.id, n]));
@@ -106,20 +176,18 @@ export default function KnowledgeGraphMap({
     const color = (n: GraphNode): [number, number, number] =>
       colorBy === "type" ? TYPE_RGB[n.type] ?? [120, 140, 170] : BAND_RGB[n.band] ?? BAND_RGB.CALM;
 
-    // Obsidian-style node radius: small, gently scaled by connectivity.
     const baseRadius = (n: GraphNode) => 2.5 + Math.sqrt(n.degree) * 1.15;
 
-    // Focus = whatever's hovered, falling back to the current selection. A node is
-    // "in focus" if it IS the focus or a direct neighbour of it; everything else is
-    // lower priority and recedes (greyed + faded), per the graph's real adjacency —
-    // not just a static "importance" ranking.
+    // Jittered position: base + geographic offset computed from pixel spread.
+    const pos = (n: GraphNode): [number, number] => {
+      const off = jitter.get(n.id);
+      return off ? [n.lon! + off[0], n.lat! + off[1]] : [n.lon!, n.lat!];
+    };
+
     const focusId = hoverId ?? selectedId;
     const neighborsOfFocus = focusId ? adjacency.get(focusId) : undefined;
     const inFocusSet = (id: string) => !focusId || id === focusId || !!neighborsOfFocus?.has(id);
 
-    // Baseline priority (used only when nothing is focused): well-connected or
-    // elevated-risk nodes stay vivid; sparse/calm nodes sit slightly receded, so the
-    // graph reads with a visual hierarchy even at rest.
     const baselinePriority = (n: GraphNode) =>
       n.degree >= 3 || n.band === "ACTION" || n.band === "CRITICAL" || n.band === "ELEVATED" ? 1 : 0.55;
 
@@ -132,14 +200,8 @@ export default function KnowledgeGraphMap({
         if (!s || !t) return null;
         const touchesFocus = focusId != null && (e.source === focusId || e.target === focusId);
         const style = RELATION_STYLE[e.relation] ?? DEFAULT_RELATION_STYLE;
-        // Risk weight: the riskier of the two connected nodes brightens/thickens the
-        // edge, on top of its relation-type base style — a FEEDS edge touching a
-        // CRITICAL corridor reads as more urgent than one touching a calm one.
         const riskWeight = Math.max(s.score, t.score);
-        // Emphasis: edges directly touching the focused node stay prominent;
-        // everything else — including edges between two "in-focus" neighbours —
-        // fades hard, so attention stays on the focused node's own connections.
-        const emphasis = focusId ? (touchesFocus ? 1 : 0.06) : Math.min(nodeEmphasis(s), nodeEmphasis(t));
+        const emphasis = focusId ? (touchesFocus ? 1 : 0.05) : Math.min(nodeEmphasis(s), nodeEmphasis(t));
         return { s, t, touchesFocus, relation: e.relation, style, riskWeight, emphasis };
       })
       .filter(Boolean) as {
@@ -147,40 +209,42 @@ export default function KnowledgeGraphMap({
         style: { color: [number, number, number]; width: number }; riskWeight: number; emphasis: number;
       }[];
 
-    // Styled by relationship type + risk weight (not a uniform line for every edge):
-    // BYPASS_ROUTE green, EXPOSES red/thick (literal risk propagation), structural
-    // FEEDS/SUPPLIES thin blue, CONFIGURED_FOR faintest. Focus further dims whatever
-    // isn't directly touching the hovered/selected node.
     const edges = new LineLayer<(typeof edgeData)[number]>({
       id: "kg-edges",
       data: edgeData,
-      getSourcePosition: (d) => [d.s.lon!, d.s.lat!],
-      getTargetPosition: (d) => [d.t.lon!, d.t.lat!],
+      // Use jittered positions so edges follow their nodes when spread.
+      getSourcePosition: (d) => pos(d.s),
+      getTargetPosition: (d) => pos(d.t),
       getColor: (d) => {
-        if (d.touchesFocus) return [56, 160, 210, 235];
+        if (d.touchesFocus) return [56, 160, 210, 210];
         const base = focusId ? desaturate(d.style.color, 1 - d.emphasis) : d.style.color;
         const [r, g, b] = base;
-        // Riskier edges get more opaque, not just wider — low-risk structural
-        // edges stay in the background, high-risk ones pop.
-        const alpha = (light ? 60 + d.riskWeight * 140 : 45 + d.riskWeight * 160) * d.emphasis;
-        return [r, g, b, Math.round(Math.min(230, alpha))];
+        // Much lower default alpha — edges read as delicate connective tissue, not bold lines.
+        // High-risk edges get more visible; low-risk structural wiring nearly disappears.
+        const alpha = (light
+          ? 18 + d.riskWeight * 65
+          : 12 + d.riskWeight * 55) * Math.max(d.emphasis, 0.05);
+        return [r, g, b, Math.round(Math.min(200, alpha))];
       },
-      getWidth: (d) => (d.touchesFocus ? 2.6 : (d.style.width + d.riskWeight * 1.8) * Math.max(0.4, d.emphasis)),
+      getWidth: (d) =>
+        d.touchesFocus
+          ? 2.2
+          : (d.style.width * 0.7 + d.riskWeight * 1.2) * Math.max(0.25, d.emphasis),
       widthUnits: "pixels",
       transitions: EDGE_TRANSITIONS,
       updateTriggers: {
+        getSourcePosition: [jitter],
+        getTargetPosition: [jitter],
         getColor: [hoverId, selectedId, theme],
         getWidth: [hoverId, selectedId],
       },
     });
 
-    // Selection ring — a plain outlined circle, not a soft glow blob. Reads as
-    // a precise selection indicator rather than decorative bloom.
     const focusNode = placed.find((n) => n.id === selectedId);
     const selectionRing = new ScatterplotLayer<GraphNode>({
       id: "kg-selection-ring",
       data: focusNode ? [focusNode] : [],
-      getPosition: (d) => [d.lon!, d.lat!],
+      getPosition: (d) => pos(d),
       getRadius: (d) => baseRadius(d) + 5,
       radiusUnits: "pixels",
       getFillColor: [0, 0, 0, 0],
@@ -195,14 +259,11 @@ export default function KnowledgeGraphMap({
     const nodes = new ScatterplotLayer<GraphNode>({
       id: "kg-nodes",
       data: placed,
-      getPosition: (d) => [d.lon!, d.lat!],
-      // The hovered node itself pops (bigger); its neighbours get a gentle bump;
-      // everything else holds its normal size — the size change plus the 220ms
-      // eased transition below IS the "pop" animation, no manual RAF loop needed.
+      getPosition: (d) => pos(d),
       getRadius: (d) => {
         const r = baseRadius(d);
         if (d.id === hoverId) return r * 1.55;
-        if (focusId && inFocusSet(d.id)) return r * 1.12;
+        if (focusId && inFocusSet(d.id)) return r * 1.1;
         return r;
       },
       radiusUnits: "pixels",
@@ -228,8 +289,9 @@ export default function KnowledgeGraphMap({
       antialiasing: true,
       transitions: POP_TRANSITIONS,
       onClick: (info) => info.object && onNodeClick?.(info.object as GraphNode),
-      onHover: (info) => setHoverId((info.object as GraphNode)?.id ?? null),
+      onHover: handleHover,
       updateTriggers: {
+        getPosition: [jitter],
         getRadius: [hoverId, selectedId],
         getFillColor: [colorBy, hoverId, selectedId],
         getLineColor: [colorBy, hoverId, selectedId],
@@ -237,13 +299,10 @@ export default function KnowledgeGraphMap({
       },
     });
 
-    // Labels declutter automatically via CollisionFilterExtension — higher-degree
-    // nodes win the space, exactly like Obsidian hides labels until they fit.
-    // Faded/greyed-out nodes' labels fade with them so attention follows focus.
     const labels = new TextLayer<GraphNode>({
       id: "kg-labels",
       data: placed,
-      getPosition: (d) => [d.lon!, d.lat!],
+      getPosition: (d) => pos(d),
       getText: (d) => d.name,
       getSize: (d) => (d.id === hoverId ? 13 : 11),
       getColor: (d) => {
@@ -259,10 +318,12 @@ export default function KnowledgeGraphMap({
       outlineWidth: 3,
       outlineColor: labelOutline,
       transitions: { getSize: 150, getColor: 180 },
-      updateTriggers: { getColor: [theme, hoverId, selectedId], getSize: [hoverId] },
+      updateTriggers: {
+        getPosition: [jitter],
+        getColor: [theme, hoverId, selectedId],
+        getSize: [hoverId],
+      },
       fontSettings: { sdf: true },
-      // Collision filtering: priority = connectivity so hubs keep their labels
-      // (props typed loosely — they belong to CollisionFilterExtension).
       extensions: [new CollisionFilterExtension()],
       ...({
         collisionEnabled: true,
@@ -275,34 +336,39 @@ export default function KnowledgeGraphMap({
 
     return [edges, selectionRing, nodes, labels];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [graph, onNodeClick, selectedId, colorBy, hoverId, theme, adjacency]);
+  }, [graph, onNodeClick, selectedId, colorBy, hoverId, theme, adjacency, jitter, handleHover, light, labelText, labelOutline]);
 
   return (
-    <DeckGL
-      initialViewState={initialView}
-      controller={true}
-      layers={layers}
-      getCursor={({ isDragging }) => (isDragging ? "grabbing" : hoverId ? "pointer" : "grab")}
-      getTooltip={({ object }) =>
-        object && (object as GraphNode).name
-          ? {
-              html: `<b>${(object as GraphNode).name}</b><br/>${(object as GraphNode).type} · ${
-                (object as GraphNode).band
-              } ${((object as GraphNode).score * 100).toFixed(0)}% · ${(object as GraphNode).degree} links`,
-              style: {
-                background: "#131318",
-                color: "#eef0f4",
-                fontSize: "11px",
-                padding: "5px 8px",
-                borderRadius: "3px",
-                border: "1px solid #34343f",
-              },
-            }
-          : null
-      }
-      style={{ position: "absolute", top: "0", left: "0", right: "0", bottom: "0" }}
-    >
-      <BaseMap reuseMaps mapStyle={basemapFor(theme)} attributionControl={false} />
-    </DeckGL>
+    <div ref={containerRef} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
+      <DeckGL
+        viewState={viewState}
+        onViewStateChange={({ viewState: vs }) =>
+          setViewState(vs as typeof viewState)
+        }
+        controller={true}
+        layers={layers}
+        getCursor={({ isDragging }) => (isDragging ? "grabbing" : hoverId ? "pointer" : "grab")}
+        getTooltip={({ object }) =>
+          object && (object as GraphNode).name
+            ? {
+                html: `<b>${(object as GraphNode).name}</b><br/>${(object as GraphNode).type} · ${
+                  (object as GraphNode).band
+                } ${((object as GraphNode).score * 100).toFixed(0)}% · ${(object as GraphNode).degree} links`,
+                style: {
+                  background: "#131318",
+                  color: "#eef0f4",
+                  fontSize: "11px",
+                  padding: "5px 8px",
+                  borderRadius: "3px",
+                  border: "1px solid #34343f",
+                },
+              }
+            : null
+        }
+        style={{ position: "absolute", top: "0", left: "0", right: "0", bottom: "0" }}
+      >
+        <BaseMap reuseMaps mapStyle={basemapFor(theme)} attributionControl={false} />
+      </DeckGL>
+    </div>
   );
 }
