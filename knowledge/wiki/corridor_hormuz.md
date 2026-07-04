@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-04T08:10:16.430373+00:00'
-valid_at: '2026-07-04T08:09:49.199780+00:00'
+last_updated: '2026-07-04T08:11:48.634669+00:00'
+valid_at: '2026-07-04T08:10:38.434333+00:00'
 source_episodes: []
 links_out:
 - event_tanker_war
@@ -29,7 +29,6 @@ links_out:
 - refinery_jamnagar
 - refinery_chennai
 - refinery_visakh
-- grade_arab_light
 - port_yanbu
 - port_fujairah
 coordinates:
@@ -57,7 +56,7 @@ The current situation has a clear precedent in the [[Tanker War]] with a feature
 - [[Visakhapatnam Refinery]]: High exposure due to peak gap of 0.00 mbpd from day 45.0.
 
 ## Signal Basis
-- System 3 procurement analysis for Strait of Hormuz: 24 alternative crude sources ranked. Top option: [[Saudi Aramco]] ([[Arab Light]]) via Strait of Hormuz — $1.80/bbl, 20 day lead time, grade compatibility 0.50, TOPSIS score 0.64. Alternative options: [[Kuwait Petroleum Corporation]] via Strait of Hormuz ($1.80/bbl, TOPSIS 0.63); [[Iraqi Oil Ministry]] via Strait of Hormuz ($1.80/bbl, TOPSIS 0.62).
+- System 2 scenario modelling (confirmed) for Strait of Hormuz: projected supply gap 0.00 mbpd over 0 days (timeline: day1:0.0, day2:0.0, day3:0.0, day4:0.0, day5:0.0, day6:0.0, day7:0.0). Projected price impact $36-$61/bbl, SPR cover would last 45.0 days at the projected draw rate, inflation impact 3.62%. Most-exposed nodes: Jamnagar Refinery peak gap 0.00 mbpd from day 45.0; Chennai Refinery peak gap 0.00 mbpd from day 45.0; Visakhapatnam Refinery peak gap 0.00 mbpd from day 45.0. Key assumptions: import_dependence_pct=88.6%; hormuz_share_pct=42.5%; spr_total_mmt=10.66MMT; spr_fill_frac=0.786frac. Model confidence 100%.
 
 ## Relations
 | Relation         | Entity                 | Type               | Strength |
