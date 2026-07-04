@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import KnowledgeGraphMap from "../components/KnowledgeGraphMap";
 import WikiDrawer from "../components/WikiDrawer";
+import { RichText } from "../components/RichText";
 import PipelineBar from "../components/PipelineBar";
 import AmbientBackground from "../components/AmbientBackground";
 import AnimatedNumber from "../components/AnimatedNumber";
@@ -51,6 +52,11 @@ export default function CommandCenter() {
   const { data: scen, live: scenLive } = useApi(api.scenario);
   const [selected, setSelected] = useState<GraphNode | null>(null);
   const [briefLoading, setBriefLoading] = useState(true);
+
+  // Opens the wiki drawer for an entity referenced via a [[wikilink]] in narrative
+  // text (brief, procurement rationale, SPR memo) — same drawer the map uses.
+  const openWikilink = (entity: string) =>
+    setSelected({ id: entity, name: entity, type: "Entity", lat: null, lon: null, score: 0, band: "CALM", degree: 0 });
 
   // AI Situation Brief narrative: pulled live from the highest-risk entity's
   // reconciled wiki page (its "Current Assessment" paragraph) — not hardcoded.
@@ -207,7 +213,9 @@ export default function CommandCenter() {
                   <Skel w="100%" h={13} /> <Skel w="96%" h={13} /> <Skel w="70%" h={13} />
                 </div>
               ) : briefLive && brief ? (
-                <p className="cc-narrative">{brief}</p>
+                <p className="cc-narrative">
+                  <RichText text={brief} onWikilink={openWikilink} />
+                </p>
               ) : (
                 <p className="cc-status-line mono">[STATUS: AWAITING SYNTHESIS]</p>
               )}
@@ -259,6 +267,7 @@ export default function CommandCenter() {
                 impact={r.impact}
                 impactTone={r.impactTone}
                 onClick={() => nav("/response")}
+                onWikilink={openWikilink}
               />
             ))}
           </div>
@@ -350,6 +359,7 @@ function RecCard({
   impact,
   impactTone,
   onClick,
+  onWikilink,
 }: {
   title: string;
   priority: string;
@@ -360,6 +370,7 @@ function RecCard({
   impact: string;
   impactTone: string;
   onClick: () => void;
+  onWikilink?: (entity: string) => void;
 }) {
   return (
     <button className={`cc-rec card lift cc-rec-${tone}`} onClick={onClick}>
@@ -368,7 +379,9 @@ function RecCard({
         <Badge tone={tone === "red" ? "red" : tone === "cyan" ? "cyan" : "muted"}>{priority}</Badge>
       </div>
       {live && body ? (
-        <p className="cc-rec-body">{body}</p>
+        <p className="cc-rec-body">
+          <RichText text={body} onWikilink={onWikilink} />
+        </p>
       ) : (
         <div className="cc-rec-body" style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <Skel w="100%" h={12} />

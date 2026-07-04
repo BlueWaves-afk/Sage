@@ -42,6 +42,29 @@ const RELATION_STYLE: Record<string, { color: [number, number, number]; width: n
 };
 const DEFAULT_RELATION_STYLE = { color: [110, 140, 175] as [number, number, number], width: 0.7 };
 
+const GREY: [number, number, number] = [110, 114, 122];
+
+/** Blend a colour toward neutral grey — used to visually "grey out" de-emphasised
+ * nodes/edges, not just fade their opacity (fading alone reads as "thin", not
+ * "de-prioritised", on a dark basemap). */
+function desaturate(rgb: [number, number, number], amount: number): [number, number, number] {
+  const a = Math.min(1, Math.max(0, amount));
+  return [
+    Math.round(rgb[0] + (GREY[0] - rgb[0]) * a),
+    Math.round(rgb[1] + (GREY[1] - rgb[1]) * a),
+    Math.round(rgb[2] + (GREY[2] - rgb[2]) * a),
+  ];
+}
+
+// Smooth GPU-interpolated "pop" transitions — no manual animation loop needed.
+const POP_TRANSITIONS = {
+  getRadius: { duration: 220, easing: (t: number) => 1 - Math.pow(1 - t, 3) },
+  getFillColor: 180,
+  getLineColor: 180,
+  getLineWidth: 180,
+};
+const EDGE_TRANSITIONS = { getColor: 180, getWidth: 180 };
+
 export interface KnowledgeGraphMapProps {
   graph: GraphData;
   onNodeClick?: (node: GraphNode) => void;
@@ -64,6 +87,18 @@ export default function KnowledgeGraphMap({
   const labelText: [number, number, number, number] = light ? [30, 45, 70, 255] : [210, 224, 240, 235];
   const labelOutline: [number, number, number, number] = light ? [255, 255, 255, 255] : [8, 14, 24, 255];
 
+  // Adjacency map for the focus/fade interaction — who's a direct neighbour of whom.
+  const adjacency = useMemo(() => {
+    const adj = new Map<string, Set<string>>();
+    for (const e of graph.edges) {
+      if (!adj.has(e.source)) adj.set(e.source, new Set());
+      if (!adj.has(e.target)) adj.set(e.target, new Set());
+      adj.get(e.source)!.add(e.target);
+      adj.get(e.target)!.add(e.source);
+    }
+    return adj;
+  }, [graph.edges]);
+
   const layers = useMemo(() => {
     const placed = graph.nodes.filter((n) => n.lat != null && n.lon != null);
     const byId = new Map(placed.map((n) => [n.id, n]));
@@ -72,45 +107,67 @@ export default function KnowledgeGraphMap({
       colorBy === "type" ? TYPE_RGB[n.type] ?? [120, 140, 170] : BAND_RGB[n.band] ?? BAND_RGB.CALM;
 
     // Obsidian-style node radius: small, gently scaled by connectivity.
-    const radius = (n: GraphNode) => 2.5 + Math.sqrt(n.degree) * 1.15;
+    const baseRadius = (n: GraphNode) => 2.5 + Math.sqrt(n.degree) * 1.15;
+
+    // Focus = whatever's hovered, falling back to the current selection. A node is
+    // "in focus" if it IS the focus or a direct neighbour of it; everything else is
+    // lower priority and recedes (greyed + faded), per the graph's real adjacency —
+    // not just a static "importance" ranking.
+    const focusId = hoverId ?? selectedId;
+    const neighborsOfFocus = focusId ? adjacency.get(focusId) : undefined;
+    const inFocusSet = (id: string) => !focusId || id === focusId || !!neighborsOfFocus?.has(id);
+
+    // Baseline priority (used only when nothing is focused): well-connected or
+    // elevated-risk nodes stay vivid; sparse/calm nodes sit slightly receded, so the
+    // graph reads with a visual hierarchy even at rest.
+    const baselinePriority = (n: GraphNode) =>
+      n.degree >= 3 || n.band === "ACTION" || n.band === "CRITICAL" || n.band === "ELEVATED" ? 1 : 0.55;
+
+    const nodeEmphasis = (n: GraphNode) => (focusId ? (inFocusSet(n.id) ? 1 : 0.12) : baselinePriority(n));
 
     const edgeData = graph.edges
       .map((e) => {
         const s = byId.get(e.source);
         const t = byId.get(e.target);
         if (!s || !t) return null;
-        const active = hoverId === s.id || hoverId === t.id || selectedId === s.id || selectedId === t.id;
+        const touchesFocus = focusId != null && (e.source === focusId || e.target === focusId);
         const style = RELATION_STYLE[e.relation] ?? DEFAULT_RELATION_STYLE;
         // Risk weight: the riskier of the two connected nodes brightens/thickens the
         // edge, on top of its relation-type base style — a FEEDS edge touching a
         // CRITICAL corridor reads as more urgent than one touching a calm one.
         const riskWeight = Math.max(s.score, t.score);
-        return { s, t, active, relation: e.relation, style, riskWeight };
+        // Emphasis: edges directly touching the focused node stay prominent;
+        // everything else — including edges between two "in-focus" neighbours —
+        // fades hard, so attention stays on the focused node's own connections.
+        const emphasis = focusId ? (touchesFocus ? 1 : 0.06) : Math.min(nodeEmphasis(s), nodeEmphasis(t));
+        return { s, t, touchesFocus, relation: e.relation, style, riskWeight, emphasis };
       })
       .filter(Boolean) as {
-        s: GraphNode; t: GraphNode; active: boolean; relation: string;
-        style: { color: [number, number, number]; width: number }; riskWeight: number;
+        s: GraphNode; t: GraphNode; touchesFocus: boolean; relation: string;
+        style: { color: [number, number, number]; width: number }; riskWeight: number; emphasis: number;
       }[];
 
     // Styled by relationship type + risk weight (not a uniform line for every edge):
     // BYPASS_ROUTE green, EXPOSES red/thick (literal risk propagation), structural
-    // FEEDS/SUPPLIES thin blue, CONFIGURED_FOR faintest. Hover/selection still
-    // brightens whatever's touched, on top of the base style.
+    // FEEDS/SUPPLIES thin blue, CONFIGURED_FOR faintest. Focus further dims whatever
+    // isn't directly touching the hovered/selected node.
     const edges = new LineLayer<(typeof edgeData)[number]>({
       id: "kg-edges",
       data: edgeData,
       getSourcePosition: (d) => [d.s.lon!, d.s.lat!],
       getTargetPosition: (d) => [d.t.lon!, d.t.lat!],
       getColor: (d) => {
-        if (d.active) return [56, 160, 210, 230];
-        const [r, g, b] = d.style.color;
+        if (d.touchesFocus) return [56, 160, 210, 235];
+        const base = focusId ? desaturate(d.style.color, 1 - d.emphasis) : d.style.color;
+        const [r, g, b] = base;
         // Riskier edges get more opaque, not just wider — low-risk structural
         // edges stay in the background, high-risk ones pop.
-        const alpha = light ? 60 + d.riskWeight * 140 : 45 + d.riskWeight * 160;
+        const alpha = (light ? 60 + d.riskWeight * 140 : 45 + d.riskWeight * 160) * d.emphasis;
         return [r, g, b, Math.round(Math.min(230, alpha))];
       },
-      getWidth: (d) => (d.active ? 2.2 : d.style.width + d.riskWeight * 1.8),
+      getWidth: (d) => (d.touchesFocus ? 2.6 : (d.style.width + d.riskWeight * 1.8) * Math.max(0.4, d.emphasis)),
       widthUnits: "pixels",
+      transitions: EDGE_TRANSITIONS,
       updateTriggers: {
         getColor: [hoverId, selectedId, theme],
         getWidth: [hoverId, selectedId],
@@ -124,7 +181,7 @@ export default function KnowledgeGraphMap({
       id: "kg-selection-ring",
       data: focusNode ? [focusNode] : [],
       getPosition: (d) => [d.lon!, d.lat!],
-      getRadius: (d) => radius(d) + 5,
+      getRadius: (d) => baseRadius(d) + 5,
       radiusUnits: "pixels",
       getFillColor: [0, 0, 0, 0],
       getLineColor: [75, 184, 221, 255],
@@ -139,51 +196,78 @@ export default function KnowledgeGraphMap({
       id: "kg-nodes",
       data: placed,
       getPosition: (d) => [d.lon!, d.lat!],
-      getRadius: radius,
+      // The hovered node itself pops (bigger); its neighbours get a gentle bump;
+      // everything else holds its normal size — the size change plus the 220ms
+      // eased transition below IS the "pop" animation, no manual RAF loop needed.
+      getRadius: (d) => {
+        const r = baseRadius(d);
+        if (d.id === hoverId) return r * 1.55;
+        if (focusId && inFocusSet(d.id)) return r * 1.12;
+        return r;
+      },
       radiusUnits: "pixels",
-      radiusMinPixels: 2.5,
-      radiusMaxPixels: 12,
-      getFillColor: (d) => [...color(d), 230],
-      getLineColor: (d) =>
-        d.id === selectedId ? [235, 245, 255, 255] : [...color(d).map((c) => Math.min(255, c + 45)) as [number, number, number], 255],
+      radiusMinPixels: 2,
+      radiusMaxPixels: 20,
+      getFillColor: (d) => {
+        const e = nodeEmphasis(d);
+        const base = e < 1 ? desaturate(color(d), 1 - e) : color(d);
+        return [...base, Math.round(90 + 140 * e)] as [number, number, number, number];
+      },
+      getLineColor: (d) => {
+        if (d.id === selectedId) return [235, 245, 255, 255];
+        if (d.id === hoverId) return [255, 255, 255, 255];
+        const e = nodeEmphasis(d);
+        const base = e < 1 ? desaturate(color(d), 1 - e) : color(d);
+        const lit = base.map((c) => Math.min(255, c + 45)) as [number, number, number];
+        return [...lit, Math.round(100 + 155 * e)] as [number, number, number, number];
+      },
       lineWidthUnits: "pixels",
-      getLineWidth: (d) => (d.id === selectedId ? 2 : 0.8),
+      getLineWidth: (d) => (d.id === selectedId ? 2 : d.id === hoverId ? 2.2 : 0.8),
       stroked: true,
       pickable: true,
       antialiasing: true,
+      transitions: POP_TRANSITIONS,
       onClick: (info) => info.object && onNodeClick?.(info.object as GraphNode),
       onHover: (info) => setHoverId((info.object as GraphNode)?.id ?? null),
       updateTriggers: {
-        getFillColor: [colorBy],
-        getLineColor: [colorBy, selectedId],
-        getLineWidth: [selectedId],
+        getRadius: [hoverId, selectedId],
+        getFillColor: [colorBy, hoverId, selectedId],
+        getLineColor: [colorBy, hoverId, selectedId],
+        getLineWidth: [hoverId, selectedId],
       },
     });
 
     // Labels declutter automatically via CollisionFilterExtension — higher-degree
     // nodes win the space, exactly like Obsidian hides labels until they fit.
+    // Faded/greyed-out nodes' labels fade with them so attention follows focus.
     const labels = new TextLayer<GraphNode>({
       id: "kg-labels",
       data: placed,
       getPosition: (d) => [d.lon!, d.lat!],
       getText: (d) => d.name,
-      getSize: 11,
-      getColor: labelText,
-      getPixelOffset: (d) => [0, -(radius(d) + 8)],
+      getSize: (d) => (d.id === hoverId ? 13 : 11),
+      getColor: (d) => {
+        const e = nodeEmphasis(d);
+        const [r, g, b, a] = labelText;
+        return [r, g, b, Math.round(a * (0.35 + 0.65 * e))];
+      },
+      getPixelOffset: (d) => [0, -(baseRadius(d) + (d.id === hoverId ? 10 : 8))],
       getTextAnchor: "middle",
       getAlignmentBaseline: "bottom",
       fontFamily: "Inter, sans-serif",
       fontWeight: 600,
       outlineWidth: 3,
       outlineColor: labelOutline,
-      updateTriggers: { getColor: [theme] },
+      transitions: { getSize: 150, getColor: 180 },
+      updateTriggers: { getColor: [theme, hoverId, selectedId], getSize: [hoverId] },
       fontSettings: { sdf: true },
       // Collision filtering: priority = connectivity so hubs keep their labels
       // (props typed loosely — they belong to CollisionFilterExtension).
       extensions: [new CollisionFilterExtension()],
       ...({
         collisionEnabled: true,
-        getCollisionPriority: (d: GraphNode) => d.degree + (d.id === selectedId ? 1000 : 0),
+        getCollisionPriority: (d: GraphNode) =>
+          d.degree + (d.id === selectedId ? 1000 : 0) + (d.id === hoverId ? 2000 : 0),
         collisionTestProps: { sizeScale: 2.4 },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any),
@@ -191,7 +275,7 @@ export default function KnowledgeGraphMap({
 
     return [edges, selectionRing, nodes, labels];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [graph, onNodeClick, selectedId, colorBy, hoverId, theme]);
+  }, [graph, onNodeClick, selectedId, colorBy, hoverId, theme, adjacency]);
 
   return (
     <DeckGL

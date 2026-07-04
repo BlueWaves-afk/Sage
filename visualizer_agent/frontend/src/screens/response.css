@@ -116,6 +116,12 @@
   font-size: 12px;
   color: var(--text-2);
 }
+.rp-option-rationale {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-1);
+}
 
 /* SPR chart */
 .rp-spr-body {

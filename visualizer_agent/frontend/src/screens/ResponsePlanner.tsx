@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { Panel, Badge, Skel, SkeletonBlock } from "../components/ui/ui";
 import { IconShield, IconCheck, IconAlert, IconExternal } from "../components/icons";
+import WikiDrawer from "../components/WikiDrawer";
+import { RichText } from "../components/RichText";
 import { api, useApi } from "../api/hooks";
-import type { ProcurementOption } from "../api/types";
+import type { ProcurementOption, GraphNode } from "../api/types";
 import "./response.css";
 
 const AXES: { key: keyof ProcurementOption; label: string; invert?: boolean; max: number }[] = [
@@ -73,6 +76,9 @@ export default function ResponsePlanner() {
   const { data: schedule, live: sLive } = useApi(api.sprSchedule);
   const options = pLive ? procurement?.ranked ?? [] : [];
   const dailyPlan = schedule?.daily_plan ?? [];
+  const [wikiNode, setWikiNode] = useState<GraphNode | null>(null);
+  const openWikilink = (entity: string) =>
+    setWikiNode({ id: entity, name: entity, type: "Entity", lat: null, lon: null, score: 0, band: "CALM", degree: 0 });
   const maxReserve = Math.max(1, ...dailyPlan.map((d) => d.days_cover_after));
 
   return (
@@ -116,6 +122,11 @@ export default function ResponsePlanner() {
                     <span className="mono">{o.lead_time_days}d</span>
                     <span className="mono">compat {o.grade_compatibility.toFixed(2)}</span>
                   </div>
+                  {o.rationale && (
+                    <p className="rp-option-rationale">
+                      <RichText text={o.rationale} onWikilink={openWikilink} />
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
@@ -160,7 +171,7 @@ export default function ResponsePlanner() {
           </div>
           <div className="rp-memo">
             <div className="label-sm">Policy Memo</div>
-            <p>{schedule.policy_memo}</p>
+            <p><RichText text={schedule.policy_memo} onWikilink={openWikilink} /></p>
             <div className="rp-memo-foot">
               <span className="rp-memo-item">
                 {schedule.constraint_satisfied ? (
@@ -175,6 +186,8 @@ export default function ResponsePlanner() {
         </div>
         )}
       </Panel>
+
+      <WikiDrawer node={wikiNode} onClose={() => setWikiNode(null)} />
     </div>
   );
 }

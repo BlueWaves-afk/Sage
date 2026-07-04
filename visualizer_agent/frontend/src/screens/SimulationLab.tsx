@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import MapView from "../components/MapView";
+import WikiDrawer from "../components/WikiDrawer";
+import { RichText } from "../components/RichText";
 import { Panel, Badge, Skel, SkeletonBlock } from "../components/ui/ui";
 import { IconPlay, IconCheck, IconExternal, IconShield, IconBrain } from "../components/icons";
 import { api, useApi } from "../api/hooks";
@@ -51,6 +53,9 @@ export default function SimulationLab() {
   const { data: proc, live: procLive } = useApi(api.procurement);
   const { data: sched, live: schedLive } = useApi(api.sprSchedule);
   const [horizon, setHorizon] = useState(48);
+  const [wikiNode, setWikiNode] = useState<GraphNode | null>(null);
+  const openWikilink = (entity: string) =>
+    setWikiNode({ id: entity, name: entity, type: "Entity", lat: null, lon: null, score: 0, band: "CALM", degree: 0 });
 
   const nodes = useMemo(() => (graph?.nodes ?? []).map(toRiskScore), [graph]);
   const projected = useMemo(
@@ -234,7 +239,7 @@ export default function SimulationLab() {
                 <IconCheck width={16} height={16} className="c-cyan" />
                 <span>{topOption.supplier} via {topOption.route_via}</span>
               </div>
-              <p>{topOption.rationale}</p>
+              <p><RichText text={topOption.rationale} onWikilink={openWikilink} /></p>
             </div>
           ) : (
             <SkeletonBlock lines={2} note="Recommended actions appear once System 3 runs against a scenario" />
@@ -245,7 +250,7 @@ export default function SimulationLab() {
                 <IconShield width={16} height={16} className="c-cyan" />
                 <span>Strategic Petroleum Reserve — {sched.constraint_satisfied ? "Constraint OK" : "Constraint at risk"}</span>
               </div>
-              <p>{sched.policy_memo}</p>
+              <p><RichText text={sched.policy_memo} onWikilink={openWikilink} /></p>
             </div>
           ) : (
             <SkeletonBlock lines={2} note="Reserve policy appears once System 4 runs against a scenario" />
@@ -273,6 +278,8 @@ export default function SimulationLab() {
               ))}
         </div>
       </Panel>
+
+      <WikiDrawer node={wikiNode} onClose={() => setWikiNode(null)} />
     </div>
   );
 }
