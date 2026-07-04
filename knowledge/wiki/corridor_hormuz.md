@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-04T08:23:01.239809+00:00'
-valid_at: '2026-07-04T08:22:36.431747+00:00'
+last_updated: '2026-07-04T08:30:12.875211+00:00'
+valid_at: '2026-07-04T08:30:09.550577+00:00'
 source_episodes: []
 links_out:
 - event_tanker_war
@@ -56,7 +56,7 @@ The current situation has a clear precedent in the [[Tanker War]] with a feature
 - [[Visakhapatnam Refinery]]: High exposure due to peak gap of 0.00 mbpd from day 45.0.
 
 ## Signal Basis
-- System 3 procurement analysis for Strait of Hormuz: 24 alternative crude sources ranked.
+- News report on direct military strikes between Iran and Israel near the [[Strait of Hormuz]].
 
 ## Relations
 | Relation         | Entity                 | Type               | Strength |
