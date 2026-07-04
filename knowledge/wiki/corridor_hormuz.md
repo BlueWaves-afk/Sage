@@ -5,16 +5,16 @@ aliases:
 entity_type: Corridor
 tags:
 - sage/corridor
-- risk/critical
-risk_score: 0.92
-risk_band: CRITICAL
+- risk/calm
+risk_score: 0.0
+risk_band: CALM
 factors:
-  ais: 0.3
-  gdelt: 0.85
-  price: 0.2
-  sanctions: 0.05
-last_updated: '2026-07-04T08:30:55.538801+00:00'
-valid_at: '2026-07-04T08:30:55.538801+00:00'
+  ais: 0.0
+  gdelt: 0.0
+  price: 0.0
+  sanctions: 0.0
+last_updated: '2026-07-04T08:31:11.093812+00:00'
+valid_at: '2026-07-04T08:31:03.375704+00:00'
 source_episodes: []
 links_out:
 - event_tanker_war
@@ -37,7 +37,6 @@ coordinates:
 ---
 
 
-
 ## Current Assessment
 The [[Strait of Hormuz]] is experiencing heightened military activity due to direct military strikes between Iran and Israel, raising the risk of closure to critical levels. This situation echoes the patterns observed during the [[Tanker War]] and the [[2019 Tanker Attacks]].
 
@@ -57,7 +56,7 @@ The current situation has a clear precedent in the [[Tanker War]] with a feature
 - [[Visakhapatnam Refinery]]: High exposure due to peak gap of 0.00 mbpd from day 45.0.
 
 ## Signal Basis
-- News report on direct military strikes between Iran and Israel near the [[Strait of Hormuz]].
+- Scenario analysis based on import dependence and SPR fill fraction.
 
 ## Relations
 | Relation         | Entity                 | Type               | Strength |
