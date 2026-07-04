@@ -13,17 +13,19 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-04T08:37:11.781469+00:00'
-valid_at: '2026-07-04T08:36:41.339290+00:00'
+last_updated: '2026-07-04T08:41:20.331246+00:00'
+valid_at: '2026-07-04T08:40:48.078881+00:00'
 source_episodes: []
 links_out:
+- supplier_adnoc
+- grade_murban
+- corridor_cape
 - supplier_aramco
 - grade_arab_light
 - corridor_hormuz
-- supplier_iraqoil
-- grade_basrah_medium
-- supplier_adnoc
-- supplier_qatarenergy
+- supplier_kazmunaygas
+- corridor_suez
+- supplier_nnpc
 coordinates:
   lat: 22.47
   lon: 70.07
@@ -31,17 +33,18 @@ coordinates:
 
 
 ## Current Assessment
-The [[Jamnagar Refinery]] is now prioritizing [[Saudi Aramco]]'s [[Arab Light]] crude via the [[Strait of Hormuz]] as the top procurement option, based on the latest System 3 procurement analysis. This shift is driven by the optimal cost, lead time, and grade compatibility metrics.
+The [[Jamnagar Refinery]] is now prioritizing [[ADNOC]]'s [[Murban]] crude via the [[Cape of Good Hope]] as the top procurement option, based on the latest System 3 procurement analysis. This shift is driven by the optimal cost, lead time, and grade compatibility metrics.
 
 ## Contradiction Note
-The new signal contradicts the previous assessment, which identified [[Iraqi Oil Ministry]]'s [[Basrah Medium]] as the top crude option. The contradiction arises from updated procurement metrics favoring [[Saudi Aramco]]'s [[Arab Light]].
+The new signal contradicts the previous assessment, which identified [[Saudi Aramco]]'s [[Arab Light]] crude via the [[Strait of Hormuz]] as the top procurement option. The contradiction arises from updated procurement metrics favoring [[ADNOC]]'s [[Murban]].
 
 ## Affected Entities
-- [[Saudi Aramco]]: High exposure due to the new top crude option.
-- [[Strait of Hormuz]]: High exposure as the primary transit route for the top crude option.
-- [[Iraqi Oil Ministry]]: Medium exposure as the previous top crude option.
-- [[ADNOC]]: Medium exposure as an alternative supplier via [[Strait of Hormuz]].
-- [[QatarEnergy]]: Low exposure as a less preferred alternative supplier via [[Strait of Hormuz]].
+- [[ADNOC]]: High exposure due to the new top crude option.
+- [[Cape of Good Hope]]: High exposure as the primary transit route for the top crude option.
+- [[Saudi Aramco]]: Medium exposure as the previous top crude option.
+- [[Strait of Hormuz]]: Medium exposure as the previous primary transit route.
+- [[KazMunayGas]]: Low exposure as an alternative supplier via [[Suez Canal]].
+- [[NNPC]]: Low exposure as an alternative supplier via [[Suez Canal]].
 
 ## Signal Basis
 - System 3 procurement analysis for Jamnagar Refinery.
@@ -49,8 +52,9 @@ The new signal contradicts the previous assessment, which identified [[Iraqi Oil
 ## Relations
 | Relation        | Entity                 | Type             | Strength |
 |-----------------|------------------------|------------------|----------|
-| supply_dependency | [[Saudi Aramco]]      | supply_dependency | high     |
-| supply_dependency | [[Strait of Hormuz]]   | supply_dependency | high     |
-| supply_dependency | [[Iraqi Oil Ministry]] | supply_dependency | medium   |
-| supply_dependency | [[ADNOC]]              | supply_dependency | medium   |
-| supply_dependency | [[QatarEnergy]]        | supply_dependency | low      |
+| supply_dependency | [[ADNOC]]              | supply_dependency | high     |
+| supply_dependency | [[Cape of Good Hope]]  | supply_dependency | high     |
+| supply_dependency | [[Saudi Aramco]]       | supply_dependency | medium   |
+| supply_dependency | [[Strait of Hormuz]]   | supply_dependency | medium   |
+| supply_dependency | [[KazMunayGas]]        | supply_dependency | low      |
+| supply_dependency | [[NNPC]]               | supply_dependency | low      |
