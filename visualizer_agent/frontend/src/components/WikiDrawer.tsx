@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { api } from "../api/hooks";
 import { Badge } from "./ui/ui";
 import type { GraphNode } from "../api/types";
@@ -53,7 +54,11 @@ export default function WikiDrawer({ node, onClose }: { node: GraphNode | null; 
     });
   }, [node]);
 
-  return (
+  // Rendered via a portal straight to <body> so the drawer is always a true
+  // viewport-fixed overlay sliding in from the right — regardless of any
+  // ancestor's transform/animation/overflow, which would otherwise hijack
+  // `position: fixed`'s containing block and make it lay out in-flow instead.
+  return createPortal(
     <>
       <div className={`wd-scrim${node ? " open" : ""}`} onClick={onClose} />
       <aside className={`wd${node ? " open" : ""}`} aria-hidden={!node}>
@@ -89,7 +94,8 @@ export default function WikiDrawer({ node, onClose }: { node: GraphNode | null; 
           </>
         )}
       </aside>
-    </>
+    </>,
+    document.body
   );
 }
 

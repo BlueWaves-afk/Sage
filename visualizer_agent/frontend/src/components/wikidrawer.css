@@ -6,7 +6,7 @@
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--dur-mid) ease;
-  z-index: 40;
+  z-index: 1000;
 }
 .wd-scrim.open { opacity: 1; pointer-events: auto; }
 
@@ -22,10 +22,11 @@
   box-shadow: -8px 0 24px -12px rgba(0, 0, 0, 0.6);
   transform: translateX(100%);
   transition: transform var(--dur-mid) var(--ease-out-expo);
-  z-index: 41;
+  z-index: 1001;
   display: flex;
   flex-direction: column;
   padding: 14px;
+  overflow: hidden;
 }
 .wd.open { transform: translateX(0); }
 
