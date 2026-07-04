@@ -1,5 +1,5 @@
 import { Panel, Badge, Skel, SkeletonBlock } from "../components/ui/ui";
-import { IconShield, IconCheck, IconExternal } from "../components/icons";
+import { IconShield, IconCheck, IconAlert, IconExternal } from "../components/icons";
 import { api, useApi } from "../api/hooks";
 import type { ProcurementOption } from "../api/types";
 import "./response.css";
@@ -71,8 +71,9 @@ function Radar({ options }: { options: ProcurementOption[] }) {
 export default function ResponsePlanner() {
   const { data: procurement, live: pLive } = useApi(api.procurement);
   const { data: schedule, live: sLive } = useApi(api.sprSchedule);
-  const options = pLive ? procurement ?? [] : [];
-  const maxReserve = Math.max(...(schedule?.drawdown ?? [{ reserve_days: 10 }]).map((d) => d.reserve_days));
+  const options = pLive ? procurement?.ranked ?? [] : [];
+  const dailyPlan = schedule?.daily_plan ?? [];
+  const maxReserve = Math.max(1, ...dailyPlan.map((d) => d.days_cover_after));
 
   return (
     <div className="rp">
@@ -127,21 +128,29 @@ export default function ResponsePlanner() {
       <Panel
         className="rp-spr"
         title={<span><IconShield width={13} height={13} /> Strategic Reserve Drawdown Schedule</span>}
-        right={sLive ? <Badge tone="green">{Math.round((schedule?.buffer_probability ?? 0) * 100)}% above 3-day buffer</Badge> : <Skel w={140} h={22} />}
+        right={
+          sLive && schedule ? (
+            <Badge tone={schedule.constraint_satisfied ? "green" : "red"}>
+              {Math.round(schedule.prob_above_buffer * 100)}% above 3-day buffer
+            </Badge>
+          ) : (
+            <Skel w={140} h={22} />
+          )
+        }
       >
-        {!sLive ? (
+        {!sLive || !schedule ? (
           <SkeletonBlock lines={5} note="Day-by-day drawdown plan appears after System 4 runs against a scenario" />
         ) : (
         <div className="rp-spr-body">
           <div className="rp-chart">
-            {(schedule?.drawdown ?? []).map((d) => (
+            {dailyPlan.slice(0, 14).map((d) => (
               <div key={d.day} className="rp-bar-col">
                 <div className="rp-bar-wrap">
                   <div
-                    className={`rp-bar${d.reserve_days < 8 ? " warn" : ""}`}
-                    style={{ height: `${(d.reserve_days / maxReserve) * 100}%` }}
+                    className={`rp-bar${d.days_cover_after < 3 ? " warn" : ""}`}
+                    style={{ height: `${(d.days_cover_after / maxReserve) * 100}%` }}
                   >
-                    <span className="rp-bar-value mono">{d.reserve_days.toFixed(1)}</span>
+                    <span className="rp-bar-value mono">{d.days_cover_after.toFixed(1)}</span>
                   </div>
                 </div>
                 <div className="rp-bar-day">Day {d.day}</div>
@@ -151,9 +160,15 @@ export default function ResponsePlanner() {
           </div>
           <div className="rp-memo">
             <div className="label-sm">Policy Memo</div>
-            <p>{schedule?.memo}</p>
+            <p>{schedule.policy_memo}</p>
             <div className="rp-memo-foot">
-              <span className="rp-memo-item"><IconCheck width={13} height={13} className="c-green" /> CMDP constraint satisfied</span>
+              <span className="rp-memo-item">
+                {schedule.constraint_satisfied ? (
+                  <><IconCheck width={13} height={13} className="c-green" /> CMDP constraint satisfied</>
+                ) : (
+                  <><IconAlert width={13} height={13} className="c-red" /> CMDP constraint NOT satisfied — diversify procurement</>
+                )}
+              </span>
               <a href="#" className="rp-memo-link">Full drawdown model <IconExternal width={12} height={12} /></a>
             </div>
           </div>

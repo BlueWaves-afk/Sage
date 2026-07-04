@@ -129,7 +129,13 @@ async def run(
 
     suppliers  = await get_available_suppliers(risk_max=supplier_risk_max)
     grade_specs = await get_grade_specs(trigger_refinery)
-    corridors  = await get_routes(risk_max=corridor_risk_max)
+    # Fetch ALL corridors here (not pre-filtered) — solve_routes() below applies
+    # corridor_risk_max itself using each corridor's real risk_score. Pre-filtering
+    # here was a real bug: a corridor excluded for being too risky (e.g. Hormuz at
+    # 0.92 during a live crisis) would then be MISSING from `corridors`, and
+    # solve_routes()'s "not in KB yet" fallback treated "missing" as "safe, risk=0.1"
+    # — silently routing crude back through the very corridor that's in crisis.
+    corridors  = await get_routes(risk_max=1.1)
 
     if not suppliers:
         log.warning("[procurement] no non-sanctioned suppliers returned from KB")

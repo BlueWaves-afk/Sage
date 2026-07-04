@@ -113,10 +113,15 @@ async def scenario_node(state: PipelineState) -> PipelineState:
 
 async def procure_node(state: PipelineState) -> PipelineState:
     from alt_procurement_agent.runner import run as run_procurement
+    from knowledge.api.read import get_most_exposed_refinery
+
     scenario = state.get("scenario_params", {}) or {}
     gap_mbpd = float(scenario.get("disruption_fraction", 1.0)) * _hormuz_mbpd()
+    # state["entity"] is usually the disrupted Corridor, not a Refinery — resolve
+    # the actual exposed refinery via the KB's EXPOSES edges before dispatching.
+    refinery = await get_most_exposed_refinery(state["entity"])
     await run_procurement(
-        scenario_id=state["scenario_id"], trigger_refinery=state["entity"],
+        scenario_id=state["scenario_id"], trigger_refinery=refinery,
         status="confirmed", gap_mbpd=gap_mbpd,
     )
     state["procurement_done"] = True

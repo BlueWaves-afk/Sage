@@ -8,7 +8,7 @@ import type {
   Supplier,
   Route,
   SprCavern,
-  ProcurementOption,
+  ProcurementRecData,
   ScenarioOutput,
   SprSchedule,
   CopilotAnswer,
@@ -56,7 +56,7 @@ export const api = {
 
   scenario: () => get<ScenarioOutput>("/api/scenario", mock.mockScenario),
 
-  procurement: () => get<ProcurementOption[]>("/api/procurement", mock.mockProcurement),
+  procurement: () => get<ProcurementRecData>("/api/procurement", mock.mockProcurement),
 
   sprSchedule: () => get<SprSchedule>("/api/spr-schedule", mock.mockSprSchedule),
 

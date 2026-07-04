@@ -72,6 +72,27 @@ _DEFAULT_CORRIDOR: dict[str, str] = {
 }
 
 _DEFAULT_WAR_RISK_PER_UNIT = 0.80  # USD/bbl per 0.5 risk unit above 0.3
+_DEFAULT_BASELINE_BRENT = 95.0     # USD/bbl — EIA-STEO reference (economics_params)
+
+
+def _load_baseline_brent() -> float:
+    """
+    The crude commodity price component. _DEFAULT_BASE_COST/_load_routing_bundle's
+    "vlcc_cost_usd_bbl" values are FREIGHT ONLY (Clarkson/Baltic Exchange voyage
+    rates, ~$1.80-5.50/bbl) — a real landed cost is crude price + freight + any
+    war-risk/bypass premium. Omitting this made every option's cost look like
+    ~$2-5/bbl, nowhere near a real landed crude price.
+    """
+    bundle_path = os.environ.get("SAGE_BUNDLE_PATH", "")
+    if not bundle_path:
+        return _DEFAULT_BASELINE_BRENT
+    try:
+        from knowledge.context.loader import load_bundle
+        ep = load_bundle(bundle_path).economics_params
+        row = ep.get("baseline_brent_usd_per_bbl")
+        return float(row["value"]) if row else _DEFAULT_BASELINE_BRENT
+    except Exception:
+        return _DEFAULT_BASELINE_BRENT
 
 
 def _load_routing_bundle():
@@ -124,18 +145,25 @@ def solve(
     Returns {supplier_display_name → RouteOption}.
     """
     base_cost, base_days, war_risk_per_unit = _load_routing_bundle()
+    baseline_brent = _load_baseline_brent()
     corridor_by_name = {c.display_name: c for c in corridors}
 
     result: dict[str, RouteOption] = {}
     for supplier in suppliers:
         country = supplier.country or ""
+        # sup_base_cost is FREIGHT only (Clarkson/Baltic Exchange voyage rate) — the
+        # landed cost also needs the crude commodity price itself (baseline_brent).
         sup_base_cost = base_cost.get(country, 4.0)
         sup_base_days = base_days.get(country, 28.0)
         default_corr_name = _DEFAULT_CORRIDOR.get(country, "Suez Canal")
 
         candidates: list[RouteOption] = []
 
-        # Default corridor option
+        # Default corridor option. NOTE: `corr is None` must mean "this corridor
+        # genuinely has no data in the KB" — callers MUST pass every corridor here
+        # (risk_max filtering happens below, using the real risk_score), never a
+        # pre-filtered list, or a corridor excluded for being too risky will look
+        # identical to one that's simply missing data and get waved through.
         corr = corridor_by_name.get(default_corr_name)
         if corr is not None:
             risk = corr.risk_score or 0.0
@@ -145,17 +173,18 @@ def solve(
                     supplier=supplier.display_name,
                     corridor=default_corr_name,
                     is_bypass=False,
-                    landed_cost_usd_bbl=round(sup_base_cost + war_premium, 2),
+                    landed_cost_usd_bbl=round(baseline_brent + sup_base_cost + war_premium, 2),
                     lead_time_days=sup_base_days,
                     corridor_risk=risk,
                 ))
         else:
-            # Corridor not in KB yet (e.g. Cape of Good Hope has no risk score) — allow
+            # Corridor genuinely absent from the KB (no risk score ever written for
+            # it) — allow with a conservative low-risk assumption.
             candidates.append(RouteOption(
                 supplier=supplier.display_name,
                 corridor=default_corr_name,
                 is_bypass=False,
-                landed_cost_usd_bbl=round(sup_base_cost, 2),
+                landed_cost_usd_bbl=round(baseline_brent + sup_base_cost, 2),
                 lead_time_days=sup_base_days,
                 corridor_risk=0.1,
             ))
@@ -174,7 +203,9 @@ def solve(
                 supplier=supplier.display_name,
                 corridor=bypass_corr_name,
                 is_bypass=True,
-                landed_cost_usd_bbl=round(sup_base_cost + edge.get("cost_premium", 0.0) + war_premium, 2),
+                landed_cost_usd_bbl=round(
+                    baseline_brent + sup_base_cost + edge.get("cost_premium", 0.0) + war_premium, 2
+                ),
                 lead_time_days=sup_base_days + edge.get("added_days", 0.0),
                 corridor_risk=bypass_risk,
             ))

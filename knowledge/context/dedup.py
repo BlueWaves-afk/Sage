@@ -187,9 +187,23 @@ async def derive_exposures() -> int:
         WITH c, r, p, fshare, max(coalesce(s.throughput_share_pct,0.0)) AS sshare
         WITH c, r, sum(fshare * sshare) AS exposure
         WHERE exposure > 0.0001
-        CREATE (c)-[:RELATES_TO {name:'EXPOSES', exposure_pct: exposure, valid_at: $now}]->(r)
+        CREATE (c)-[:RELATES_TO {
+            name: 'EXPOSES', exposure_pct: exposure, valid_at: $now,
+            uuid: 'exposes-placeholder', created_at: $now,
+            group_id: '', episodes: [],
+            fact: c.name + ' exposes ' + r.name + ' to ' +
+                  toString(round(exposure * 1000) / 10) + '% of disrupted corridor throughput'
+        }]->(r)
         """,
         {"now": now},
+    )
+    # Graphiti's internal EntityEdge hydration (triggered by add_episode's dedup sweep)
+    # requires every RELATES_TO edge to carry a non-null uuid/group_id/created_at/fact/
+    # episodes — the literal placeholder above collides across rows, so replace it with
+    # a real per-edge id here (id(r) is FalkorDB's stable internal edge id, unique per edge).
+    await _cy(
+        "MATCH ()-[r:RELATES_TO]->() WHERE r.name='EXPOSES' AND r.uuid='exposes-placeholder' "
+        "SET r.uuid = 'exposes-' + toString(id(r))"
     )
     rows = await _cy("MATCH ()-[r:RELATES_TO]->() WHERE r.name='EXPOSES' RETURN count(r) AS c")
     n = rows[0]["c"] if rows else 0

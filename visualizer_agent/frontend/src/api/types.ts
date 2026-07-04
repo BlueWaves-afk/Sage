@@ -48,25 +48,80 @@ export interface ProcurementOption {
   rationale: string;
 }
 
+// Mirrors contracts/outputs.py::ProcurementRecData exactly — the real /api/procurement
+// response is this wrapper, not a bare ProcurementOption[].
+export interface ProcurementRecData {
+  scenario_id: string;
+  status: "speculative" | "confirmed";
+  target_refinery: string | null;
+  ranked: ProcurementOption[];
+}
+
+// Mirrors contracts/outputs.py::ScenarioOutputData exactly — field names must match
+// the real backend response (verified against a live golden-path run), not an
+// invented shape, or the UI silently renders nothing for fields that don't exist.
+export interface SectorImpact {
+  sector: string;
+  petroleum_share: number;
+  shortfall_mbpd: number;
+  gdp_weight: number;
+  criticality: number;
+}
+
+export interface NodeImpact {
+  node: string;
+  node_type: string;
+  exposure: number;
+  peak_gap_mbpd: number;
+  onset_day: number;
+  gap_timeline: number[];
+}
+
+export interface AssumptionEntry {
+  value: number | string;
+  unit?: string;
+  source?: string;
+  [key: string]: unknown;
+}
+
 export interface ScenarioOutput {
   scenario_id: string;
   trigger_entity: string;
-  status: "speculative" | "confirmed";
+  status: "speculative" | "confirmed" | "counterfactual";
   confidence: number;
   gap_mbpd: number;
-  price_shock_pct: number;
-  spr_cover_days: number;
-  narrative: string;
-  chain_of_events: string[];
-  assumptions: string[];
-  timeline: { hour: number; label: string; critical?: boolean }[];
+  gap_duration_days: number;
+  feedstock_gap_timeline: number[];
+  price_impact_low: number;
+  price_impact_high: number;
+  spr_depletion_days: number;
+  gdp_proxy_impact_pct: number | null;
+  inflation_impact_pct: number | null;
+  sector_impacts: SectorImpact[];
+  node_impacts: NodeImpact[];
+  assumptions: Record<string, AssumptionEntry>;
+  counterfactual_type?: string | null;
+}
+
+// Mirrors contracts/outputs.py::SPRScheduleData / SPRDay.
+export interface SprDay {
+  day: number;
+  action: "draw" | "hold" | "refill";
+  volume_mmt: number;
+  reserve_after_mmt: number;
+  days_cover_after: number;
+  decision_driver?: string | null;
 }
 
 export interface SprSchedule {
   scenario_id: string;
-  buffer_probability: number;
-  drawdown: { day: number; reserve_days: number; action: string }[];
-  memo: string;
+  status: "speculative" | "confirmed";
+  daily_plan: SprDay[];
+  prob_above_buffer: number;
+  constraint_satisfied: boolean;
+  lagrange_multiplier?: number | null;
+  option_value_of_waiting?: number | null;
+  policy_memo: string;
 }
 
 export interface IntelItem {

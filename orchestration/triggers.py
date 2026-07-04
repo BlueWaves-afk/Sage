@@ -163,7 +163,12 @@ async def _cold_pipeline(client: object, entity: str, score: float) -> None:
 
 async def _run_procurement(scenario_id: str, trigger_entity: str) -> None:
     from alt_procurement_agent.runner import run as run_procurement
-    await run_procurement(scenario_id=scenario_id, trigger_refinery=trigger_entity)
+    from knowledge.api.read import get_most_exposed_refinery
+
+    # trigger_entity is usually a Corridor (e.g. "Strait of Hormuz") — resolve the
+    # actual refinery whose feedstock is short before handing off to procurement.
+    refinery = await get_most_exposed_refinery(trigger_entity)
+    await run_procurement(scenario_id=scenario_id, trigger_refinery=refinery)
 
 
 def _hormuz_dependency_mbpd() -> float:

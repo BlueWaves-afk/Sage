@@ -26,6 +26,22 @@ const TYPE_RGB: Record<string, [number, number, number]> = {
   GeoEvent: [244, 162, 97],
 };
 
+// Relationship-type colouring — a "structural" corridor→refinery FEEDS edge reads
+// very differently from a BYPASS_ROUTE (a reroute *around* risk) or an EXPOSES edge
+// (literally how risk propagates from a disrupted corridor to a refinery). Styling
+// every edge identically made the map look like "everything connects to everything";
+// this makes the relationship kind and its risk weight visible at a glance.
+const RELATION_STYLE: Record<string, { color: [number, number, number]; width: number }> = {
+  BYPASS_ROUTE: { color: [80, 200, 130], width: 1.6 },       // reroute around risk — green
+  EXPOSES: { color: [230, 90, 70], width: 2.2 },              // risk propagation — red, thick
+  FEEDS: { color: [90, 150, 210], width: 1.1 },                // corridor → port throughput
+  SUPPLIES: { color: [90, 150, 210], width: 1.0 },             // port → refinery throughput
+  EXPORTS_VIA: { color: [140, 160, 190], width: 0.8 },
+  CONFIGURED_FOR: { color: [110, 140, 175], width: 0.5 },      // grade compatibility — least salient
+  SANCTIONED_BY: { color: [220, 130, 60], width: 1.3 },
+};
+const DEFAULT_RELATION_STYLE = { color: [110, 140, 175] as [number, number, number], width: 0.7 };
+
 export interface KnowledgeGraphMapProps {
   graph: GraphData;
   onNodeClick?: (node: GraphNode) => void;
@@ -45,7 +61,6 @@ export default function KnowledgeGraphMap({
   const { theme } = useTheme();
 
   const light = theme === "light";
-  const edgeIdle: [number, number, number, number] = light ? [70, 110, 150, 50] : [110, 140, 175, 38];
   const labelText: [number, number, number, number] = light ? [30, 45, 70, 255] : [210, 224, 240, 235];
   const labelOutline: [number, number, number, number] = light ? [255, 255, 255, 255] : [8, 14, 24, 255];
 
@@ -65,20 +80,41 @@ export default function KnowledgeGraphMap({
         const t = byId.get(e.target);
         if (!s || !t) return null;
         const active = hoverId === s.id || hoverId === t.id || selectedId === s.id || selectedId === t.id;
-        return { s, t, active };
+        const style = RELATION_STYLE[e.relation] ?? DEFAULT_RELATION_STYLE;
+        // Risk weight: the riskier of the two connected nodes brightens/thickens the
+        // edge, on top of its relation-type base style — a FEEDS edge touching a
+        // CRITICAL corridor reads as more urgent than one touching a calm one.
+        const riskWeight = Math.max(s.score, t.score);
+        return { s, t, active, relation: e.relation, style, riskWeight };
       })
-      .filter(Boolean) as { s: GraphNode; t: GraphNode; active: boolean }[];
+      .filter(Boolean) as {
+        s: GraphNode; t: GraphNode; active: boolean; relation: string;
+        style: { color: [number, number, number]; width: number }; riskWeight: number;
+      }[];
 
-    // Thin, low-opacity edges; the ones touching the hovered/selected node brighten.
+    // Styled by relationship type + risk weight (not a uniform line for every edge):
+    // BYPASS_ROUTE green, EXPOSES red/thick (literal risk propagation), structural
+    // FEEDS/SUPPLIES thin blue, CONFIGURED_FOR faintest. Hover/selection still
+    // brightens whatever's touched, on top of the base style.
     const edges = new LineLayer<(typeof edgeData)[number]>({
       id: "kg-edges",
       data: edgeData,
       getSourcePosition: (d) => [d.s.lon!, d.s.lat!],
       getTargetPosition: (d) => [d.t.lon!, d.t.lat!],
-      getColor: (d) => (d.active ? [56, 160, 210, 220] : edgeIdle),
-      getWidth: (d) => (d.active ? 1.6 : 0.7),
+      getColor: (d) => {
+        if (d.active) return [56, 160, 210, 230];
+        const [r, g, b] = d.style.color;
+        // Riskier edges get more opaque, not just wider — low-risk structural
+        // edges stay in the background, high-risk ones pop.
+        const alpha = light ? 60 + d.riskWeight * 140 : 45 + d.riskWeight * 160;
+        return [r, g, b, Math.round(Math.min(230, alpha))];
+      },
+      getWidth: (d) => (d.active ? 2.2 : d.style.width + d.riskWeight * 1.8),
       widthUnits: "pixels",
-      updateTriggers: { getColor: [hoverId, selectedId, theme], getWidth: [hoverId, selectedId] },
+      updateTriggers: {
+        getColor: [hoverId, selectedId, theme],
+        getWidth: [hoverId, selectedId],
+      },
     });
 
     // Selection ring — a plain outlined circle, not a soft glow blob. Reads as

@@ -290,16 +290,22 @@ async def _write_risk_edge(g, entity, score, band, f_ais, f_gdelt, f_price,
         "SET old.invalid_at=$now",
         {"n": entity, "now": now_iso})
     # 2. Create the new current RISK_STATE self-edge.
+    # group_id/fact/episodes are set (not left null) because Graphiti's internal
+    # EntityEdge hydration — triggered during add_episode's dedup/search sweep —
+    # requires every RELATES_TO edge to carry all five EntityEdge-required fields,
+    # or the whole ingest crashes with a pydantic ValidationError.
+    fact_text = rationale or f"{entity} risk assessed at {float(score):.2f} ({band})"
     await _exec_cypher(g,
         "MATCH (e:Entity {name:$n}) WITH e LIMIT 1 "
         "CREATE (e)-[r:RELATES_TO {name:'RISK_STATE', score:$score, band:$band, "
         "factor_ais:$ais, factor_gdelt:$gdelt, factor_price:$price, "
         "factor_sanctions:$sanctions, rationale:$rat, model_version:$mv, "
-        "valid_at:$now, created_at:$now, uuid:$uuid}]->(e)",
+        "valid_at:$now, created_at:$now, uuid:$uuid, "
+        "group_id:'', episodes:[], fact:$fact}]->(e)",
         {"n": entity, "score": float(score), "band": band,
          "ais": float(f_ais), "gdelt": float(f_gdelt), "price": float(f_price),
          "sanctions": float(f_sanctions), "rat": rationale or "",
-         "mv": model_version or "", "now": now_iso, "uuid": uuid_str})
+         "mv": model_version or "", "now": now_iso, "uuid": uuid_str, "fact": fact_text})
 
 
 async def write_risk_state(

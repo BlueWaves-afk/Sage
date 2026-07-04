@@ -146,6 +146,7 @@ def run(params: ARIOParams, refineries: list[dict] | None = None,
     cumulative_gap  = 0.0
 
     timeline: list[float] = []
+    supply_gap_timeline: list[float] = []   # post-bypass, PRE-SPR-draw — what must be sourced/reserved
     spr_depletion_day = float(p.horizon_days)
     product_shortfall_day = float(p.horizon_days)
     spr_hit = prod_hit = False
@@ -164,13 +165,14 @@ def run(params: ARIOParams, refineries: list[dict] | None = None,
         ramp   = max(0.0, min(1.0, (t - p.bypass_ramp_days) / max(p.bypass_ramp_days, 1)))
         relief = min(eff_bypass_cap, lost) * ramp
         net    = max(0.0, lost - relief)                       # unmet by bypass
+        supply_gap_timeline.append(round(net, 4))
 
         draw = min(eff_spr_draw, net, max(0.0, spr_remaining - spr_floor_mbbl))
         spr_remaining -= draw
         if not spr_hit and spr_remaining <= spr_floor_mbbl and net > 0:
             spr_depletion_day, spr_hit = float(t), True
 
-        feedstock_gap = max(0.0, net - draw)                   # mbpd refineries short
+        feedstock_gap = max(0.0, net - draw)                   # mbpd refineries short AFTER SPR response
         timeline.append(round(feedstock_gap, 4))
 
         cumulative_gap += feedstock_gap
@@ -184,8 +186,14 @@ def run(params: ARIOParams, refineries: list[dict] | None = None,
     price_low  = round(p.price_per_mbpd_low  * net_global, 2)
     price_high = round(p.price_per_mbpd_high * net_global, 2)
 
-    peak_gap = max(timeline) if timeline else 0.0
-    gap_days = sum(1 for g in timeline if g > 0.01)
+    # Headline gap = the post-bypass, PRE-SPR-draw shortfall (supply_gap_timeline) —
+    # the volume that actually needs sourcing or reserve backing. Using the post-SPR
+    # residual here instead would read as "no gap" whenever the SPR fully absorbs the
+    # shock at the modelled draw rate, which hides the disruption entirely and makes
+    # the procurement/reserve responses look pointless even though they ARE the
+    # response to this exact volume.
+    peak_gap = max(supply_gap_timeline) if supply_gap_timeline else 0.0
+    gap_days = sum(1 for g in supply_gap_timeline if g > 0.01)
 
     # ── Macro transmission: the PRICE shock drives GDP + inflation (sourced, NIPFP) ──
     price_mid = (price_low + price_high) / 2.0
@@ -218,7 +226,7 @@ def run(params: ARIOParams, refineries: list[dict] | None = None,
         for r in refineries:
             w = weights[r["name"]]
             share = (w / total_w) if total_w > 0 else 0.0
-            r_timeline = [round(g * share, 4) for g in timeline]
+            r_timeline = [round(g * share, 4) for g in supply_gap_timeline]
             r_peak = max(r_timeline) if r_timeline else 0.0
             r_onset = next((float(i) for i, g in enumerate(r_timeline) if g > 0.001), float(p.horizon_days))
             node_impacts.append(NodeImpact(
@@ -229,7 +237,11 @@ def run(params: ARIOParams, refineries: list[dict] | None = None,
         node_impacts.sort(key=lambda n: -n.peak_gap_mbpd)
 
     return ARIOResult(
-        feedstock_gap_timeline=timeline,
+        # Exposed timeline matches the gap_mbpd/gap_duration_days definition above
+        # (pre-SPR-draw) so a day-by-day chart's peak always equals gap_mbpd. The
+        # post-SPR residual is still captured separately via spr_depletion_days /
+        # days_until_product_shortfall, which track exactly when reserves run out.
+        feedstock_gap_timeline=supply_gap_timeline,
         gap_mbpd=round(peak_gap, 4),
         gap_duration_days=float(gap_days),
         spr_depletion_days=spr_depletion_day,

@@ -90,8 +90,7 @@ export default function CommandCenter() {
   // Recommendation cards read from System 3/4/2 outputs. These are only present
   // once a scenario has run; until then the endpoints 404 (live=false) and the
   // card renders a skeleton rather than a fabricated recommendation.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const topOption = (proc as any)?.ranked?.[0] ?? (Array.isArray(proc) ? proc[0] : null);
+  const topOption = proc?.ranked?.[0] ?? null;
   const recs = [
     {
       title: "Alternative Procurement",
@@ -110,17 +109,19 @@ export default function CommandCenter() {
       priority: "Priority 2",
       tone: "muted" as const,
       live: schedLive,
-      body: sched?.memo ?? "",
-      confidence: sched ? `${Math.round((sched.buffer_probability ?? 0) * 100)}%` : "",
-      impact: "MED",
-      impactTone: "c-amber",
+      body: sched?.policy_memo ?? "",
+      confidence: sched ? `${Math.round((sched.prob_above_buffer ?? 0) * 100)}%` : "",
+      impact: sched?.constraint_satisfied === false ? "AT RISK" : "MED",
+      impactTone: sched?.constraint_satisfied === false ? "c-red" : "c-amber",
     },
     {
       title: "Supply Chain Risk",
       priority: "Priority 1",
       tone: "red" as const,
       live: scenLive,
-      body: scen?.narrative ?? "",
+      body: scen
+        ? `${scen.gap_mbpd.toFixed(2)} mbpd supply gap projected at ${scen.trigger_entity}; price impact up to $${scen.price_impact_high.toFixed(0)}/bbl; SPR cover ${scen.spr_depletion_days.toFixed(0)} days.`
+        : "",
       confidence: scen ? `${Math.round((scen.confidence ?? 0) * 100)}%` : "",
       impact: "CRITICAL",
       impactTone: "c-red",

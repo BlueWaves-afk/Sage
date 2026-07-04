@@ -11,6 +11,7 @@ from any async context.
 """
 from __future__ import annotations
 
+import inspect
 import logging
 import os
 from datetime import datetime, timezone
@@ -88,6 +89,22 @@ async def bootstrap(g: Graphiti) -> None:
 
     log.info("Building FalkorDB indices and constraints…")
     await g.build_indices_and_constraints()
+
+    # FalkorDB's default per-query timeout (1000ms) is too tight for the 2-hop
+    # subgraph traversals System 2/copilot run (get_subgraph, _graph_ppr_query) once
+    # the graph has a few hundred edges — those queries were observed timing out
+    # under normal load, silently degrading to an empty subgraph (get_subgraph
+    # swallows Cypher errors and returns []). Set here (not just via docker-compose)
+    # so it's enforced on every boot regardless of deployment environment.
+    try:
+        client = g.driver.client
+        config_set = client.config_set
+        result = config_set("TIMEOUT", 10000)
+        if inspect.isawaitable(result):
+            await result
+        log.info("FalkorDB query timeout set to 10000ms.")
+    except Exception as exc:
+        log.warning("Could not set FalkorDB TIMEOUT config (non-fatal): %s", exc)
     # NOTE: _seed_edge_types() (placeholder SeedX entities) is intentionally NOT called.
     # The context bundle's structural episodes exercise every custom edge type with real
     # data, so the seed is redundant — and its SeedX placeholders leaked into reads

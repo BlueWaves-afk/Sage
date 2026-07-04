@@ -8,6 +8,7 @@ import type {
   Route,
   SprCavern,
   ProcurementOption,
+  ProcurementRecData,
   ScenarioOutput,
   SprSchedule,
   IntelItem,
@@ -58,50 +59,67 @@ export const mockSpr: SprCavern[] = [
   { display_name: "Padur SPR", capacity_mmt: 2.5, current_fill_mmt: 1.4, fill_pct: 0.56 },
 ];
 
-export const mockProcurement: ProcurementOption[] = [
-  { supplier: "ADNOC", grade: "Murban", route_via: "Fujairah land-bypass", landed_cost_usd_bbl: 84.2, lead_time_days: 6, grade_compatibility: 0.94, corridor_risk: 0.12, topsis_score: 0.88, rationale: "Murban's light-sweet assay matches Jamnagar's configured slate; the Fujairah land-bypass to the Gulf of Oman avoids the contested Hormuz chokepoint entirely, offsetting a modest cost premium with the lowest corridor risk of any option." },
-  { supplier: "Saudi Aramco", grade: "Arab Light", route_via: "Yanbu (Red Sea bypass)", landed_cost_usd_bbl: 82.9, lead_time_days: 10, grade_compatibility: 0.9, corridor_risk: 0.24, topsis_score: 0.81, rationale: "Arab Light via the Petroline pipeline to Yanbu bypasses Hormuz through the Red Sea. Longer lead time is offset by the lowest landed cost and a highly compatible medium-sour grade." },
-  { supplier: "Iraqi Oil Ministry", grade: "Basrah Medium", route_via: "Strait of Hormuz", landed_cost_usd_bbl: 80.1, lead_time_days: 8, grade_compatibility: 0.86, corridor_risk: 0.62, topsis_score: 0.64, rationale: "Cheapest barrel but routes directly through the elevated-risk Hormuz corridor; ranked lower on corridor risk despite strong cost and acceptable compatibility." },
+// Landed cost = baseline Brent (~$95/bbl) + freight + bypass/war-risk premium —
+// values here match a real golden-path run (Hormuz closed, all routes bypass it).
+const mockProcurementOptions: ProcurementOption[] = [
+  { supplier: "ADNOC", grade: "Murban", route_via: "Cape of Good Hope", landed_cost_usd_bbl: 98.05, lead_time_days: 24, grade_compatibility: 1.0, corridor_risk: 0.0, topsis_score: 0.78, rationale: "Murban's light-sweet assay matches Jamnagar's configured slate; the Fujairah bypass avoids the contested Hormuz chokepoint entirely, offsetting a modest freight premium with the lowest corridor risk of any option." },
+  { supplier: "KazMunayGas", grade: "CPC Blend", route_via: "Suez Canal", landed_cost_usd_bbl: 98.5, lead_time_days: 26, grade_compatibility: 0.88, corridor_risk: 0.0, topsis_score: 0.73, rationale: "CPC Blend via Suez avoids Hormuz entirely. Longer lead time is offset by a highly compatible medium grade and zero corridor risk." },
+  { supplier: "NNPC", grade: "Bonny Light", route_via: "Suez Canal", landed_cost_usd_bbl: 98.8, lead_time_days: 26, grade_compatibility: 0.9, corridor_risk: 0.0, topsis_score: 0.68, rationale: "Bonny Light's low sulfur content is compatible with Jamnagar's slate; routing via Suez avoids the disrupted Hormuz corridor at a modest cost premium." },
 ];
 
+export const mockProcurement: ProcurementRecData = {
+  scenario_id: "scn_hormuz_2026_0223",
+  status: "confirmed",
+  target_refinery: "Jamnagar Refinery",
+  ranked: mockProcurementOptions,
+};
+
+// Shape matches the real ScenarioOutputData contract exactly (verified against a
+// live golden-path run: Iran-Israel conflict escalation closing Strait of Hormuz).
 export const mockScenario: ScenarioOutput = {
   scenario_id: "scn_hormuz_2026_0223",
   trigger_entity: "Strait of Hormuz",
-  status: "speculative",
-  confidence: 0.91,
-  gap_mbpd: 0.5,
-  price_shock_pct: 12,
-  spr_cover_days: 9.5,
-  narrative:
-    "Geopolitical tension in the Red Sea has reached a critical threshold. SAGE models predict a 12% increase in Brent Crude volatility over the next 48 hours. Strategic pivoting of tankers is underway.",
-  chain_of_events: [
-    "Complete cessation of traffic through main arterial lanes.",
-    "Immediate insurance premium surge for local anchorage.",
-    "Projected 12% global price shock within 48 hours.",
+  status: "confirmed",
+  confidence: 1.0,
+  gap_mbpd: 0.61,
+  gap_duration_days: 10,
+  feedstock_gap_timeline: [0.15, 0.29, 0.43, 0.57, 0.61, 0.55, 0.42, 0.28, 0.14, 0.03],
+  price_impact_low: 35.7,
+  price_impact_high: 61.2,
+  spr_depletion_days: 45,
+  gdp_proxy_impact_pct: -1.28,
+  inflation_impact_pct: 3.62,
+  sector_impacts: [
+    { sector: "transport", petroleum_share: 0.51, shortfall_mbpd: 0.31, gdp_weight: 7.0, criticality: 0.9 },
+    { sector: "industry", petroleum_share: 0.12, shortfall_mbpd: 0.07, gdp_weight: 27.0, criticality: 0.6 },
+    { sector: "agriculture", petroleum_share: 0.05, shortfall_mbpd: 0.03, gdp_weight: 18.0, criticality: 0.85 },
   ],
-  assumptions: [
-    "Assumes neutralization of Cape route optimization and static naval deployment in the Red Sea corridor.",
+  node_impacts: [
+    { node: "Jamnagar Refinery", node_type: "Refinery", exposure: 0.429, peak_gap_mbpd: 0.61, onset_day: 3, gap_timeline: [] },
   ],
-  timeline: [
-    { hour: 12, label: "Insurance Surges" },
-    { hour: 24, label: "Terminal Delays" },
-    { hour: 36, label: "Local Price Spike" },
-    { hour: 48, label: "Reserve Activation", critical: true },
-  ],
+  assumptions: {
+    disruption_fraction: { value: 0.8, unit: "frac", source: "LLM scenario decision" },
+    escalation_profile: { value: "escalating", source: "LLM scenario decision" },
+    import_dependence_pct: { value: 88.6, unit: "%", source: "PPAC 2025" },
+  },
 };
 
 export const mockSprSchedule: SprSchedule = {
   scenario_id: "scn_hormuz_2026_0223",
-  buffer_probability: 0.97,
-  drawdown: [
-    { day: 1, reserve_days: 9.5, action: "Hold" },
-    { day: 2, reserve_days: 9.1, action: "Hold" },
-    { day: 3, reserve_days: 8.4, action: "Release Tier-1 (Vizag)" },
-    { day: 4, reserve_days: 7.6, action: "Release Tier-1 (Padur)" },
-    { day: 5, reserve_days: 7.0, action: "Sustain" },
+  status: "confirmed",
+  prob_above_buffer: 0.089,
+  constraint_satisfied: false,
+  lagrange_multiplier: null,
+  option_value_of_waiting: -273.46,
+  daily_plan: [
+    { day: 1, action: "draw", volume_mmt: 0.172, reserve_after_mmt: 2.878, days_cover_after: 5.05, decision_driver: "drawing 0.172 MMT to cover 0.172 MMT/d feedstock gap" },
+    { day: 2, action: "draw", volume_mmt: 0.172, reserve_after_mmt: 2.705, days_cover_after: 4.75, decision_driver: "drawing 0.172 MMT to cover 0.172 MMT/d feedstock gap" },
+    { day: 3, action: "draw", volume_mmt: 0.172, reserve_after_mmt: 2.533, days_cover_after: 4.44, decision_driver: "drawing 0.172 MMT to cover 0.172 MMT/d feedstock gap" },
+    { day: 4, action: "draw", volume_mmt: 0.172, reserve_after_mmt: 2.360, days_cover_after: 4.14, decision_driver: "drawing 0.172 MMT to cover 0.172 MMT/d feedstock gap" },
+    { day: 5, action: "draw", volume_mmt: 0.172, reserve_after_mmt: 2.188, days_cover_after: 3.84, decision_driver: "drawing 0.172 MMT to cover 0.172 MMT/d feedstock gap" },
   ],
-  memo:
-    "Authorize release of Tier-1 reserves from Vishakhapatnam and Padur to maintain 48-hour refinery continuity. Modelled drawdown holds reserve cover above the 3-day buffer with 97% probability across the projected gap window.",
+  policy_memo:
+    "Given the current 1.58 mbpd supply gap projected over 30 days, initiate a strategic drawdown of the SPR immediately, releasing 3.05 MMT over a 25-day period. The chance constraint (P(reserve<3 days)≤0.05) is NOT satisfied under this scenario severity — diversifying via alternative procurement is essential, not optional.",
 };
 
 // A representative slice of the geospatial knowledge graph for offline mode.

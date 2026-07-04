@@ -670,6 +670,49 @@ async def get_grade_specs(refinery: str) -> list[GradeSpecView]:
     ]
 
 
+async def get_most_exposed_refinery(entity: str) -> Optional[str]:
+    """
+    Resolve the refinery most exposed to a disruption at `entity`.
+
+    If `entity` is itself a refinery, returns it unchanged. Otherwise (a corridor,
+    port, or other node), looks up the deterministic EXPOSES edges written by
+    knowledge.context.dedup.derive_exposures() (Σ_port FEEDS(corridor→port) ×
+    SUPPLIES(port→refinery)) and returns the highest-exposure refinery.
+
+    Callers (procure_node, orchestration.triggers._run_procurement) need a REFINERY
+    name to pass to alt_procurement_agent.runner.run(trigger_refinery=...) — passing
+    the corridor's own name there is a bug (there is no refinery called "Strait of
+    Hormuz"), so this is the single place that resolves "which refinery is actually
+    short of feedstock" from the real KB structure, no hardcoding.
+    """
+    try:
+        from knowledge.registry import REGISTRY
+        entry = next((e for e in REGISTRY.values() if e.canonical_name == entity), None)
+        if entry and entry.entity_type == "Refinery":
+            return entity
+    except Exception:
+        pass
+
+    rows = await _cypher(
+        """
+        MATCH (c:Entity {name: $entity})-[r:RELATES_TO]->(ref:Entity)
+        WHERE r.name = 'EXPOSES' AND 'Refinery' IN ref.labels
+        RETURN ref.name AS name, r.exposure_pct AS exposure
+        ORDER BY r.exposure_pct DESC
+        LIMIT 1
+        """,
+        {"entity": entity},
+    )
+    if rows and rows[0].get("name"):
+        return str(rows[0]["name"])
+
+    log.warning(
+        "get_most_exposed_refinery: no EXPOSES edge found for '%s' — "
+        "falling back to Jamnagar Refinery (India's largest refinery)", entity,
+    )
+    return "Jamnagar Refinery"
+
+
 # ---------------------------------------------------------------------------
 # C7.2 — get_routes()
 # ---------------------------------------------------------------------------
@@ -719,11 +762,25 @@ async def get_routes(risk_max: float = 0.5) -> list[CorridorView]:
 async def get_spr_state() -> list[SPRCavernView]:
     """
     reserve_optim_agent. Returns all SPRCavern fill levels.
-    India has 3 sites: Vizag (1.33 MMT), Mangaluru (1.5 MMT), Padur (2.5 MMT).
+    India has exactly 3 sites: Vizag (1.33 MMT), Mangaluru (1.5 MMT), Padur (2.5 MMT).
+
+    Filtered to the registry's known canonical cavern names rather than "any node
+    labelled SPRCavern": Graphiti's LLM extraction will occasionally spawn a bogus
+    aggregate node (e.g. a generic "SPR" entity with capacity_mmt = the SUM of the
+    three real sites) from narrative text that mentions the total reserve figure.
+    Since India's SPR sites are a small, fixed, real-world set, filtering to the
+    registry is strictly more correct than trusting arbitrary extracted labels, and
+    prevents that aggregate node from silently doubling get_spr_state()'s totals.
     """
+    try:
+        from knowledge.registry import REGISTRY
+        canonical_names = [e.canonical_name for e in REGISTRY.values() if e.entity_type == "SPRCavern"]
+    except Exception:
+        canonical_names = ["Vizag SPR", "Mangaluru SPR", "Padur SPR"]
+
     query = """
     MATCH (s:Entity)
-    WHERE 'SPRCavern' IN s.labels
+    WHERE 'SPRCavern' IN s.labels AND s.name IN $names
     RETURN
       s.uuid            AS uuid,
       s.name            AS display_name,
@@ -731,7 +788,16 @@ async def get_spr_state() -> list[SPRCavernView]:
       s.capacity_mmt    AS capacity_mmt,
       s.current_fill_mmt AS current_fill_mmt
     """
-    rows = await _cypher(query)
+    rows = await _cypher(query, {"names": canonical_names})
+
+    # Dedup by name (keep the entry with the higher fill == the earlier, well-formed
+    # writes) in case more than one node matches a canonical name.
+    by_name: dict[str, dict] = {}
+    for row in rows:
+        name = str(row.get("display_name", ""))
+        prev = by_name.get(name)
+        if prev is None or (row.get("current_fill_mmt") or 0) > (prev.get("current_fill_mmt") or 0):
+            by_name[name] = row
 
     return [
         SPRCavernView(
@@ -741,7 +807,7 @@ async def get_spr_state() -> list[SPRCavernView]:
             capacity_mmt=_safe_float(row.get("capacity_mmt")),
             current_fill_mmt=_safe_float(row.get("current_fill_mmt")),
         )
-        for row in rows
+        for row in by_name.values()
     ]
 
 

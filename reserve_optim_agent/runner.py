@@ -153,7 +153,7 @@ async def run(
         policy_memo=policy_memo,
     )
     await write_spr_schedule(data)
-    log.info("[spr] wrote SPR schedule: %d days, P(buffer)=%.1%%",
+    log.info("[spr] wrote SPR schedule: %d days, P(buffer)=%.1f%%",
              len(daily_plan), result.prob_above_buffer * 100)
     return scenario_id
 
