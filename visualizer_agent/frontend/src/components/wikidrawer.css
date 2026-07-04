@@ -1,12 +1,12 @@
 .wd-scrim {
   position: fixed;
   inset: 0;
-  background: rgba(3, 7, 14, 0.5);
-  backdrop-filter: blur(2px);
+  /* Darkens the page but the map column sits above this via z-index */
+  background: rgba(3, 7, 14, 0.62);
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--dur-mid) ease;
-  z-index: 1000;
+  z-index: 900;
 }
 .wd-scrim.open { opacity: 1; pointer-events: auto; }
 
@@ -22,7 +22,7 @@
   box-shadow: -8px 0 24px -12px rgba(0, 0, 0, 0.6);
   transform: translateX(100%);
   transition: transform var(--dur-mid) var(--ease-out-expo);
-  z-index: 1001;
+  z-index: 1001;  /* above scrim(900) and map(950) */
   display: flex;
   flex-direction: column;
   padding: 14px;
