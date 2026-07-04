@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-04T08:09:43.839042+00:00'
-valid_at: '2026-07-04T08:09:36.027602+00:00'
+last_updated: '2026-07-04T08:10:16.430373+00:00'
+valid_at: '2026-07-04T08:09:49.199780+00:00'
 source_episodes: []
 links_out:
 - event_tanker_war
@@ -23,11 +23,13 @@ links_out:
 - supplier_adnoc
 - supplier_nioc
 - supplier_iraqoil
+- supplier_kpc
 - port_vadinar
 - port_sikka
 - refinery_jamnagar
 - refinery_chennai
 - refinery_visakh
+- grade_arab_light
 - port_yanbu
 - port_fujairah
 coordinates:
@@ -47,6 +49,7 @@ The current situation has a clear precedent in the [[Tanker War]] with a feature
 - [[ADNOC]]: High exposure due to significant throughput share.
 - [[NIOC]]: High exposure due to significant throughput share.
 - [[Iraqi Oil Ministry]]: High exposure due to significant throughput share.
+- [[Kuwait Petroleum Corporation]]: High exposure due to significant throughput share.
 - [[Vadinar]]: High exposure as a major destination port.
 - [[Sikka]]: High exposure as a major destination port.
 - [[Jamnagar Refinery]]: High exposure due to peak gap of 0.00 mbpd from day 45.0.
@@ -54,7 +57,7 @@ The current situation has a clear precedent in the [[Tanker War]] with a feature
 - [[Visakhapatnam Refinery]]: High exposure due to peak gap of 0.00 mbpd from day 45.0.
 
 ## Signal Basis
-- System 2 scenario modelling (confirmed) for Strait of Hormuz: projected supply gap 0.00 mbpd over 0 days (timeline: day1:0.0, day2:0.0, day3:0.0, day4:0.0, day5:0.0, day6:0.0, day7:0.0). Projected price impact $36-$61/bbl, SPR cover would last 45.0 days at the projected draw rate, inflation impact 3.62%. Most-exposed nodes: Jamnagar Refinery peak gap 0.00 mbpd from day 45.0; Chennai Refinery peak gap 0.00 mbpd from day 45.0; Visakhapatnam Refinery peak gap 0.00 mbpd from day 45.0. Key assumptions: import_dependence_pct=88.6%; hormuz_share_pct=42.5%; spr_total_mmt=5.33MMT; spr_fill_frac=0.572frac. Model confidence 100%.
+- System 3 procurement analysis for Strait of Hormuz: 24 alternative crude sources ranked. Top option: [[Saudi Aramco]] ([[Arab Light]]) via Strait of Hormuz — $1.80/bbl, 20 day lead time, grade compatibility 0.50, TOPSIS score 0.64. Alternative options: [[Kuwait Petroleum Corporation]] via Strait of Hormuz ($1.80/bbl, TOPSIS 0.63); [[Iraqi Oil Ministry]] via Strait of Hormuz ($1.80/bbl, TOPSIS 0.62).
 
 ## Relations
 | Relation         | Entity                 | Type               | Strength |
@@ -63,6 +66,7 @@ The current situation has a clear precedent in the [[Tanker War]] with a feature
 | supply_dependency| [[ADNOC]]              | supply_dependency  | high     |
 | supply_dependency| [[NIOC]]               | supply_dependency  | high     |
 | supply_dependency| [[Iraqi Oil Ministry]] | supply_dependency  | high     |
+| supply_dependency| [[Kuwait Petroleum Corporation]] | supply_dependency  | high     |
 | threat_actor     | Iran                   | threat_actor       | high     |
 | threat_actor     | Israel                 | threat_actor       | high     |
 | historical_precedent| [[Tanker War]]      | historical_precedent| high     |
