@@ -86,7 +86,6 @@ export default function WikiDrawer({
   }, [current?.id ?? current?.name]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function navigateTo(name: string) {
-    // Try to resolve to a real graph node for richer metadata.
     const match =
       graph?.nodes.find((n) => n.name.toLowerCase() === name.toLowerCase()) ??
       graph?.nodes.find(
@@ -95,7 +94,14 @@ export default function WikiDrawer({
           name.toLowerCase().includes(n.name.toLowerCase())
       ) ??
       stubNode(name);
-    setHistory((h) => [...h, match]);
+    setHistory((h) => {
+      const cur = h[h.length - 1];
+      // Don't push if already on the same page.
+      if (cur && (cur.id === match.id || cur.name.toLowerCase() === match.name.toLowerCase())) {
+        return h;
+      }
+      return [...h, match];
+    });
   }
 
   function goBack() {
