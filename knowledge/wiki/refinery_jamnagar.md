@@ -13,40 +13,37 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-02T21:10:17.969738+00:00'
-valid_at: '2026-07-02T21:10:17.969738+00:00'
+last_updated: '2026-07-04T08:31:46.731566+00:00'
+valid_at: '2026-07-04T08:31:17.318109+00:00'
 source_episodes: []
 links_out:
-- grade_arab_light
-- grade_arab_medium
-- supplier_aramco
-- grade_basrah_heavy
 - supplier_iraqoil
-- grade_urals
-- supplier_rosneft
-- port_vadinar
-- port_sikka
+- grade_basrah_medium
 - corridor_hormuz
-- port_yanbu
+- supplier_adnoc
+- supplier_qatarenergy
 coordinates:
   lat: 22.47
   lon: 70.07
 ---
 
 
-## Overview
-The [[Jamnagar Refinery]] (Reliance) is the world's largest single-site refining complex —
-~1.40 mbpd across its DTA and SEZ units, with a Nelson Complexity Index of 21.1.
+## Current Assessment
+The [[Jamnagar Refinery]] is currently evaluating alternative crude sources to optimize procurement, with [[Iraqi Oil Ministry]]'s [[Basrah Medium]] via the [[Strait of Hormuz]] identified as the top option. This assessment is based on a detailed System 3 procurement analysis ranking 24 alternative sources.
 
-## Crude Diet
-Its high complexity lets it process a very wide slate: [[Arab Light]] and [[Arab Medium]] from
-[[Saudi Aramco]], [[Basrah Heavy]] from the [[Iraqi Oil Ministry]], and [[Urals]] from [[Rosneft]]
-(increased post-2022 for price advantage). See the CONFIGURED_FOR edges for compatibility scores.
+## Affected Entities
+- [[Iraqi Oil Ministry]]: High exposure due to proposed increased supply of [[Basrah Medium]].
+- [[Strait of Hormuz]]: High exposure as the primary transit route for the top crude option.
+- [[ADNOC]]: Medium exposure as an alternative supplier via [[Strait of Hormuz]].
+- [[QatarEnergy]]: Medium exposure as another alternative supplier via [[Strait of Hormuz]].
 
-## Supply Path
-Crude arrives via [[Vadinar]] (~70%) and [[Sikka]] (~30%), both fed through the
-[[Strait of Hormuz]]. This makes Jamnagar SAGE's most Hormuz-exposed demand node.
+## Signal Basis
+- System 3 procurement analysis for Jamnagar Refinery.
 
-## SAGE Risk Profile
-High exposure to a Hormuz disruption; bypass feasibility is high because it can absorb
-[[Yanbu]]-routed [[Arab Light]] with a modest cost premium. On-site crude inventory ≈ 22 days.
+## Relations
+| Relation        | Entity                 | Type             | Strength |
+|-----------------|------------------------|------------------|----------|
+| supply_dependency | [[Iraqi Oil Ministry]] | supply_dependency | high     |
+| supply_dependency | [[Strait of Hormuz]]   | supply_dependency | high     |
+| supply_dependency | [[ADNOC]]              | supply_dependency | medium   |
+| supply_dependency | [[QatarEnergy]]        | supply_dependency | medium   |
