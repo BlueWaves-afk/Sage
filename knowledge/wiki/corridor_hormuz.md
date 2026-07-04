@@ -5,16 +5,16 @@ aliases:
 entity_type: Corridor
 tags:
 - sage/corridor
-- risk/calm
-risk_score: 0.0
-risk_band: CALM
+- risk/critical
+risk_score: 0.92
+risk_band: CRITICAL
 factors:
-  ais: 0.0
-  gdelt: 0.0
-  price: 0.0
-  sanctions: 0.0
-last_updated: '2026-07-04T08:30:12.875211+00:00'
-valid_at: '2026-07-04T08:30:09.550577+00:00'
+  ais: 0.3
+  gdelt: 0.85
+  price: 0.2
+  sanctions: 0.05
+last_updated: '2026-07-04T08:30:55.538801+00:00'
+valid_at: '2026-07-04T08:30:55.538801+00:00'
 source_episodes: []
 links_out:
 - event_tanker_war
@@ -35,6 +35,7 @@ coordinates:
   lat: 26.5
   lon: 56.4
 ---
+
 
 
 ## Current Assessment
