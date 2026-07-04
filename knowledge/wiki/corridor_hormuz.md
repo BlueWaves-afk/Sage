@@ -5,16 +5,16 @@ aliases:
 entity_type: Corridor
 tags:
 - sage/corridor
-- risk/critical
-risk_score: 0.92
-risk_band: CRITICAL
+- risk/calm
+risk_score: 0.0
+risk_band: CALM
 factors:
-  ais: 0.3
-  gdelt: 0.85
-  price: 0.2
-  sanctions: 0.05
-last_updated: '2026-07-04T08:36:17.054944+00:00'
-valid_at: '2026-07-04T08:36:17.054944+00:00'
+  ais: 0.0
+  gdelt: 0.0
+  price: 0.0
+  sanctions: 0.0
+last_updated: '2026-07-04T08:36:34.279601+00:00'
+valid_at: '2026-07-04T08:36:26.412466+00:00'
 source_episodes: []
 links_out:
 - event_tanker_war
@@ -37,7 +37,6 @@ coordinates:
 ---
 
 
-
 ## Current Assessment
 The [[Strait of Hormuz]] is experiencing heightened military activity due to direct military strikes between Iran and Israel, raising the risk of closure to critical levels. This situation echoes the patterns observed during the [[Tanker War]] and the [[2019 Tanker Attacks]].
 
@@ -57,7 +56,7 @@ The current situation has a clear precedent in the [[Tanker War]] with a feature
 - [[Visakhapatnam Refinery]]: High exposure due to peak gap of 0.00 mbpd from day 45.0.
 
 ## Signal Basis
-- News report on direct military strikes between Iran and Israel near the [[Strait of Hormuz]].
+- System 2 scenario modelling (confirmed) for Strait of Hormuz: projected supply gap 0.61 mbpd over 10 days (timeline: day1:0.1, day2:0.2, day3:0.3, day4:0.4, day5:0.5, day6:0.6, day7:0.6). Projected price impact $36-$61/bbl, SPR cover would last 45.0 days at the projected draw rate, GDP impact -1.28%, inflation impact 3.62%. Most-exposed nodes: Jamnagar Refinery peak gap 0.61 mbpd from day 0.0; Chennai Refinery peak gap 0.00 mbpd from day 45.0; Visakhapatnam Refinery peak gap 0.00 mbpd from day 45.0. Key assumptions: import_dependence_pct=88.6%; hormuz_share_pct=42.5%; spr_total_mmt=5.33MMT; spr_fill_frac=0.572frac. Model confidence 100%.
 
 ## Relations
 | Relation         | Entity                 | Type               | Strength |
