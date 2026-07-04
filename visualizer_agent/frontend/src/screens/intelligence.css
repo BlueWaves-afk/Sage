@@ -12,10 +12,6 @@
   flex-direction: column;
   gap: 8px;
   min-width: 0;
-  /* Sit above the drawer scrim (z-index 900) so the map stays fully visible
-     when the wiki panel slides in — only the briefing column gets darkened. */
-  position: relative;
-  z-index: 950;
 }
 
 .gi-breadcrumb {

@@ -38,7 +38,15 @@ function renderMarkdown(md: string): string {
   }
 }
 
-export default function WikiDrawer({ node, onClose }: { node: GraphNode | null; onClose: () => void }) {
+export default function WikiDrawer({
+  node,
+  onClose,
+  onWikilink,
+}: {
+  node: GraphNode | null;
+  onClose: () => void;
+  onWikilink?: (entityName: string) => void;
+}) {
   const [content, setContent] = useState<string>("");
   const [live, setLive] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -60,7 +68,6 @@ export default function WikiDrawer({ node, onClose }: { node: GraphNode | null; 
   // `position: fixed`'s containing block and make it lay out in-flow instead.
   return createPortal(
     <>
-      <div className={`wd-scrim${node ? " open" : ""}`} onClick={onClose} />
       <aside className={`wd${node ? " open" : ""}`} aria-hidden={!node}>
         {node && (
           <>
@@ -87,7 +94,15 @@ export default function WikiDrawer({ node, onClose }: { node: GraphNode | null; 
                   <span className="skeleton wd-sk-line short" />
                 </div>
               ) : (
-                <div dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }} />
+                <div
+                dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }}
+                onClick={(e) => {
+                  const target = e.target as HTMLElement;
+                  if (target.classList.contains("wikilink") && onWikilink) {
+                    onWikilink(target.textContent ?? "");
+                  }
+                }}
+              />
               )}
             </div>
             <div className="wd-foot label-sm">Retrieved from SAGE knowledge base · not generated</div>
