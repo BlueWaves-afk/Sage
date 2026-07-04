@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-04T08:19:57.955020+00:00'
-valid_at: '2026-07-04T08:19:33.381223+00:00'
+last_updated: '2026-07-04T08:22:30.604319+00:00'
+valid_at: '2026-07-04T08:22:18.068857+00:00'
 source_episodes: []
 links_out:
 - event_tanker_war
