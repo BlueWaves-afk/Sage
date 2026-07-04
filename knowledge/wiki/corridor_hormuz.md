@@ -13,10 +13,12 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-02T21:04:03.681834+00:00'
-valid_at: '2026-07-02T21:04:03.681834+00:00'
+last_updated: '2026-07-04T08:08:49.206582+00:00'
+valid_at: '2026-07-04T08:08:45.605489+00:00'
 source_episodes: []
 links_out:
+- event_tanker_war
+- event_2019_hormuz_attacks
 - supplier_aramco
 - supplier_adnoc
 - supplier_nioc
@@ -31,26 +33,33 @@ coordinates:
 ---
 
 
-## Strategic Role
-The [[Strait of Hormuz]] is the world's most critical oil chokepoint. Approximately 20 million
-barrels per day transit the strait — roughly 20% of global petroleum liquids and 25–30% of global
-LNG trade. For India it is the single most important maritime corridor: the bulk of crude from
-[[Saudi Aramco]], [[ADNOC]], [[NIOC]], and the [[Iraqi Oil Ministry]] flows through it before
-reaching [[Vadinar]] and [[Sikka]].
+## Current Assessment
+The [[Strait of Hormuz]] is experiencing heightened military activity due to direct military strikes between Iran and Israel, raising the risk of closure to critical levels. This situation echoes the patterns observed during the [[Tanker War]] and the [[2019 Tanker Attacks]].
 
-## Physical Characteristics
-Two 3.2 km navigable lanes separated by a median; minimum depth 27 m (VLCC-capable). Iranian
-territorial waters span the northern edge, Omani waters the southern.
+## Historical Pattern
+The current situation has a clear precedent in the [[Tanker War]] with a feature-overlap percentage of approximately 70%.
 
-## Historical Disruption Events
-The Tanker War (1984–1988) saw 500+ vessels attacked; the 2019 tanker attacks and the 2024
-shadow-fleet surge are the most recent precursors SAGE pattern-matches against.
+## Affected Entities
+- [[Saudi Aramco]]: High exposure due to significant throughput share.
+- [[ADNOC]]: High exposure due to significant throughput share.
+- [[NIOC]]: High exposure due to significant throughput share.
+- [[Iraqi Oil Ministry]]: High exposure due to significant throughput share.
+- [[Vadinar]]: High exposure as a major destination port.
+- [[Sikka]]: High exposure as a major destination port.
 
-## Bypass Alternatives
-If Hormuz closes, crude can reroute via [[Yanbu]] (Saudi Petroline, Red Sea) and [[Fujairah]]
-(UAE ADCOP) — see the BYPASS_ROUTE edges from [[Saudi Aramco]] and [[ADNOC]]. Combined alternative
-export capacity (~3.5–5.5 mbpd) is far below the 20 mbpd Hormuz flow.
+## Signal Basis
+- News report indicating direct military strikes between Iran and Israel near the [[Strait of Hormuz]].
 
-## SAGE Risk Profile
-Primary risk drivers: AIS dark-vessel activity, IRGC naval exercises, US–Iran diplomatic
-temperature. Risk synthesis is forced on any AIS gap exceeding 4 hours in the strait corridor.
+## Relations
+| Relation         | Entity                 | Type               | Strength |
+|------------------|------------------------|--------------------|----------|
+| supply_dependency| [[Saudi Aramco]]       | supply_dependency  | high     |
+| supply_dependency| [[ADNOC]]              | supply_dependency  | high     |
+| supply_dependency| [[NIOC]]               | supply_dependency  | high     |
+| supply_dependency| [[Iraqi Oil Ministry]] | supply_dependency  | high     |
+| threat_actor     | Iran               | threat_actor       | high     |
+| threat_actor     | Israel             | threat_actor       | high     |
+| historical_precedent| [[Tanker War]]      | historical_precedent| high     |
+| historical_precedent| [[2019 Tanker Attacks]]| historical_precedent| medium  |
+| bypass_option    | [[Yanbu]]              | bypass_option      | medium   |
+| bypass_option    | [[Fujairah]]           | bypass_option      | medium   |
