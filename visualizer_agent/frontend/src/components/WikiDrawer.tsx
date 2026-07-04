@@ -50,11 +50,14 @@ export default function WikiDrawer({
   node,
   onClose,
   graph,
+  onNavigate,
 }: {
   node: GraphNode | null;
   onClose: () => void;
   /** Optional full graph used to resolve wikilink names → real nodes */
   graph?: { nodes: GraphNode[] };
+  /** Called when the user navigates to a different entity via a wikilink */
+  onNavigate?: (node: GraphNode) => void;
 }) {
   // History stack — current page is the last entry.
   const [history, setHistory] = useState<NavEntry[]>([]);
@@ -96,16 +99,24 @@ export default function WikiDrawer({
       stubNode(name);
     setHistory((h) => {
       const cur = h[h.length - 1];
-      // Don't push if already on the same page.
       if (cur && (cur.id === match.id || cur.name.toLowerCase() === match.name.toLowerCase())) {
         return h;
       }
+      onNavigate?.(match);
       return [...h, match];
     });
   }
 
+  function goBackTo(index: number) {
+    setHistory((h) => {
+      const target = h[index];
+      if (target) onNavigate?.(target);
+      return h.slice(0, index + 1);
+    });
+  }
+
   function goBack() {
-    setHistory((h) => (h.length > 1 ? h.slice(0, -1) : h));
+    goBackTo(history.length - 2);
   }
 
   const canGoBack = history.length > 1;
@@ -143,7 +154,7 @@ export default function WikiDrawer({
                 <span key={i}>
                   <button
                     className="wd-bc-btn"
-                    onClick={() => setHistory((prev) => prev.slice(0, i + 1))}
+                    onClick={() => goBackTo(i)}
                   >
                     {h.name}
                   </button>

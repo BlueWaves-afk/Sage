@@ -195,6 +195,11 @@ export default function GlobalIntelligence() {
         node={selected}
         onClose={() => setSelected(null)}
         graph={graph ?? undefined}
+        onNavigate={(n) => {
+          // Only update selectedId if the node has coordinates so the map
+          // actually has somewhere to fly to.
+          if (n.lat != null && n.lon != null) setSelected(n);
+        }}
       />
     </div>
   );
