@@ -15,14 +15,22 @@ const AXES: { key: keyof ProcurementOption; label: string; invert?: boolean; max
   { key: "topsis_score", label: "TOPSIS", max: 1 },
 ];
 
-// Radar chart comparing the top-3 procurement options across 5 normalised axes.
-function Radar({ options }: { options: ProcurementOption[] }) {
+// Radar chart across 5 normalised axes. The active (clicked) option is drawn bold
+// and filled; every other option renders as a faint reference outline behind it,
+// so picking a card always re-focuses the diagram on that option specifically —
+// including options outside the top 3.
+function Radar({
+  options,
+  activeSupplier,
+}: {
+  options: ProcurementOption[];
+  activeSupplier: string | null;
+}) {
   const size = 300;
   const cx = size / 2;
   const cy = size / 2;
   const R = 110;
   const n = AXES.length;
-  const colors = ["#38c6ee", "#34d38a", "#f5a623"];
 
   const point = (i: number, r: number) => {
     const a = (Math.PI * 2 * i) / n - Math.PI / 2;
@@ -33,6 +41,9 @@ function Radar({ options }: { options: ProcurementOption[] }) {
     const frac = Math.min(1, Math.max(0, v / ax.max));
     return ax.invert ? 1 - frac : frac;
   };
+  const shapeOf = (opt: ProcurementOption) => AXES.map((ax, i) => point(i, R * norm(opt, ax)).join(",")).join(" ");
+
+  const active = options.find((o) => o.supplier === activeSupplier) ?? options[0];
 
   return (
     <svg viewBox={`0 0 ${size} ${size}`} className="radar">
@@ -57,16 +68,33 @@ function Radar({ options }: { options: ProcurementOption[] }) {
           </g>
         );
       })}
-      {options.slice(0, 3).map((opt, oi) => (
+
+      {/* Faint reference outlines for every other option — context, not competing */}
+      {options
+        .filter((o) => o.supplier !== active?.supplier)
+        .map((opt) => (
+          <polygon
+            key={opt.supplier}
+            points={shapeOf(opt)}
+            fill="none"
+            stroke="#4b5568"
+            strokeWidth={1}
+            strokeOpacity={0.45}
+          />
+        ))}
+
+      {/* The active option — bold, filled, animates in on change */}
+      {active && (
         <polygon
-          key={opt.supplier}
-          points={AXES.map((ax, i) => point(i, R * norm(opt, ax)).join(",")).join(" ")}
-          fill={colors[oi]}
-          fillOpacity={0.12}
-          stroke={colors[oi]}
-          strokeWidth={2}
+          key={`active-${active.supplier}`}
+          className="radar-active-shape"
+          points={shapeOf(active)}
+          fill="#38c6ee"
+          fillOpacity={0.16}
+          stroke="#38c6ee"
+          strokeWidth={2.5}
         />
-      ))}
+      )}
     </svg>
   );
 }
@@ -80,6 +108,11 @@ export default function ResponsePlanner() {
   const openWikilink = (entity: string) =>
     setWikiNode({ id: entity, name: entity, type: "Entity", lat: null, lon: null, score: 0, band: "CALM", degree: 0 });
   const maxReserve = Math.max(1, ...dailyPlan.map((d) => d.days_cover_after));
+
+  // Which procurement option the radar currently focuses on — defaults to #1,
+  // and updates whenever a card is clicked (any card, not just the top 3).
+  const [activeSupplier, setActiveSupplier] = useState<string | null>(null);
+  const active = activeSupplier ?? options[0]?.supplier ?? null;
 
   return (
     <div className="rp">
@@ -95,19 +128,37 @@ export default function ResponsePlanner() {
           ) : (
           <div className="rp-proc-body">
             <div className="rp-radar-wrap">
-              <Radar options={options} />
+              <Radar options={options} activeSupplier={active} />
               <div className="rp-legend">
-                {options.slice(0, 3).map((o, i) => (
-                  <div key={o.supplier} className="rp-legend-item">
-                    <span className="rp-legend-dot" style={{ background: ["#38c6ee", "#34d38a", "#f5a623"][i] }} />
-                    {o.supplier}
-                  </div>
-                ))}
+                <span className="rp-legend-item rp-legend-active">
+                  <span className="rp-legend-dot" style={{ background: "#38c6ee" }} />
+                  {options.find((o) => o.supplier === active)?.supplier ?? "—"}
+                </span>
+                <span className="rp-legend-item rp-legend-muted">
+                  <span className="rp-legend-dot rp-legend-dot-outline" />
+                  other options
+                </span>
               </div>
             </div>
             <div className="rp-options">
               {options.map((o, i) => (
-                <div key={o.supplier} className={`rp-option${i === 0 ? " top" : ""}`}>
+                // A div (not <button>) — RichText renders clickable wikilink
+                // <button>s inside the rationale, and nesting <button> inside
+                // <button> is invalid HTML. Keyboard-accessible via role+tabIndex.
+                <div
+                  key={o.supplier}
+                  className={`rp-option${o.supplier === active ? " top" : ""}`}
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={o.supplier === active}
+                  onClick={() => setActiveSupplier(o.supplier)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setActiveSupplier(o.supplier);
+                    }
+                  }}
+                >
                   <div className="rp-option-head">
                     <span className="rp-rank">#{i + 1}</span>
                     <div className="rp-option-name">

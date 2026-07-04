@@ -53,10 +53,16 @@
   font-size: 12px;
   color: var(--text-1);
 }
+.rp-legend-active { color: var(--cyan); font-weight: 600; }
+.rp-legend-muted { color: var(--text-3); }
 .rp-legend-dot {
   width: 10px;
   height: 10px;
   border-radius: 3px;
+}
+.rp-legend-dot-outline {
+  background: transparent;
+  border: 1.5px solid #4b5568;
 }
 
 .rp-options {
@@ -70,15 +76,22 @@
   border-left: 2px solid transparent;
   border-radius: var(--r-sm);
   padding: 8px 10px;
-  transition: border-color var(--dur-fast) ease, background var(--dur-fast) ease;
+  cursor: pointer;
+  transition: border-color var(--dur-fast) ease, background var(--dur-fast) ease, transform var(--dur-fast) ease;
 }
 .rp-option:hover {
   border-color: var(--border-2);
   background: var(--bg-4);
 }
+.rp-option:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 1px;
+}
 .rp-option.top {
   border-left-color: var(--cyan);
+  background: var(--bg-4);
 }
+.rp-option.top .rp-topsis { transform: scale(1.08); }
 .rp-option-head {
   display: flex;
   align-items: center;
