@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../api/hooks";
 import { Badge } from "./ui/ui";
 import type { GraphNode } from "../api/types";
@@ -37,12 +38,10 @@ function renderMarkdown(md: string): string {
   }
 }
 
-// ── Stub node shape for wiki-only entities (no graph node available) ─────────
 function stubNode(name: string): GraphNode {
   return { id: name, name, type: "Entity", lat: null, lon: null, score: 0, band: "CALM", degree: 0 };
 }
 
-// ── Navigation entry — either a real graph node or a stub ───────────────────
 type NavEntry = GraphNode;
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -54,32 +53,31 @@ export default function WikiDrawer({
 }: {
   node: GraphNode | null;
   onClose: () => void;
-  /** Optional full graph used to resolve wikilink names → real nodes */
   graph?: { nodes: GraphNode[] };
-  /** Called when the user navigates to a different entity via a wikilink */
   onNavigate?: (node: GraphNode) => void;
 }) {
-  // History stack — current page is the last entry.
   const [history, setHistory] = useState<NavEntry[]>([]);
-  const [content, setContent]  = useState<string>("");
-  const [live, setLive]        = useState(true);
-  const [loading, setLoading]  = useState(false);
+  const [content, setContent] = useState<string>("");
+  const [live, setLive]       = useState(true);
+  const [loading, setLoading] = useState(false);
+  // Direction: +1 = forward (new link), -1 = back
+  const [dir, setDir] = useState<1 | -1>(1);
   const bodyRef = useRef<HTMLDivElement>(null);
 
   const current = history[history.length - 1] ?? null;
 
-  // When the external `node` prop changes (user clicked a map node), reset.
+  // External node change → reset history.
   useEffect(() => {
     if (!node) { setHistory([]); return; }
     setHistory([node]);
+    setDir(1);
   }, [node?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Fetch wiki content whenever `current` changes.
+  // Fetch content whenever current page changes.
   useEffect(() => {
     if (!current) return;
     setLoading(true);
     setContent("");
-    // Scroll body back to top on navigation.
     if (bodyRef.current) bodyRef.current.scrollTop = 0;
     api.wiki(current.name).then((env) => {
       setContent(env.data.content || `_No wiki page found for **${current.name}**._`);
@@ -88,83 +86,122 @@ export default function WikiDrawer({
     });
   }, [current?.id ?? current?.name]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function navigateTo(name: string) {
-    const match =
+  function resolve(name: string): NavEntry {
+    return (
       graph?.nodes.find((n) => n.name.toLowerCase() === name.toLowerCase()) ??
       graph?.nodes.find(
         (n) =>
           n.name.toLowerCase().includes(name.toLowerCase()) ||
           name.toLowerCase().includes(n.name.toLowerCase())
       ) ??
-      stubNode(name);
-    setHistory((h) => {
-      const cur = h[h.length - 1];
-      if (cur && (cur.id === match.id || cur.name.toLowerCase() === match.name.toLowerCase())) {
-        return h;
-      }
-      onNavigate?.(match);
-      return [...h, match];
-    });
+      stubNode(name)
+    );
+  }
+
+  function navigateTo(name: string) {
+    const match = resolve(name);
+    const cur = history[history.length - 1];
+    // Skip if already on the same page.
+    if (cur && (cur.id === match.id || cur.name.toLowerCase() === match.name.toLowerCase())) return;
+    setDir(1);
+    setHistory((h) => [...h, match]);
+    // Call onNavigate outside setHistory so it fires as a normal side-effect,
+    // not inside a state-setter callback (which React can defer/batch unexpectedly).
+    onNavigate?.(match);
   }
 
   function goBackTo(index: number) {
-    setHistory((h) => {
-      const target = h[index];
-      if (target) onNavigate?.(target);
-      return h.slice(0, index + 1);
-    });
+    const target = history[index];
+    if (!target) return;
+    setDir(-1);
+    setHistory((h) => h.slice(0, index + 1));
+    onNavigate?.(target);
   }
 
   function goBack() {
-    goBackTo(history.length - 2);
+    if (history.length > 1) goBackTo(history.length - 2);
   }
 
   const canGoBack = history.length > 1;
   const isOpen    = !!current;
 
+  // Variants for the drawer panel sliding in from the right.
+  const drawerVariants = {
+    hidden:  { x: "100%", opacity: 0 },
+    visible: { x: 0, opacity: 1, transition: { type: "spring" as const, stiffness: 320, damping: 34, mass: 0.8 } },
+    exit:    { x: "100%", opacity: 0, transition: { duration: 0.22, ease: "easeIn" as const } },
+  };
+
+  const pageVariants = {
+    enter: (d: number) => ({ x: d > 0 ? 32 : -32, opacity: 0 }),
+    center:              { x: 0, opacity: 1, transition: { duration: 0.22, ease: "easeOut" as const } },
+    exit:  (d: number) => ({ x: d > 0 ? -32 : 32, opacity: 0, transition: { duration: 0.16, ease: "easeIn" as const } }),
+  };
+
   return createPortal(
-    <aside className={`wd${isOpen ? " open" : ""}`} aria-hidden={!isOpen}>
-      {current && (
-        <>
+    <AnimatePresence>
+      {isOpen && (
+        <motion.aside
+          key="wd"
+          className="wd open"
+          variants={drawerVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          aria-modal
+          role="dialog"
+        >
+          {/* ── Header ── */}
           <div className="wd-head">
             <div className="wd-head-left">
-              {canGoBack && (
-                <button
-                  className="wd-back press"
-                  onClick={goBack}
-                  aria-label="Go back"
-                  title="Back"
-                >
-                  ←
-                </button>
-              )}
+              <AnimatePresence>
+                {canGoBack && (
+                  <motion.button
+                    key="back"
+                    className="wd-back press"
+                    onClick={goBack}
+                    aria-label="Go back"
+                    title="Back"
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0, transition: { duration: 0.18 } }}
+                    exit={{ opacity: 0, x: -8, transition: { duration: 0.12 } }}
+                  >
+                    ←
+                  </motion.button>
+                )}
+              </AnimatePresence>
               <div>
                 <div className="wd-type label-sm">{current.type}</div>
                 <h2 className="wd-title">{current.name}</h2>
               </div>
             </div>
-            <button className="wd-close press" onClick={onClose} aria-label="Close">
-              ✕
-            </button>
+            <button className="wd-close press" onClick={onClose} aria-label="Close">✕</button>
           </div>
 
-          {canGoBack && (
-            <div className="wd-breadcrumb mono">
-              {history.slice(0, -1).map((h, i) => (
-                <span key={i}>
-                  <button
-                    className="wd-bc-btn"
-                    onClick={() => goBackTo(i)}
-                  >
-                    {h.name}
-                  </button>
-                  <span className="wd-bc-sep"> › </span>
-                </span>
-              ))}
-              <span className="wd-bc-current">{current.name}</span>
-            </div>
-          )}
+          {/* ── Breadcrumb ── */}
+          <AnimatePresence>
+            {canGoBack && (
+              <motion.div
+                key="bc"
+                className="wd-breadcrumb mono"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto", transition: { duration: 0.2 } }}
+                exit={{ opacity: 0, height: 0, transition: { duration: 0.14 } }}
+              >
+                {history.slice(0, -1).map((h, i) => (
+                  <span key={i}>
+                    <button className="wd-bc-btn" onClick={() => goBackTo(i)}>
+                      {h.name}
+                    </button>
+                    <span className="wd-bc-sep"> › </span>
+                  </span>
+                ))}
+                <span className="wd-bc-current">{current.name}</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
+          {/* ── Meta ── */}
           <div className="wd-meta">
             <Badge tone={bandTone(current.band)}>{current.band}</Badge>
             {current.score > 0 && (
@@ -176,38 +213,49 @@ export default function WikiDrawer({
             {!live && <span className="wd-offline mono">offline</span>}
           </div>
 
+          {/* ── Body — slides left/right on navigation ── */}
           <div className="wd-body" ref={bodyRef}>
-            {loading ? (
-              <div className="wd-skeleton">
-                <span className="skeleton wd-sk-line" />
-                <span className="skeleton wd-sk-line" />
-                <span className="skeleton wd-sk-line short" />
-              </div>
-            ) : (
-              <div
-                dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }}
-                onClick={(e) => {
-                  const t = e.target as HTMLElement;
-                  if (t.classList.contains("wikilink")) {
-                    navigateTo(t.textContent ?? "");
-                  }
-                }}
-                onKeyDown={(e) => {
-                  const t = e.target as HTMLElement;
-                  if ((e.key === "Enter" || e.key === " ") && t.classList.contains("wikilink")) {
-                    navigateTo(t.textContent ?? "");
-                  }
-                }}
-              />
-            )}
+            <AnimatePresence mode="wait" custom={dir}>
+              <motion.div
+                key={current.id ?? current.name}
+                custom={dir}
+                variants={pageVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                style={{ height: "100%" }}
+              >
+                {loading ? (
+                  <div className="wd-skeleton">
+                    <span className="skeleton wd-sk-line" />
+                    <span className="skeleton wd-sk-line" />
+                    <span className="skeleton wd-sk-line short" />
+                  </div>
+                ) : (
+                  <div
+                    dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }}
+                    onClick={(e) => {
+                      const t = e.target as HTMLElement;
+                      if (t.classList.contains("wikilink")) navigateTo(t.textContent ?? "");
+                    }}
+                    onKeyDown={(e) => {
+                      const t = e.target as HTMLElement;
+                      if ((e.key === "Enter" || e.key === " ") && t.classList.contains("wikilink")) {
+                        navigateTo(t.textContent ?? "");
+                      }
+                    }}
+                  />
+                )}
+              </motion.div>
+            </AnimatePresence>
           </div>
 
           <div className="wd-foot label-sm">
             Retrieved from SAGE knowledge base · not generated
           </div>
-        </>
+        </motion.aside>
       )}
-    </aside>,
+    </AnimatePresence>,
     document.body
   );
 }
