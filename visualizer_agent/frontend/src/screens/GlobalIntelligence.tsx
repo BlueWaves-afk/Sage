@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import KnowledgeGraphMap from "../components/KnowledgeGraphMap";
 import WikiDrawer from "../components/WikiDrawer";
 import { Panel, Badge, Meter, OfflineHint } from "../components/ui/ui";
 import { IconBrain, IconCheck } from "../components/icons";
 import { api, useApi } from "../api/hooks";
 import type { GraphNode } from "../api/types";
+import { useVoice, voiceStore } from "../voice/useVoiceStore";
 import "./intelligence.css";
 
 // Entity types double as the map's layer filters.
@@ -48,6 +49,29 @@ export default function GlobalIntelligence() {
     () => [...(graph?.nodes ?? [])].sort((a, b) => b.degree - a.degree).slice(0, 4),
     [graph]
   );
+
+  // Voice: `focus_entity` selects the graph node (drives map+drawer at once);
+  // `open_wiki` just opens the drawer without moving the map.
+  const focusedByVoice = useVoice((s) => s.focusedEntity);
+  const drawerByVoice = useVoice((s) => s.drawerEntity);
+  useEffect(() => {
+    if (!focusedByVoice) return;
+    // Try to resolve to a real graph node so the map camera has coordinates;
+    // fall back to a bare stub (drawer still opens fine on the entity name).
+    const node =
+      graph?.nodes.find((n) => n.name === focusedByVoice) ??
+      ({ id: focusedByVoice, name: focusedByVoice, type: "Entity", lat: null, lon: null, score: 0, band: "CALM", degree: 0 } as GraphNode);
+    setSelected(node);
+    voiceStore.focusEntity(null);
+  }, [focusedByVoice, graph]);
+  useEffect(() => {
+    if (!drawerByVoice) return;
+    const node =
+      graph?.nodes.find((n) => n.name === drawerByVoice) ??
+      ({ id: drawerByVoice, name: drawerByVoice, type: "Entity", lat: null, lon: null, score: 0, band: "CALM", degree: 0 } as GraphNode);
+    setSelected(node);
+    voiceStore.openDrawer(null);
+  }, [drawerByVoice, graph]);
 
   return (
     <div className="gi">

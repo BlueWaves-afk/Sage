@@ -287,6 +287,13 @@ async def accuracy() -> dict:
 # WebSocket push channel
 # ---------------------------------------------------------------------------
 
+@app.websocket("/ws/voice")
+async def voice_websocket(ws: WebSocket) -> None:
+    """Voice bridge — Gnani STT/TTS + intent → action bus."""
+    from voicebridge.ws import voice_ws_endpoint
+    await voice_ws_endpoint(ws)
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(ws: WebSocket) -> None:
     """

@@ -13,6 +13,8 @@ import { api } from "../api/hooks";
 import { useApi } from "../api/hooks";
 import { mockIntel } from "../api/mock";
 import type { IntelItem } from "../api/types";
+import { useVoice, voiceStore } from "../voice/useVoiceStore";
+import type { KpiKey } from "../voice/types";
 import "./command.css";
 
 const INTEL_ICON: Record<IntelItem["source"], typeof IconRss> = {
@@ -30,6 +32,10 @@ const TONE_CLASS: Record<IntelItem["tone"], string> = {
 };
 
 type Kpi = {
+  // Key mirrors the voice action taxonomy — a `flash_kpi` action from voice
+  // pulses the tile whose `kpiKey` matches. Anything the user might ask about
+  // by voice must live under one of the KpiKey values.
+  kpiKey?: KpiKey;
   label: string;
   value?: string;
   num?: number;
@@ -83,13 +89,24 @@ export default function CommandCenter() {
     dash?.threat_level === "MEDIUM" ? "c-amber" : "c-green";
 
   const kpis: Kpi[] = useMemo(() => [
-    { label: "Threat Level", value: dash?.threat_level ?? "—", tone: threatTone },
-    { label: "Brent Crude", num: dash?.brent_usd_bbl ?? undefined, prefix: "$", decimals: 2, tone: "", up: true, value: dash?.brent_usd_bbl == null ? "—" : undefined, sub: "EIA REF" },
-    { label: "SPR Coverage", num: dash?.spr_coverage_pct ?? undefined, suffix: "%", decimals: 1, tone: "", value: dash?.spr_coverage_pct == null ? "—" : undefined },
-    { label: "Active Alerts", num: dash?.active_alerts ?? 0, tone: (dash?.active_alerts ?? 0) > 0 ? "c-amber" : "c-green", warn: (dash?.active_alerts ?? 0) > 0 },
-    { label: "Tracked Entities", num: dash?.monitoring_entities ?? 0, tone: "", sub: "KB NODES" },
+    { kpiKey: "threat_level", label: "Threat Level", value: dash?.threat_level ?? "—", tone: threatTone },
+    { kpiKey: "brent_usd_bbl", label: "Brent Crude", num: dash?.brent_usd_bbl ?? undefined, prefix: "$", decimals: 2, tone: "", up: true, value: dash?.brent_usd_bbl == null ? "—" : undefined, sub: "EIA REF" },
+    { kpiKey: "spr_coverage_pct", label: "SPR Coverage", num: dash?.spr_coverage_pct ?? undefined, suffix: "%", decimals: 1, tone: "", value: dash?.spr_coverage_pct == null ? "—" : undefined },
+    { kpiKey: "active_alerts", label: "Active Alerts", num: dash?.active_alerts ?? 0, tone: (dash?.active_alerts ?? 0) > 0 ? "c-amber" : "c-green", warn: (dash?.active_alerts ?? 0) > 0 },
+    { kpiKey: "monitoring_entities", label: "Tracked Entities", num: dash?.monitoring_entities ?? 0, tone: "", sub: "KB NODES" },
     { label: "Mode", value: live ? "LIVE" : "OFFLINE", tone: live ? "c-cyan" : "c-muted" },
   ], [dash, live, threatTone]);
+
+  // Voice: which KPI is currently flashing (voice `flash_kpi` action) + which
+  // entity the voice bridge asked to open in the drawer.
+  const flashedKpi = useVoice((s) => s.flashedKpi);
+  const voiceDrawer = useVoice((s) => s.drawerEntity);
+  useEffect(() => {
+    if (!voiceDrawer) return;
+    setSelected({ id: voiceDrawer, name: voiceDrawer, type: "Entity", lat: null, lon: null, score: 0, band: "CALM", degree: 0 });
+    // Consume it so the same entity can be re-requested later.
+    voiceStore.openDrawer(null);
+  }, [voiceDrawer]);
 
   const bottlenecks = dash?.bottlenecks?.slice(0, 3) ?? [];
 
@@ -140,7 +157,10 @@ export default function CommandCenter() {
       {/* KPI row */}
       <div className="cc-kpis stagger">
         {kpis.map((k) => (
-          <div key={k.label} className="cc-kpi card lift">
+          <div
+            key={k.label}
+            className={`cc-kpi card lift${k.kpiKey && flashedKpi === k.kpiKey ? " cc-kpi-flash" : ""}`}
+          >
             <span className="label-sm">{k.label}</span>
             <div className={`cc-kpi-value ${k.tone}`}>
               <Kb live={k.label === "Mode" ? true : live} loading={loading} skel={<Skel w={90} h={24} />}>

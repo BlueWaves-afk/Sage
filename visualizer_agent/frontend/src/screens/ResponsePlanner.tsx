@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Panel, Badge, Skel, SkeletonBlock } from "../components/ui/ui";
 import { IconShield, IconCheck, IconAlert, IconExternal } from "../components/icons";
 import WikiDrawer from "../components/WikiDrawer";
 import { RichText } from "../components/RichText";
 import { api, useApi } from "../api/hooks";
 import type { ProcurementOption, GraphNode } from "../api/types";
+import { useVoice, voiceStore } from "../voice/useVoiceStore";
 import "./response.css";
 
 const AXES: { key: keyof ProcurementOption; label: string; invert?: boolean; max: number }[] = [
@@ -113,6 +114,27 @@ export default function ResponsePlanner() {
   // and updates whenever a card is clicked (any card, not just the top 3).
   const [activeSupplier, setActiveSupplier] = useState<string | null>(null);
   const active = activeSupplier ?? options[0]?.supplier ?? null;
+
+  // Voice `select_option` action — resolved with a lenient case-insensitive
+  // startsWith match so "select ADNOC" hits the ADNOC card without requiring
+  // exact string equality with whatever the STT capitalization was.
+  const supplierByVoice = useVoice((s) => s.activeSupplier);
+  useEffect(() => {
+    if (!supplierByVoice) return;
+    const q = supplierByVoice.toLowerCase();
+    const match = options.find((o) =>
+      o.supplier.toLowerCase() === q || o.supplier.toLowerCase().startsWith(q)
+    );
+    if (match) setActiveSupplier(match.supplier);
+    voiceStore.selectSupplier(null);
+  }, [supplierByVoice, options]);
+
+  const drawerByVoice = useVoice((s) => s.drawerEntity);
+  useEffect(() => {
+    if (!drawerByVoice) return;
+    setWikiNode({ id: drawerByVoice, name: drawerByVoice, type: "Entity", lat: null, lon: null, score: 0, band: "CALM", degree: 0 });
+    voiceStore.openDrawer(null);
+  }, [drawerByVoice]);
 
   return (
     <div className="rp">

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import IconSidebar from "./IconSidebar";
 import TopBar from "./TopBar";
 import StatusBar from "./StatusBar";
+import VoiceOrbProvider from "../../voice/VoiceOrbProvider";
 import { api } from "../../api/hooks";
 import "./layout.css";
 
@@ -32,6 +33,7 @@ export default function AppShell() {
         </div>
         <StatusBar live={live} />
       </div>
+      <VoiceOrbProvider />
     </div>
   );
 }

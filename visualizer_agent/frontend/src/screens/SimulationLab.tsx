@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import MapView from "../components/MapView";
 import WikiDrawer from "../components/WikiDrawer";
 import { RichText } from "../components/RichText";
@@ -6,6 +6,7 @@ import { Panel, Badge, Skel, SkeletonBlock } from "../components/ui/ui";
 import { IconPlay, IconCheck, IconExternal, IconShield, IconBrain } from "../components/icons";
 import { api, useApi } from "../api/hooks";
 import type { GraphNode, RiskScore, NodeImpact } from "../api/types";
+import { useVoice, voiceStore } from "../voice/useVoiceStore";
 import "./simulation.css";
 
 const LAYERS = [
@@ -56,6 +57,25 @@ export default function SimulationLab() {
   const [wikiNode, setWikiNode] = useState<GraphNode | null>(null);
   const openWikilink = (entity: string) =>
     setWikiNode({ id: entity, name: entity, type: "Entity", lat: null, lon: null, score: 0, band: "CALM", degree: 0 });
+
+  // Voice: `run_scenario` action. The seeded golden-path is already the
+  // scenario /api/scenario returns, so v1 just refreshes / makes visible that
+  // it re-fetched. A future POST /api/scenario/run endpoint would kick off a
+  // fresh cold pipeline; the store slice + status message are already in place.
+  const runTrigger = useVoice((s) => s.runScenarioTrigger);
+  const drawerByVoice = useVoice((s) => s.drawerEntity);
+  useEffect(() => {
+    if (!runTrigger) return;
+    voiceStore.setStatus(`Latest scenario for ${runTrigger}`);
+    // Re-fetch of scenario/procurement/spr happens naturally when a POST
+    // endpoint is added; for now the freshest cached run is already shown.
+    voiceStore.clearScenarioTrigger();
+  }, [runTrigger]);
+  useEffect(() => {
+    if (!drawerByVoice) return;
+    setWikiNode({ id: drawerByVoice, name: drawerByVoice, type: "Entity", lat: null, lon: null, score: 0, band: "CALM", degree: 0 });
+    voiceStore.openDrawer(null);
+  }, [drawerByVoice]);
 
   const nodes = useMemo(() => (graph?.nodes ?? []).map(toRiskScore), [graph]);
   const projected = useMemo(

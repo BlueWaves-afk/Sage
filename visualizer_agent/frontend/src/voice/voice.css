@@ -1,0 +1,154 @@
+/* Voice orb — floats above the status bar, below any modals/drawer. */
+
+.voice-dock {
+  position: fixed;
+  right: 18px;
+  bottom: 50px; /* clears the 32px status bar with a 16px gap */
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+}
+.voice-dock > * {
+  pointer-events: auto;
+}
+
+.voice-btn {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--border-2);
+  background: var(--bg-2);
+  color: var(--text-1);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  overflow: visible;
+  transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease,
+    transform var(--dur-fast) ease;
+}
+.voice-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+.voice-btn:active { transform: scale(0.96); }
+
+.orb-icon {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+}
+
+/* Ring — animates by state. Position: absolute + inset so the ring scales
+ * outward without pushing the icon around. */
+.orb-ring {
+  position: absolute;
+  inset: -1px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+}
+.orb-off { display: none; }
+
+/* Idle: gentle solid ring, cyan */
+.orb-idle {
+  border: 1px solid var(--cyan-dim);
+}
+
+/* Listening: pulsing outward waves — mic is live */
+.orb-listening {
+  border: 1.5px solid var(--cyan);
+  animation: orb-pulse 1.4s ease-out infinite;
+}
+.orb-listening::before,
+.orb-listening::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--cyan);
+  animation: orb-wave 1.4s ease-out infinite;
+}
+.orb-listening::after { animation-delay: 0.7s; }
+@keyframes orb-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(75, 184, 221, 0.35); }
+  50% { box-shadow: 0 0 0 3px rgba(75, 184, 221, 0.22); }
+}
+@keyframes orb-wave {
+  0% { opacity: 0.6; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.9); }
+}
+
+/* Thinking: rotating conic gradient */
+.orb-thinking {
+  border: 1.5px solid var(--border-2);
+  background: conic-gradient(from 0deg, transparent 0deg, var(--cyan) 90deg, transparent 180deg);
+  mask: radial-gradient(farthest-side, transparent 55%, black 56%);
+  -webkit-mask: radial-gradient(farthest-side, transparent 55%, black 56%);
+  animation: orb-spin 1s linear infinite;
+}
+@keyframes orb-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Speaking: audio-like breathing ring, amber-cyan gradient */
+.orb-speaking {
+  border: 1.5px solid var(--cyan);
+  animation: orb-breathe 1.2s ease-in-out infinite;
+}
+@keyframes orb-breathe {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(75, 184, 221, 0.4); }
+  50% { box-shadow: 0 0 0 5px rgba(75, 184, 221, 0.12); }
+}
+
+/* Caption panel — the transcript / status line above the orb, only shown
+ * while expanded. */
+.voice-caption {
+  max-width: 320px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-sm);
+  background: var(--bg-glass);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  font-size: 12px;
+  color: var(--text-1);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.voice-caption-status {
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+
+.voice-caption-msg {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  line-height: 1.35;
+}
+.voice-caption-role {
+  flex-shrink: 0;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.voice-caption-user .voice-caption-role { color: var(--text-2); }
+.voice-caption-sage .voice-caption-role { color: var(--cyan-dim); }
+
+.voice-caption-text {
+  color: var(--text-0);
+}
+
+.voice-caption-interim {
+  font-style: italic;
+  color: var(--text-2);
+  padding-top: 6px;
+  border-top: 1px dashed var(--border-1);
+}

@@ -23,6 +23,17 @@
   flex-direction: column;
   gap: 4px;
   align-items: flex-start;
+  transition: border-color var(--dur-fast) ease, background var(--dur-fast) ease;
+}
+/* Voice `flash_kpi` action pulses this class for ~1.4s so a hands-free user
+ * can visually confirm which KPI SAGE just spoke about. */
+.cc-kpi-flash {
+  border-color: var(--cyan);
+  animation: cc-kpi-flash 1.4s var(--ease-out-expo);
+}
+@keyframes cc-kpi-flash {
+  0%   { background: var(--cyan-soft); border-color: var(--cyan); }
+  100% { background: var(--bg-3); border-color: var(--border-1); }
 }
 .cc-kpi > .label-sm {
   min-height: 11px;
