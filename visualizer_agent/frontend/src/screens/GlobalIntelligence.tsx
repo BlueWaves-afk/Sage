@@ -194,15 +194,7 @@ export default function GlobalIntelligence() {
       <WikiDrawer
         node={selected}
         onClose={() => setSelected(null)}
-        onWikilink={(name) => {
-          const match =
-            graph?.nodes.find((n) => n.name.toLowerCase() === name.toLowerCase()) ??
-            graph?.nodes.find((n) =>
-              n.name.toLowerCase().includes(name.toLowerCase()) ||
-              name.toLowerCase().includes(n.name.toLowerCase())
-            );
-          if (match) setSelected(match);
-        }}
+        graph={graph ?? undefined}
       />
     </div>
   );
