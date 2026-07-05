@@ -13,6 +13,8 @@
 [![LangGraph](https://img.shields.io/badge/LangGraph-Autonomous%20Loop-1C3C3C?style=flat-square)](https://langchain-ai.github.io/langgraph/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
+[![Read the Series](https://img.shields.io/badge/Read_the_Series-Engineering_SAGE-2563eb?style=for-the-badge&logo=hashnode&logoColor=white)](https://ridingbluewaves.hashnode.dev/engineering-sage-an-anticipatory-intelligence-system-for-indias-crude-oil-supply-chain)
+
 </div>
 
 ---
@@ -20,6 +22,20 @@
 ## What SAGE Does — In One Sentence
 
 SAGE continuously ingests geopolitical and logistics signals from four always-on sensory sub-agents (AIS, news, sanctions, prices), synthesizes them into a bitemporal knowledge graph and a human-readable wiki store via a triage-gated Nova Pro pipeline, and autonomously triggers disruption modelling, procurement rerouting, and SPR drawdown recommendations — turning a reactive crisis response into a managed, anticipatory process with a 28× speedup from threshold crossing to ranked output.
+
+---
+
+## Engineering SAGE — The Deep-Dive Series
+
+A written walkthrough of the design decisions behind SAGE, each an introspective "why we did this, why we didn't do that" piece. Start with the overview, then dive into whichever decision interests you.
+
+| # | Article | What it covers |
+|---|---------|----------------|
+| ▶ | **[Engineering SAGE — overview](https://ridingbluewaves.hashnode.dev/engineering-sage-an-anticipatory-intelligence-system-for-indias-crude-oil-supply-chain)** | The problem, the five-system architecture, and the four core bets. Start here. |
+| 1 | **[Why raw signals never touch SAGE's vector store](https://ridingbluewaves.hashnode.dev/why-raw-signals-never-touch-sages-vector-store)** | Synthesis-first ingest and why a deterministic source-aware triage gate, not an LLM, routes every signal. |
+| 2 | **[Why SAGE keeps two knowledge graphs, not one](https://ridingbluewaves.hashnode.dev/why-sage-keeps-two-knowledge-graphs-not-one)** | A computable Graphiti graph for machines, an editable wikilink graph for humans, and why every edge is bitemporal. |
+| 3 | **[Answering a crisis in 50ms by computing a future that hasn't happened](https://ridingbluewaves.hashnode.dev/answering-a-crisis-in-50ms-by-computing-a-future-that-hasnt-happened)** | The anticipatory sandbox: speculative execution, the GNN surrogate, and the RISK_STATE isolation rule behind the 28× speedup. |
+| 4 | **[from_pretrained, not fit: loading a worldview instead of simulating one](https://ridingbluewaves.hashnode.dev/frompretrained-not-fit-loading-a-worldview-instead-of-simulating-one)** | The versioned, provenance-tracked context bundle and the no-unsourced-row guarantee. |
 
 ---
 
