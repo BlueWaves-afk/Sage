@@ -21,6 +21,9 @@ dependencies = [
     "apscheduler",
     "h3",
     "yfinance",
+    "transformers",
+    "torch",
+    "lxml",
     # Scenario agent
     "numpy",
     "scipy",
