@@ -1,0 +1,37 @@
+# S.A.G.E. — Dependency Requirements
+
+# Knowledge Base & Narrative Layer
+graphiti-core[falkordb]
+pydantic>=2.0
+pyyaml>=6.0
+
+# Multi-Agent Orchestration
+langgraph
+langchain-core
+
+# System 1: Sensory Agents & Ingestion
+websockets
+apscheduler
+h3
+yfinance
+transformers
+torch
+lxml
+redis[asyncio]
+
+# System 2: Scenario Cascade & GNN
+numpy
+scipy
+# Note: torch-geometric and PyTorch GPU versions are typically installed separately depending on CUDA availability.
+
+# System 3: Procurement Sourcing
+ortools
+scikit-learn
+
+# System 4: Strategic Petroleum Reserve
+shap
+
+# API Gateway & Web Interfaces
+fastapi
+uvicorn[standard]
+boto3
