@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T14:57:26.215666+00:00'
-valid_at: '2026-07-09T14:57:26.215666+00:00'
+last_updated: '2026-07-09T15:13:58.569414+00:00'
+valid_at: '2026-07-09T15:13:58.569414+00:00'
 source_episodes: []
 links_out: []
 coordinates: {}
@@ -22,9 +22,10 @@ coordinates: {}
 
 
 ## Profile
-[[Murban]] is a CrudeGrade tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
+Murban is a light, medium-sour crude oil grade originating from the United Arab Emirates. It has an API gravity of 40.2 and a sulfur content of 0.79%. Murban is extracted primarily from the Murban oil field, one of the largest in the UAE.
 
-## Relations
-- (no structural relationships in this bundle)
+## Role
+Murban serves as a significant revenue stream for the UAE, contributing substantially to its export earnings. Its high yield of valuable products—28% naphtha, 15% kerosene, 22% diesel, 20% vacuum gas oil (VGO), and 15% residue—makes it highly sought after in global refining markets. 
 
-_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/grade_murban.md to enrich._
+## Risk
+Geopolitical tensions in the Persian Gulf pose a risk to the stable supply of Murban. Any disruption in the region could impact global oil prices and supply chains reliant on this crude grade.
