@@ -6,12 +6,12 @@ entity_type: Corridor
 tags:
 - sage/corridor
 - risk/critical
-risk_score: 0.92
+risk_score: 0.9199
 risk_band: CRITICAL
 factors:
   ais: 0.0
-  gdelt: 0.0
-  price: 0.35
+  gdelt: 0.595
+  price: 0.0
   sanctions: 0.0
 last_updated: '2026-07-09T14:02:40.272855+00:00'
 valid_at: '2026-07-09T14:02:40.272855+00:00'
@@ -21,6 +21,7 @@ coordinates:
   lat: 26.5
   lon: 56.4
 ---
+
 
 
 
