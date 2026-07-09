@@ -13,18 +13,29 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-02T21:05:53.579839+00:00'
-valid_at: '2026-07-02T21:05:53.579839+00:00'
+last_updated: '2026-07-09T14:45:00.999275+00:00'
+valid_at: '2026-07-09T14:45:00.999275+00:00'
 source_episodes: []
-links_out: []
+links_out:
+- supplier_nnpc
+- supplier_us
+- supplier_petrobras
+- supplier_pdvsa
+- supplier_sonangol
 coordinates:
   lat: -34.36
   lon: 18.47
 ---
 
 
-## Location and Geography
-The Cape of Good Hope is a rocky headland on the Atlantic coast of the Cape Peninsula in South Africa. It is situated at coordinates -34.36 latitude and 18.47 longitude. Despite common misconceptions, the Cape of Good Hope is not the southernmost tip of Africa; that distinction belongs to Cape Agulhas, approximately 150 kilometers to the east-southeast.
+## Profile
+[[Cape of Good Hope]] is a Corridor tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
 
-## Strategic Importance in Oil Supply Chain
-The Cape of Good Hope holds significant strategic importance in the oil supply chain due to its position as a critical waypoint on the Cape Route. This route is vital for ships traveling between the Atlantic and Indian Oceans, facilitating the transport of oil from various producing regions to global markets. The corridor's throughput is approximately 7.0 million barrels per day (mbpd), underscoring its role in global energy logistics. The choke severity index of 0.15 indicates a relatively low risk of disruption, though any incident could still have considerable impact given the volume of oil transiting this route.
+## Relations
+- [[NNPC]]
+- [[United States]]
+- [[Petrobras]]
+- [[PDVSA]]
+- [[Sonangol]]
+
+_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/corridor_cape.md to enrich._
