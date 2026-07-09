@@ -13,10 +13,11 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T14:57:27.155049+00:00'
-valid_at: '2026-07-09T14:57:27.155049+00:00'
+last_updated: '2026-07-09T15:17:30.836572+00:00'
+valid_at: '2026-07-09T15:17:30.836572+00:00'
 source_episodes: []
-links_out: []
+links_out:
+- refinery_mangaluru
 coordinates:
   lat: 12.91
   lon: 74.84
@@ -24,9 +25,10 @@ coordinates:
 
 
 ## Profile
-[[Mangaluru SPR]] is a SPRCavern tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
+The SPRCavern "Mangaluru SPR" is a strategic petroleum reserve facility located in [[Mangaluru]], Karnataka. It has a total storage capacity of 1.50 million metric tons (mmt) of crude oil.
 
-## Relations
-- (no structural relationships in this bundle)
+## Role
+The primary role of the Mangaluru SPR is to serve as a buffer against supply disruptions in the global oil market. It ensures energy security for India by providing a reserve that can be tapped during emergencies or significant fluctuations in oil supply.
 
-_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/spr_mangaluru.md to enrich._
+## Risk
+The current fill level of the Mangaluru SPR stands at 0.86 mmt, indicating that the facility is not yet at full capacity. This partial fill presents a risk in terms of the reserve's effectiveness during a major supply crisis, as the available volume is below the maximum potential storage.
