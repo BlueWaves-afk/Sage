@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T13:55:24.915059+00:00'
-valid_at: '2026-07-09T13:55:24.880997+00:00'
+last_updated: '2026-07-09T13:59:02.120307+00:00'
+valid_at: '2026-07-09T13:59:02.086282+00:00'
 source_episodes: []
 links_out: []
 coordinates:
