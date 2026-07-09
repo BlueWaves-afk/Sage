@@ -13,21 +13,24 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T14:57:24.749823+00:00'
-valid_at: '2026-07-09T14:57:24.749823+00:00'
+last_updated: '2026-07-09T15:07:30.396676+00:00'
+valid_at: '2026-07-09T15:07:30.396676+00:00'
 source_episodes: []
 links_out:
-- corridor_hormuz
 - port_fujairah
+- corridor_hormuz
 coordinates: {}
 ---
 
 
-## Profile
-[[ADNOC]] is a Supplier tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
+## Overview
+[[ADNOC]], the Abu Dhabi National Oil Company, is the state-owned oil company of United Arab Emirates. It is one of the world's largest energy companies by reserves and production. ADNOC operates 16 subsidiary companies across upstream, midstream, and downstream sectors. 
 
-## Relations
-- [[Strait of Hormuz]]
-- [[Fujairah]]
+## Export Capacity
+ADNOC has a daily export capacity of 3.0 million barrels per day (mbpd). The company is enhancing its export infrastructure, including the West-East Pipeline project to double oil export capacity through the port of [[Fujairah]], aiming to bypass the [[Strait of Hormuz]].
 
-_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/supplier_adnoc.md to enrich._
+## Investments and Partnerships
+ADNOC has attracted significant foreign direct investment, including from US asset managers BlackRock and KKR, Italian firm Eni, and Austria's OMV. Notable investments include pipeline assets and refining businesses. 
+
+## Strategic Initiatives
+ADNOC has undertaken several strategic initiatives, such as listing its Murban crude oil as a futures contract, investing in chemicals projects, and acquiring stakes in international companies like OMV and Fertiglobe.
