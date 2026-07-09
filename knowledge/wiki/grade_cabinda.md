@@ -13,19 +13,21 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T14:57:26.658878+00:00'
-valid_at: '2026-07-09T14:57:26.658878+00:00'
+last_updated: '2026-07-09T15:15:48.311217+00:00'
+valid_at: '2026-07-09T15:15:48.311217+00:00'
 source_episodes: []
 links_out:
+- supplier_sonangol
 - refinery_chennai
 coordinates: {}
 ---
 
 
 ## Profile
-[[Cabinda]] is a CrudeGrade tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
+[[Cabinda]] is a light sweet crude oil grade originating from [[Sonangol]]. It has an API gravity of 32.0 and a sulfur content of 0.13%. The crude is extracted from offshore fields in the Cabinda Province, which is an exclave of Angola.
 
-## Relations
-- [[Chennai Refinery]]
+## Role
+Cabinda crude is valued for its high yields of light products. Its refining process typically produces 20% naphtha, 13% kerosene, 22% diesel, 23% vacuum gas oil (VGO), and 22% residue. These characteristics make it suitable for refineries configured to maximize middle distillates and lighter products, such as the [[Chennai Refinery]] in India.
 
-_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/grade_cabinda.md to enrich._
+## Risk
+The political instability in Cabinda Province, due to ongoing separatist movements, poses a risk to the consistent supply of Cabinda crude. Additionally, its sweet nature and high-value product yields make it susceptible to price volatility in both crude and refined product markets.
