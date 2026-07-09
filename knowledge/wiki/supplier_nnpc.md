@@ -13,19 +13,32 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T14:57:25.030505+00:00'
-valid_at: '2026-07-09T14:57:25.030505+00:00'
+last_updated: '2026-07-09T15:09:13.083476+00:00'
+valid_at: '2026-07-09T15:09:13.083476+00:00'
 source_episodes: []
-links_out:
-- corridor_cape
+links_out: []
 coordinates: {}
 ---
 
 
-## Profile
-[[NNPC]] is a Supplier tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
+## Overview
+The Nigerian National Petroleum Company (NNPC) is a state-owned oil company in Nigeria. It operates as a limited liability company and is the only entity licensed to operate in the country's petroleum industry. NNPC partners with foreign oil companies to explore Nigeria's fossil fuel resources.
 
-## Relations
-- [[Cape of Good Hope]]
+## Leadership
+- **Group Chief Executive Officer (GCEO):** Bayo Ojulari
+- **Non-Executive Chairman:** Ahmadu Musa Kida
+- **Board Members:** Representatives from Nigeria’s six geopolitical zones and ministry representatives.
 
-_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/supplier_nnpc.md to enrich._
+## Operations
+NNPC’s business operations are managed through Strategic Business and Corporate Services Units (SBUs/CSUs) across Nigeria. The company has several subsidiaries and associated companies, including:
+- NNPC Upstream Investment Management Services (NUIMS)
+- NNPC Trading Limited (NTL)
+- NNPC Exploration & Production Limited (NEPL)
+- NNPC Retail Limited (NRL)
+- NNPC Gas Infrastructure Company (NGIC)
+- NNPC Pipeline & Storage Company (NPSC)
+
+## Export Data
+- **Country:** Nigeria
+- **Daily Export (mbpd):** 1.4
+- **Sanctioned:** False
