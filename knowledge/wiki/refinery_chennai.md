@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-02T21:11:47.757885+00:00'
-valid_at: '2026-07-02T21:11:47.757885+00:00'
+last_updated: '2026-07-09T14:45:02.266209+00:00'
+valid_at: '2026-07-09T14:45:02.266209+00:00'
 source_episodes: []
 links_out:
 - grade_cabinda
@@ -25,10 +25,9 @@ coordinates:
 
 
 ## Profile
-The [[Chennai Refinery]], located at coordinates 13.16°N latitude and 80.26°E longitude, is a significant asset in India's refining capacity. It processes approximately 0.21 million barrels per day (mbpd) of crude oil.
+[[Chennai Refinery]] is a Refinery tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
 
-## Role
-The refinery plays a critical role in India's downstream oil sector, contributing to the nation's fuel supply. Its strategic location enables efficient distribution of refined products across southern India. The refinery maintains an inventory sufficient for 22 days, ensuring a buffer against supply disruptions.
+## Relations
+- [[Cabinda]]
 
-## Risk
-Geopolitical tensions and supply chain disruptions, particularly from crude oil sources like [[Cabinda]], pose risks to the refinery's operations. Fluctuations in global oil prices and regional political stability directly impact the refinery's supply security and operational continuity.
+_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/refinery_chennai.md to enrich._
