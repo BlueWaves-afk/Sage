@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T18:11:30.630097+00:00'
-valid_at: '2026-07-09T18:10:51.347803+00:00'
+last_updated: '2026-07-09T18:17:01.084383+00:00'
+valid_at: '2026-07-09T18:16:21.065364+00:00'
 source_episodes: []
 links_out:
 - supplier_adnoc
