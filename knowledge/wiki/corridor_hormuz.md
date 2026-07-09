@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.35
   sanctions: 0.0
-last_updated: '2026-07-09T13:24:27.866413+00:00'
-valid_at: '2026-07-09T13:24:27.866413+00:00'
+last_updated: '2026-07-09T13:24:27.870953+00:00'
+valid_at: '2026-07-09T13:24:27.870953+00:00'
 source_episodes: []
 links_out:
 - authority_ofac
@@ -35,6 +35,7 @@ coordinates:
   lat: 26.5
   lon: 56.4
 ---
+
 
 
 
