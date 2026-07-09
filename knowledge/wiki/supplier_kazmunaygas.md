@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-02T21:09:56.797750+00:00'
-valid_at: '2026-07-02T21:09:56.797750+00:00'
+last_updated: '2026-07-09T14:45:01.701854+00:00'
+valid_at: '2026-07-09T14:45:01.701854+00:00'
 source_episodes: []
 links_out:
 - corridor_suez
@@ -23,10 +23,9 @@ coordinates: {}
 
 
 ## Profile
-[[KazMunayGas]] is the national oil and gas company of Kazakhstan. It plays a pivotal role in the country's energy sector, managing significant upstream, midstream, and downstream operations. The company is instrumental in Kazakhstan's oil exports, which average 1.4 million barrels per day (mbpd).
+[[KazMunayGas]] is a Supplier tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
 
-## Role
-[[KazMunayGas]] is crucial for Kazakhstan's energy security and economic stability. It engages in exploration, production, refining, and the sale of oil and gas. The company's export routes are diverse, including pipelines and maritime routes through the [[Suez Canal]], ensuring a steady flow of oil to global markets.
+## Relations
+- [[Suez Canal]]
 
-## Risk
-The primary risks associated with [[KazMunayGas]] include geopolitical tensions in the region, fluctuations in global oil prices, and the reliability of transit routes such as the [[Suez Canal]]. Additionally, environmental regulations and the transition to greener energy sources pose long-term challenges to its operations.
+_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/supplier_kazmunaygas.md to enrich._
