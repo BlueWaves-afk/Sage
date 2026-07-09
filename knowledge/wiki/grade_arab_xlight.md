@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-02T21:12:33.983805+00:00'
-valid_at: '2026-07-02T21:12:33.983805+00:00'
+last_updated: '2026-07-09T14:45:02.485612+00:00'
+valid_at: '2026-07-09T14:45:02.485612+00:00'
 source_episodes: []
 links_out: []
 coordinates: {}
@@ -22,21 +22,9 @@ coordinates: {}
 
 
 ## Profile
-- **Name:** Arab Extra Light
-- **Origin:** Saudi Arabia
-- **API Gravity:** 40.9
-- **Sulfur Content:** 1.15%
-- **Yields:** 
-  - Naphtha: 28%
-  - Kerosene: 15%
-  - Diesel: 22%
-  - Vacuum Gas Oil (VGO): 20%
-  - Residue: 15%
+[[Arab Extra Light]] is a CrudeGrade tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
 
-## Role
-- **Market Position:** Arab Extra Light is a high-value crude grade due to its low sulfur content and high API gravity, making it attractive for refineries seeking to produce lighter, higher-value products such as naphtha and diesel.
-- **Refining:** Its yield profile is particularly suited for refineries configured to maximize light-end products, enhancing its desirability in markets with high demand for gasoline and diesel.
+## Relations
+- (no structural relationships in this bundle)
 
-## Risk
-- **Geopolitical:** As a product of Saudi Arabia, supply chains for Arab Extra Light are susceptible to regional geopolitical tensions, which can impact production and export stability.
-- **Market Volatility:** Fluctuations in global oil demand, especially for light products, can affect the crude's market value and refining margins.
+_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/grade_arab_xlight.md to enrich._
