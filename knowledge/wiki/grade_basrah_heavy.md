@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-02T21:12:54.709984+00:00'
-valid_at: '2026-07-02T21:12:54.709984+00:00'
+last_updated: '2026-07-09T14:45:02.595343+00:00'
+valid_at: '2026-07-09T14:45:02.595343+00:00'
 source_episodes: []
 links_out:
 - refinery_jamnagar
@@ -24,10 +24,10 @@ coordinates: {}
 
 
 ## Profile
-[[Basrah Heavy]] is a crude oil grade originating from Iraq. It is characterized by an API gravity of 24.0, classifying it as a heavy crude, and a high sulfur content of 4.05%, making it a sour crude. 
+[[Basrah Heavy]] is a CrudeGrade tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
 
-## Role
-[[Basrah Heavy]] is primarily refined into heavier products due to its high residue yield of 40%. Its refining process yields 13% naphtha, 10% kerosene, 16% diesel, and 21% vacuum gas oil (VGO). Refineries such as [[Jamnagar Refinery]] and facilities at [[Paradip]] are equipped to process this crude, leveraging its high residue output for further downstream applications.
+## Relations
+- [[Jamnagar Refinery]]
+- [[Paradip]]
 
-## Risk
-The high sulfur content of [[Basrah Heavy]] poses environmental and processing risks, necessitating desulfurization units in refineries to meet regulatory standards. Geopolitical instability in Iraq also introduces supply chain risks, potentially affecting the consistent flow of this crude to international markets.
+_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/grade_basrah_heavy.md to enrich._
