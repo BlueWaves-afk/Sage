@@ -13,12 +13,12 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-02T21:15:39.903440+00:00'
-valid_at: '2026-07-02T21:15:39.903440+00:00'
+last_updated: '2026-07-09T14:45:03.262834+00:00'
+valid_at: '2026-07-09T14:45:03.262834+00:00'
 source_episodes: []
 links_out:
-- refinery_jamnagar
 - corridor_hormuz
+- refinery_jamnagar
 coordinates:
   lat: 22.6
   lon: 69.87
@@ -26,10 +26,10 @@ coordinates:
 
 
 ## Profile
-The Port of Sikka, located at coordinates 22.60 latitude and 69.87 longitude, serves as a critical maritime gateway for the [[Jamnagar Refinery]]. It accommodates vessels with a maximum draft of 23.0 meters. The port is characterized by minimal congestion, with a congestion index of 0.0, ensuring efficient throughput of oil shipments.
+[[Sikka]] is a Port tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
 
-## Role
-Sikka plays a pivotal role in the oil supply chain by facilitating the export and import activities of the [[Jamnagar Refinery]], one of the world's largest refineries. Its strategic location enables it to serve as a vital link in the regional oil distribution network, contributing to energy security in the area.
+## Relations
+- [[Strait of Hormuz]]
+- [[Jamnagar Refinery]]
 
-## Risk
-The port's operations are indirectly influenced by geopolitical tensions, particularly those affecting the [[Strait of Hormuz]], a critical chokepoint for global oil shipments. Any disruption in the Strait could impact the flow of oil through Sikka, potentially affecting the operational efficiency of the Jamnagar Refinery and the broader regional energy supply chain.
+_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/port_sikka.md to enrich._
