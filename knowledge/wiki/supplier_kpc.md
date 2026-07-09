@@ -13,19 +13,19 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-02T21:08:28.367046+00:00'
-valid_at: '2026-07-02T21:08:28.367046+00:00'
+last_updated: '2026-07-09T14:45:01.349477+00:00'
+valid_at: '2026-07-09T14:45:01.349477+00:00'
 source_episodes: []
-links_out: []
+links_out:
+- corridor_hormuz
 coordinates: {}
 ---
 
 
-## Overview
-Kuwait Petroleum Corporation (KPC) is the state-owned oil company of [[Kuwait Petroleum Corporation]]. It is headquartered in Kuwait City and focuses on petroleum exploration, production, refining, marketing, and transportation. KPC is a significant global player, producing about 7% of the world's total crude oil.
+## Profile
+[[Kuwait Petroleum Corporation]] is a Supplier tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
 
-## Export Capacity
-KPC has a daily export capacity of 2.0 million barrels per day (mbpd). The company is not currently under any sanctions.
+## Relations
+- [[Strait of Hormuz]]
 
-## Recent Developments
-In 2026, due to regional conflict with Iran, KPC implemented a precautionary reduction in oil output and temporarily suspended production at the Mina Abdullah and Mina Al-Ahmadi refineries following drone attacks.
+_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/supplier_kpc.md to enrich._
