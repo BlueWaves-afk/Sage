@@ -6,20 +6,20 @@ entity_type: Corridor
 tags:
 - sage/corridor
 - risk/calm
-risk_score: 0.0875
+risk_score: 0.0
 risk_band: CALM
 factors:
   ais: 0.0
   gdelt: 0.0
-  price: 0.35
+  price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T13:24:27.870953+00:00'
-valid_at: '2026-07-09T13:24:27.870953+00:00'
+last_updated: '2026-07-09T13:24:53.326303+00:00'
+valid_at: '2026-07-09T13:22:39.316609+00:00'
 source_episodes: []
 links_out:
 - authority_ofac
-- event_tanker_war
 - supplier_aramco
+- event_tanker_war
 - supplier_adnoc
 - supplier_nioc
 - supplier_iraqoil
@@ -37,13 +37,8 @@ coordinates:
 ---
 
 
-
-
-
-
-
 ## Current Assessment
-The [[Strait of Hormuz]] remains under immediate threat of closure following Iran's declaration to shut down the strait in response to recent strikes. Additionally, the [[OFAC]] has added a tanker operator to the SDN list, further complicating the transit of oil through the strait.
+The [[Strait of Hormuz]] remains under immediate threat of closure following Iran's declaration to shut down the strait in response to recent strikes. The [[OFAC]] has added a tanker operator to the SDN list, further complicating the transit of oil through the strait. System 3 procurement analysis has identified 24 alternative crude sources, with [[Saudi Aramco]] (Arab Light) being the top option.
 
 ## Historical Pattern
 The current situation has a clear precedent in the [[Tanker War]] with a feature-overlap percentage of approximately 70%.
@@ -63,6 +58,7 @@ The current situation has a clear precedent in the [[Tanker War]] with a feature
 ## Signal Basis
 - News report indicating Iran's threat to close the [[Strait of Hormuz]] after strikes.
 - [[OFAC]] adds tanker operator to SDN list.
+- System 3 procurement analysis for Strait of Hormuz: 24 alternative crude sources ranked.
 
 ## Relations
 | Relation         | Entity                 | Type               | Strength |
