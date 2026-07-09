@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-02T21:11:36.937738+00:00'
-valid_at: '2026-07-02T21:11:36.937738+00:00'
+last_updated: '2026-07-09T14:45:02.212265+00:00'
+valid_at: '2026-07-09T14:45:02.212265+00:00'
 source_episodes: []
 links_out:
 - grade_cpc_blend
@@ -25,10 +25,9 @@ coordinates:
 
 
 ## Profile
-The [[Visakhapatnam Refinery]], located at coordinates 17.69°N latitude and 83.22°E longitude, is a key asset in India's oil refining sector. It has a processing capacity of 0.30 million barrels per day (mbpd). The refinery maintains an inventory sufficient for 22 days of operation.
+[[Visakhapatnam Refinery]] is a Refinery tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
 
-## Role
-The [[Visakhapatnam Refinery]] plays a critical role in India's energy security by converting crude oil into refined petroleum products. Its strategic location on the eastern coast facilitates the import of crude oil and the distribution of refined products across eastern India.
+## Relations
+- [[CPC Blend]]
 
-## Risk
-Operational risks include potential supply chain disruptions due to geopolitical tensions in crude oil exporting regions. The refinery's dependency on imported crude, such as [[CPC Blend]], exposes it to market volatility and supply uncertainties. Additionally, environmental and regulatory risks could impact operational continuity and compliance costs.
+_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/refinery_visakh.md to enrich._
