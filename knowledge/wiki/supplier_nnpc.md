@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T14:45:35.349647+00:00'
-valid_at: '2026-07-09T14:45:35.349647+00:00'
+last_updated: '2026-07-09T14:57:25.030505+00:00'
+valid_at: '2026-07-09T14:57:25.030505+00:00'
 source_episodes: []
 links_out:
 - corridor_cape
