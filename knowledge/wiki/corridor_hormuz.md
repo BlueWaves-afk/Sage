@@ -13,12 +13,11 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-04T08:41:44.116331+00:00'
-valid_at: '2026-07-04T08:41:35.517951+00:00'
+last_updated: '2026-07-09T13:20:45.767315+00:00'
+valid_at: '2026-07-09T13:20:39.322764+00:00'
 source_episodes: []
 links_out:
 - event_tanker_war
-- event_2019_hormuz_attacks
 - supplier_aramco
 - supplier_adnoc
 - supplier_nioc
@@ -38,7 +37,7 @@ coordinates:
 
 
 ## Current Assessment
-The [[Strait of Hormuz]] is experiencing heightened military activity due to direct military strikes between Iran and Israel, raising the risk of closure to critical levels. This situation echoes the patterns observed during the [[Tanker War]] and the [[2019 Tanker Attacks]].
+The [[Strait of Hormuz]] is under immediate threat of closure following Iran's declaration to shut down the strait in response to recent strikes. This development significantly elevates the risk of a major disruption to global oil supply.
 
 ## Historical Pattern
 The current situation has a clear precedent in the [[Tanker War]] with a feature-overlap percentage of approximately 70%.
@@ -56,7 +55,7 @@ The current situation has a clear precedent in the [[Tanker War]] with a feature
 - [[Visakhapatnam Refinery]]: High exposure due to peak gap of 0.00 mbpd from day 45.0.
 
 ## Signal Basis
-- System 2 scenario modelling (confirmed) for Strait of Hormuz: projected supply gap 0.61 mbpd over 10 days (timeline: day1:0.1, day2:0.2, day3:0.3, day4:0.4, day5:0.5, day6:0.6, day7:0.6). Projected price impact $36-$61/bbl, SPR cover would last 45.0 days at the projected draw rate, GDP impact -1.28%, inflation impact 3.62%. Most-exposed nodes: Jamnagar Refinery peak gap 0.61 mbpd from day 0.0; Chennai Refinery peak gap 0.00 mbpd from day 45.0; Visakhapatnam Refinery peak gap 0.00 mbpd from day 45.0. Key assumptions: import_dependence_pct=88.6%; hormuz_share_pct=42.5%; spr_total_mmt=5.33MMT; spr_fill_frac=0.572frac. Model confidence 100%.
+- News report indicating Iran's threat to close the [[Strait of Hormuz]] after strikes.
 
 ## Relations
 | Relation         | Entity                 | Type               | Strength |
@@ -69,7 +68,6 @@ The current situation has a clear precedent in the [[Tanker War]] with a feature
 | threat_actor     | Iran                   | threat_actor       | high     |
 | threat_actor     | Israel                 | threat_actor       | high     |
 | historical_precedent| [[Tanker War]]      | historical_precedent| high     |
-| historical_precedent| [[2019 Tanker Attacks]]| historical_precedent| medium  |
 | bypass_option    | [[Yanbu]]              | bypass_option      | medium   |
 | bypass_option    | [[Fujairah]]           | bypass_option      | medium   |
 | supply_dependency| [[Jamnagar Refinery]]  | supply_dependency  | high     |
