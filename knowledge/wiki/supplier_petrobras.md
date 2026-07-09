@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-02T21:09:33.194649+00:00'
-valid_at: '2026-07-02T21:09:33.194649+00:00'
+last_updated: '2026-07-09T14:45:01.585110+00:00'
+valid_at: '2026-07-09T14:45:01.585110+00:00'
 source_episodes: []
 links_out:
 - corridor_cape
@@ -23,10 +23,9 @@ coordinates: {}
 
 
 ## Profile
-[[Petrobras]], headquartered in Brazil, is a major player in the global oil supply chain. It is a state-controlled oil and gas corporation, involved in the exploration, production, and distribution of oil and natural gas. Petrobras operates both domestically and internationally, with significant activities in the pre-salt layer of the [[Cape of Good Hope]] region.
+[[Petrobras]] is a Supplier tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
 
-## Role
-Petrobras contributes approximately 1.5 million barrels per day (mbpd) to the global oil market through its export activities. The company plays a critical role in Brazil's energy sector, influencing the country's economic stability and energy security. Its operations extend beyond Brazil, impacting global oil supply dynamics.
+## Relations
+- [[Cape of Good Hope]]
 
-## Risk
-Petrobras faces various geopolitical and operational risks. These include regulatory changes in Brazil, fluctuations in global oil prices, and the geopolitical stability of regions where it operates, such as near the [[Cape of Good Hope]]. Additionally, environmental concerns and the company's financial health pose risks to its long-term sustainability and reliability as a supplier.
+_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/supplier_petrobras.md to enrich._
