@@ -13,18 +13,21 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-02T21:05:10.894280+00:00'
-valid_at: '2026-07-02T21:05:10.894280+00:00'
+last_updated: '2026-07-09T14:45:00.877567+00:00'
+valid_at: '2026-07-09T14:45:00.877567+00:00'
 source_episodes: []
-links_out: []
+links_out:
+- supplier_kazmunaygas
 coordinates:
   lat: 30.7
   lon: 32.3
 ---
 
 
-## Geopolitical Significance
-The [[Suez Canal]] is a critical maritime corridor connecting the Mediterranean Sea to the Red Sea, facilitating a direct route between Europe and Asia. Its strategic importance is underscored by its role as a naval shortcut and choke point, particularly for nations with military presences on both the Mediterranean and Red Seas, such as Egypt and Israel.
+## Profile
+[[Suez Canal]] is a Corridor tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
 
-## Operational Capacity
-The canal has a throughput capacity of 4.9 million barrels per day (mbpd) and a choke severity index of 0.60, indicating a significant but not extreme vulnerability in the global oil supply chain. Located at coordinates 30.7°N latitude and 32.3°E longitude, the canal's efficient operation is vital for maintaining global energy security.
+## Relations
+- [[KazMunayGas]]
+
+_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/corridor_suez.md to enrich._
