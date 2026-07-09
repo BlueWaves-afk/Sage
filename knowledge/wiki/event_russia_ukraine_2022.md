@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T14:57:27.834479+00:00'
-valid_at: '2026-07-09T14:57:27.834479+00:00'
+last_updated: '2026-07-09T15:21:57.625027+00:00'
+valid_at: '2026-07-09T15:21:57.625027+00:00'
 source_episodes: []
 links_out: []
 coordinates: {}
@@ -22,9 +22,17 @@ coordinates: {}
 
 
 ## Profile
-[[2022 Russia-Ukraine War]] is a GeoEvent tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
+- **Event**: 2022 Russia-Ukraine War
+- **Actors**: Russia, Ukraine
+- **Action**: Invasion by Russia of Ukraine on 2022-02-24, triggering Western sanctions and a steep discount on Urals crude.
+- **Severity**: 0.85 (high impact on global oil markets and geopolitics)
 
-## Relations
-- (no structural relationships in this bundle)
+## Role
+- **Geopolitical Disruption**: The conflict has significantly altered the dynamics of the global oil supply chain, particularly affecting Russia's oil exports.
+- **Sanctions Impact**: Western sanctions imposed on Russia have restricted its access to international financial systems and markets, complicating oil trade.
+- **Market Reaction**: The steep discount on Urals crude has led to shifts in purchasing patterns among global buyers, seeking alternatives or negotiating lower prices.
 
-_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/event_russia_ukraine_2022.md to enrich._
+## Risk
+- **Supply Chain Volatility**: Heightened risk of supply disruptions due to ongoing conflict and sanctions.
+- **Price Instability**: Fluctuations in oil prices driven by market reactions to the conflict and sanctions.
+- **Strategic Realignment**: Increased risk of long-term shifts in oil trade alliances and supply routes as countries and companies reassess dependencies on Russian oil.
