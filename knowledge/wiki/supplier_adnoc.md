@@ -13,14 +13,15 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T19:15:45.224800+00:00'
-valid_at: '2026-07-09T19:15:45.224800+00:00'
+last_updated: '2026-07-09T19:39:27.692310+00:00'
+valid_at: '2026-07-09T19:39:27.692310+00:00'
 source_episodes: []
 links_out:
 - port_fujairah
 - corridor_hormuz
 coordinates: {}
 ---
+
 
 
 
