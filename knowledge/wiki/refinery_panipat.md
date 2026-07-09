@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T14:57:25.514207+00:00'
-valid_at: '2026-07-09T14:57:25.514207+00:00'
+last_updated: '2026-07-09T15:11:40.671267+00:00'
+valid_at: '2026-07-09T15:11:40.671267+00:00'
 source_episodes: []
 links_out:
 - grade_arab_light
@@ -25,9 +25,10 @@ coordinates:
 
 
 ## Profile
-[[Panipat]] is a Refinery tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
+The [[Panipat]], situated at coordinates 29.39°N latitude and 76.97°E longitude, is a significant asset in the Indian oil refining landscape. It has a processing capacity of 0.30 million barrels per day (mbpd). The refinery maintains an inventory sufficient for 22 days of operation.
 
-## Relations
-- [[Arab Light]]
+## Role
+The [[Panipat]] plays a critical role in India's domestic oil supply chain by converting crude oil into refined petroleum products. It contributes to meeting the regional demand for fuels such as gasoline, diesel, and jet fuel. The refinery is capable of processing various crude oil types, including [[Arab Light]].
 
-_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/refinery_panipat.md to enrich._
+## Risk
+Operational risks at the [[Panipat]] include supply chain disruptions, which could impact the availability of crude oil feedstocks like [[Arab Light]]. Geopolitical tensions in oil-producing regions may affect crude oil supply reliability. Additionally, the 22-day inventory buffer provides a limited safeguard against short-term supply interruptions.
