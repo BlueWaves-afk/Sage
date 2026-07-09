@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T14:57:25.464017+00:00'
-valid_at: '2026-07-09T14:57:25.464017+00:00'
+last_updated: '2026-07-09T15:11:23.742078+00:00'
+valid_at: '2026-07-09T15:11:23.742078+00:00'
 source_episodes: []
 links_out:
 - grade_arab_heavy
@@ -25,11 +25,14 @@ coordinates:
 ---
 
 
-## Profile
-[[Paradip]] is a Refinery tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
+## Capacity and Location
+- The Paradip Refinery has a processing capacity of 0.30 million barrels per day (mbpd).
+- It is located at coordinates 20.31°N latitude and 86.69°E longitude.
 
-## Relations
-- [[Arab Heavy]]
-- [[Basrah Heavy]]
+## Inventory and Operations
+- The refinery maintains an inventory sufficient for 22 days of operation.
+- It is owned by Indian Oil Corporation Limited and processes heavy crude oils, including types similar to [[Arab Heavy]] and [[Basrah Heavy]].
 
-_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/refinery_paradip.md to enrich._
+## State Support and Township
+- The Government of Odisha has provided nil sales tax on refinery products for an 11-year period.
+- The IOCL Paradip Refinery Township includes residential areas, facilities, and amenities for refinery employees.
