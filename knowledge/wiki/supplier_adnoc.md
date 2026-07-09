@@ -13,36 +13,21 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-02T21:07:01.033981+00:00'
-valid_at: '2026-07-02T21:07:01.033981+00:00'
+last_updated: '2026-07-09T14:45:01.171793+00:00'
+valid_at: '2026-07-09T14:45:01.171793+00:00'
 source_episodes: []
 links_out:
-- port_fujairah
 - corridor_hormuz
+- port_fujairah
 coordinates: {}
 ---
 
 
-## Overview
-- **Country**: United Arab Emirates
-- **Daily Export**: 3.0 million barrels per day (mbpd)
-- **Sanctioned**: False
+## Profile
+[[ADNOC]] is a Supplier tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
 
-## Operations
-- **Headquarters**: Abu Dhabi, United Arab Emirates
-- **Key People**: Mohamed bin Zayed Al Nahyan (Chairman), Sultan Ahmed Al Jaber (Director-General & CEO)
-- **Products**: Petroleum, oil products, natural gas, petrochemicals
-- **Subsidiaries**: ADNOC Onshore, ADNOC Offshore, ADNOC Drilling, Al Yasat Petroleum, Al Dhafra Petroleum, ADNOC Sour Gas, ADNOC Gas Processing, ADNOC LNG, ADNOC Refining, Fertiglobe, ADNOC Industrial Gas, Abu Dhabi Polymers Company (Borouge), ADNOC Logistics & Services, ADNOC Distribution, Abu Dhabi Crude Oil Pipeline LLC (ADCOP)
-- **Refineries**: Ruwais Refinery, Umm Al Nar
-- **Exports**: Liquefied natural gas (LNG)
+## Relations
+- [[Strait of Hormuz]]
+- [[Fujairah]]
 
-## Strategic Initiatives
-- **West-East Pipeline Project**: Accelerated in May 2026 to double oil export capacity through [[Fujairah]], bypassing the [[Strait of Hormuz]]. Expected operational by 2027.
-
-## Foreign Direct Investment
-- **Investors**: BlackRock, KKR, Eni, OMV, GIC
-- **Investments**: 
-  - BlackRock and KKR acquired 40% of ADNOC's pipeline assets for $4 billion.
-  - Eni SpA took a 20% stake in Abu Dhabi Oil Refining Company for over $3 billion.
-  - OMV invested $2.8 billion for 15% of ADNOC's refining business.
-  - GIC acquired a 6% share in ADNOC's pipeline infrastructure for $600 million.
+_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/supplier_adnoc.md to enrich._
