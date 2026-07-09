@@ -13,18 +13,22 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T14:57:27.524027+00:00'
-valid_at: '2026-07-09T14:57:27.524027+00:00'
+last_updated: '2026-07-09T15:19:58.492496+00:00'
+valid_at: '2026-07-09T15:19:58.492496+00:00'
 source_episodes: []
 links_out: []
 coordinates: {}
 ---
 
 
-## Profile
-[[Tanker War]] is a GeoEvent tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
+## GeoEvent Overview
+The **Tanker War** was a series of attacks on merchant vessels in the Persian Gulf and Strait of Hormuz from 1981 to 1988, part of the Iran–Iraq War. Iraq was responsible for 283 attacks and Iran for 168. Iraq began targeting ships bound for Iranian ports in 1981; in March 1984 it expanded attacks to the Kharg Island oil-loading complex, after which Iran began retaliatory attacks, making it a two-way conflict.
 
-## Relations
-- (no structural relationships in this bundle)
+## Actors and Actions
+**Iraq** targeted ships bound for Iranian ports starting in 1981, expanding to the Kharg Island oil-loading complex in March 1984. **Iran** retaliated with attacks on merchant vessels, making the conflict bilateral. Kuwait and Saudi Arabia backed Iraq. Over 30 million tonnes of cargo were damaged between 1981 and 1987, and well over 100 sailors were killed.
 
-_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/event_tanker_war.md to enrich._
+## US Intervention
+The US intervened in 1986 to protect Kuwaiti tankers. In 1987, Kuwait requested US reflagging of its vessels, leading to **Operation Earnest Will** (July 1987–September 1988). Iran used speedboat attacks and Chinese-made Silkworm missiles.
+
+## Conclusion
+The Tanker War ended on 4 August 1988 with the broader Iran–Iraq War.
