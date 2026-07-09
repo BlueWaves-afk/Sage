@@ -6,15 +6,15 @@ entity_type: Supplier
 tags:
 - sage/supplier
 - risk/calm
-risk_score: 0.0
+risk_score: 0.18
 risk_band: CALM
 factors:
-  ais: 0.0
-  gdelt: 0.0
-  price: 0.0
+  ais: 0.12
+  gdelt: 0.15
+  price: 0.22
   sanctions: 0.0
-last_updated: '2026-07-09T14:45:34.866918+00:00'
-valid_at: '2026-07-09T14:45:34.866918+00:00'
+last_updated: '2026-07-09T14:45:38.285758+00:00'
+valid_at: '2026-07-09T14:45:38.285758+00:00'
 source_episodes: []
 links_out:
 - corridor_hormuz
@@ -28,6 +28,7 @@ links_out:
 - port_yanbu
 coordinates: {}
 ---
+
 
 
 ## Profile
