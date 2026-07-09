@@ -13,20 +13,19 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-02T21:13:27.784137+00:00'
-valid_at: '2026-07-02T21:13:27.784137+00:00'
+last_updated: '2026-07-09T14:45:02.757126+00:00'
+valid_at: '2026-07-09T14:45:02.757126+00:00'
 source_episodes: []
 links_out:
-- supplier_nnpc
+- refinery_kochi
 coordinates: {}
 ---
 
 
 ## Profile
-[[Bonny Light]] is a [[NNPC]]n crude oil grade with an API gravity of 38.0 and a sulfur content of 0.37%. It is extracted from the Niger Delta region, known for its high-quality sweet crude. The yield breakdown includes 26% naphtha, 14% kerosene, 23% diesel, 20% vacuum gas oil (VGO), and 17% residue.
+[[Bonny Light]] is a CrudeGrade tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
 
-## Role
-[[Bonny Light]] is highly valued in the global oil market due to its low sulfur content and high API gravity, making it ideal for producing high-quality transportation fuels. Its refined products are in demand for gasoline, diesel, and jet fuel, contributing significantly to [[NNPC]]'s export revenue and energy security.
+## Relations
+- [[Kochi]]
 
-## Risk
-The production and export of [[Bonny Light]] are susceptible to geopolitical instability, militant activities, and infrastructure challenges in the Niger Delta. These factors can lead to supply disruptions, impacting global oil prices and refinery operations that depend on this sweet crude grade.
+_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/grade_bonny_light.md to enrich._
