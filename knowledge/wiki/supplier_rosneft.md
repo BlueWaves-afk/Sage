@@ -13,21 +13,19 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-02T21:07:49.862436+00:00'
-valid_at: '2026-07-02T21:07:49.862436+00:00'
+last_updated: '2026-07-09T14:45:01.233962+00:00'
+valid_at: '2026-07-09T14:45:01.233962+00:00'
 source_episodes: []
-links_out: []
+links_out:
+- corridor_malacca
 coordinates: {}
 ---
 
 
-## Company Overview
-[[Rosneft]] is a Russian integrated energy company headquartered in Moscow, specializing in the exploration, extraction, production, refining, transport, and sale of petroleum, natural gas, and petroleum products. It is controlled by the Russian government through the Rosneftegaz holding company.
+## Profile
+[[Rosneft]] is a Supplier tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
 
-## Operational Data
-- **Country of Origin**: Russia
-- **Daily Export Volume**: 4.5 million barrels per day (mbpd)
-- **Sanctioned**: No
+## Relations
+- [[Strait of Malacca]]
 
-## Historical Context
-[[Rosneft]] was established in 1993 and has since grown to become one of the largest oil companies globally. It significantly expanded its assets through the acquisition of former Yukos assets and TNK-BP in 2013.
+_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/supplier_rosneft.md to enrich._
