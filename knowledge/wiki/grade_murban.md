@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-02T21:13:17.065866+00:00'
-valid_at: '2026-07-02T21:13:17.065866+00:00'
+last_updated: '2026-07-09T14:45:02.703950+00:00'
+valid_at: '2026-07-09T14:45:02.703950+00:00'
 source_episodes: []
 links_out: []
 coordinates: {}
@@ -22,21 +22,9 @@ coordinates: {}
 
 
 ## Profile
-- **CrudeGrade**: Murban
-- **Origin**: United Arab Emirates
-- **API Gravity**: 40.2
-- **Sulfur Content**: 0.79%
+[[Murban]] is a CrudeGrade tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
 
-## Role
-- **Yield Composition**:
-  - Naphtha: 28%
-  - Kerosene: 15%
-  - Diesel: 22%
-  - Vacuum Gas Oil (VGO): 20%
-  - Residue: 15%
-- **Market Value**: Highly valued for its low sulfur content and balanced yield profile, making it suitable for producing high-quality refined products.
+## Relations
+- (no structural relationships in this bundle)
 
-## Risk
-- **Geopolitical Stability**: Dependent on the political stability of the United Arab Emirates.
-- **Supply Chain Vulnerability**: Exposure to regional tensions in the Persian Gulf could impact supply continuity.
-- **Refining Compatibility**: Well-suited for modern refineries due to its API gravity and sulfur content, reducing processing complexities and enhancing product quality.
+_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/grade_murban.md to enrich._
