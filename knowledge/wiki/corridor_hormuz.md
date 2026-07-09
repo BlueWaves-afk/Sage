@@ -5,34 +5,35 @@ aliases:
 entity_type: Corridor
 tags:
 - sage/corridor
-- risk/critical
-risk_score: 0.9198
-risk_band: CRITICAL
+- risk/calm
+risk_score: 0.0
+risk_band: CALM
 factors:
   ais: 0.0
-  gdelt: 0.595
-  price: 0.35
+  gdelt: 0.0
+  price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T14:03:45.548715+00:00'
-valid_at: '2026-07-09T14:03:45.548715+00:00'
+last_updated: '2026-07-09T14:04:28.360263+00:00'
+valid_at: '2026-07-09T14:04:05.008986+00:00'
 source_episodes: []
 links_out:
+- supplier_adnoc
+- corridor_cape
 - event_2019_hormuz_attacks
 - supplier_aramco
 - supplier_nioc
-- supplier_adnoc
 - supplier_iraqoil
 - supplier_kpc
 - supplier_qatarenergy
+- corridor_suez
 coordinates:
   lat: 26.5
   lon: 56.4
 ---
 
 
-
 ## Current Assessment
-Iran has threatened to close the [[Strait of Hormuz]] following recent strikes, potentially disrupting a critical chokepoint for global oil supply. The risk score for this signal is currently unavailable.
+Iran has threatened to close the [[Strait of Hormuz]] following recent strikes, potentially disrupting a critical chokepoint for global oil supply. The risk score for this signal is currently unavailable. System 3 procurement analysis has identified 20 alternative crude sources, with the top option being [[ADNOC]] (Murban) via [[Cape of Good Hope]] at $98.05/bbl with a 24-day lead time and a TOPSIS score of 0.78.
 
 ## Historical Pattern
 The situation bears resemblance to the [[2019 Tanker Attacks]], where tensions in the region led to significant disruptions in oil transit through the [[Strait of Hormuz]].
@@ -47,6 +48,7 @@ The situation bears resemblance to the [[2019 Tanker Attacks]], where tensions i
 
 ## Signal Basis
 - News report indicating Iran's threat to close the [[Strait of Hormuz]].
+- System 3 procurement analysis for alternative crude sources.
 
 ## Relations
 | Relation         | Entity                 | Type               | Strength |
@@ -58,3 +60,6 @@ The situation bears resemblance to the [[2019 Tanker Attacks]], where tensions i
 | supply_dependency| [[Iraqi Oil Ministry]]| supplier           | high     |
 | supply_dependency| [[Kuwait Petroleum Corporation]]| supplier | medium |
 | supply_dependency| [[QatarEnergy]]        | supplier           | high     |
+| bypass_option    | [[Cape of Good Hope]]  | corridor           | high     |
+| bypass_option    | [[Suez Canal]]         | corridor           | medium   |
+| signal_source    | System 3 procurement analysis | analysis_tool | high     |
