@@ -13,14 +13,15 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T18:07:05.945229+00:00'
-valid_at: '2026-07-09T18:06:27.478071+00:00'
+last_updated: '2026-07-09T18:11:30.630097+00:00'
+valid_at: '2026-07-09T18:10:51.347803+00:00'
 source_episodes: []
 links_out:
 - supplier_adnoc
 - grade_murban
 - corridor_cape
 - supplier_kazmunaygas
+- corridor_suez
 - supplier_rosneft
 coordinates:
   lat: 22.47
@@ -29,7 +30,7 @@ coordinates:
 
 
 ## Current Assessment
-The [[Jamnagar Refinery]] is currently evaluating alternative crude sources, with [[ADNOC]]'s [[Murban]] crude via the [[Cape of Good Hope]] emerging as the top option due to its favorable cost, lead time, and grade compatibility.
+The [[Jamnagar Refinery]] is currently evaluating alternative crude sources, with [[ADNOC]]'s [[Murban]] crude via the [[Cape of Good Hope]] emerging as the top option due to its favorable cost, lead time, and grade compatibility. The refinery is also considering [[KazMunayGas]] via the [[Suez Canal]] and [[Rosneft]] via the ESPO Pipeline as viable alternatives.
 
 ## Affected Entities
 - [[ADNOC]]: high exposure due to being the top-ranked crude supplier.
@@ -37,6 +38,7 @@ The [[Jamnagar Refinery]] is currently evaluating alternative crude sources, wit
 - [[Cape of Good Hope]]: medium exposure as the recommended shipping route.
 - [[KazMunayGas]]: medium exposure as an alternative supplier.
 - [[Rosneft]]: medium exposure as an alternative supplier.
+- [[Suez Canal]]: medium exposure as an alternative shipping route.
 
 ## Signal Basis
 - System 3 procurement analysis for Jamnagar Refinery.
@@ -49,3 +51,4 @@ The [[Jamnagar Refinery]] is currently evaluating alternative crude sources, wit
 | bypass_option   | [[Cape of Good Hope]] | bypass_option     | medium   |
 | supply_dependency | [[KazMunayGas]]    | supply_dependency  | medium   |
 | supply_dependency | [[Rosneft]]        | supply_dependency  | medium   |
+| bypass_option   | [[Suez Canal]]     | bypass_option      | medium   |
