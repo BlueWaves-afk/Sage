@@ -5,37 +5,32 @@ aliases:
 entity_type: Corridor
 tags:
 - sage/corridor
-- risk/critical
-risk_score: 0.936
-risk_band: CRITICAL
+- risk/calm
+risk_score: 0.0
+risk_band: CALM
 factors:
-  ais: 0.9
-  gdelt: 0.9
-  price: 0.9
-  sanctions: 0.9
-last_updated: '2026-07-09T19:13:39.912690+00:00'
-valid_at: '2026-07-09T19:13:39.912690+00:00'
+  ais: 0.0
+  gdelt: 0.0
+  price: 0.0
+  sanctions: 0.0
+last_updated: '2026-07-09T19:14:20.361730+00:00'
+valid_at: '2026-07-09T19:14:18.057663+00:00'
 source_episodes: []
 links_out:
 - authority_ofac
-- refinery_jamnagar
 - event_2019_hormuz_attacks
 - supplier_nioc
 - supplier_aramco
 - supplier_adnoc
+- refinery_jamnagar
 coordinates:
   lat: 26.5
   lon: 56.4
 ---
 
 
-
-
-
-
-
 ## Current Assessment
-The [[Strait of Hormuz]] is experiencing heightened geopolitical tensions following direct military strikes between Iran and Israel near the Persian Gulf. The [[OFAC]] has designated a second sanctioned tanker, further complicating the supply chain dynamics. The latest System 2 scenario modelling projects a supply gap of 0.21 mbpd over 10 days, with a peak gap of 0.21 mbpd at [[Jamnagar Refinery]] from day 0.
+The [[Strait of Hormuz]] is experiencing heightened geopolitical tensions following direct military strikes between Iran and Israel near the Persian Gulf. The [[OFAC]] has designated a second sanctioned tanker, further complicating the supply chain dynamics. 
 
 ## Historical Pattern
 The current event shows similarity to the [[2019 Tanker Attacks]] with a feature-overlap percentage of approximately 30%.
