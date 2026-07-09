@@ -5,21 +5,27 @@ aliases:
 entity_type: Supplier
 tags:
 - sage/supplier
-- risk/calm
-risk_score: 0.0
-risk_band: CALM
+- risk/watch
+risk_score: 0.2723
+risk_band: WATCH
 factors:
   ais: 0.0
-  gdelt: 0.0
+  gdelt: 0.9075
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T15:09:41.244312+00:00'
-valid_at: '2026-07-09T15:09:41.244312+00:00'
+last_updated: '2026-07-09T07:00:00'
+valid_at: '2026-07-09T07:00:00'
 source_episodes: []
 links_out:
 - corridor_cape
 coordinates: {}
 ---
+
+
+
+
+
+
 
 
 ## Profile
