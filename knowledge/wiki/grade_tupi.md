@@ -13,18 +13,29 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T14:57:26.490866+00:00'
-valid_at: '2026-07-09T14:57:26.490866+00:00'
+last_updated: '2026-07-09T15:14:58.533467+00:00'
+valid_at: '2026-07-09T15:14:58.533467+00:00'
 source_episodes: []
-links_out: []
+links_out:
+- supplier_petrobras
 coordinates: {}
 ---
 
 
 ## Profile
-[[Tupi]] is a CrudeGrade tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
+- **Name:** Tupi Crude
+- **Origin:** [[Petrobras]]
+- **API Gravity:** 29.0
+- **Sulfur Content:** 0.40%
 
-## Relations
-- (no structural relationships in this bundle)
+## Yield Characteristics
+- **Naphtha:** 18%
+- **Kerosene:** 13%
+- **Diesel:** 21%
+- **Vacuum Gas Oil (VGO):** 24%
+- **Residue:** 24%
 
-_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/grade_tupi.md to enrich._
+## Geopolitical and Market Considerations
+- **Production Source:** Pre-salt layer in the Santos Basin, offshore Brazil.
+- **Export Dynamics:** Significant for Brazilian oil exports, influencing regional energy security and trade balances.
+- **Refining Compatibility:** Suited for refineries configured to handle medium API gravity and moderate sulfur content crudes, common in Latin American and some Asian refineries.
