@@ -5,19 +5,19 @@ aliases:
 entity_type: Corridor
 tags:
 - sage/corridor
-- risk/watch
-risk_score: 0.266
-risk_band: WATCH
+- risk/calm
+risk_score: 0.0
+risk_band: CALM
 factors:
   ais: 0.0
-  gdelt: 0.595
-  price: 0.35
+  gdelt: 0.0
+  price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T14:00:03.181304+00:00'
+last_updated: '2026-07-09T14:00:57.711140+00:00'
 valid_at: '2026-07-09T14:00:03.181304+00:00'
 source_episodes: []
 links_out:
-- event_2019_hormuz_attacks
+- authority_ofac
 - supplier_aramco
 - supplier_nioc
 - supplier_adnoc
@@ -30,12 +30,8 @@ coordinates:
 ---
 
 
-
 ## Current Assessment
-Iran has threatened to close the [[Strait of Hormuz]] following recent strikes, potentially disrupting a critical chokepoint for global oil supply. The situation remains fluid with no immediate risk score available.
-
-## Historical Pattern
-The threat to close the [[Strait of Hormuz]] echoes the [[2019 Tanker Attacks]], though the current situation appears more severe given the explicit threat from Iran.
+Iran has threatened to close the [[Strait of Hormuz]] following recent strikes, potentially disrupting a critical chokepoint for global oil supply. The [[OFAC]] has added a tanker operator to the SDN list, further complicating the situation.
 
 ## Affected Entities
 - **[[Saudi Aramco]]**: High exposure due to significant throughput share.
@@ -47,6 +43,7 @@ The threat to close the [[Strait of Hormuz]] echoes the [[2019 Tanker Attacks]],
 
 ## Signal Basis
 - News report indicating Iran's threat to close the [[Strait of Hormuz]].
+- [[OFAC]] adds tanker operator to SDN list.
 
 ## Relations
 | Relation         | Entity                 | Type               | Strength |
@@ -58,3 +55,4 @@ The threat to close the [[Strait of Hormuz]] echoes the [[2019 Tanker Attacks]],
 | supply_dependency| [[Iraqi Oil Ministry]]| supplier           | high     |
 | supply_dependency| [[Kuwait Petroleum Corporation]]| supplier | medium |
 | supply_dependency| [[QatarEnergy]]        | supplier           | high     |
+| sanctions_link   | [[OFAC]]               | authority          | high     |
