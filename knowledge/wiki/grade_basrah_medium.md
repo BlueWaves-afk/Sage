@@ -13,19 +13,19 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-02T21:12:43.360205+00:00'
-valid_at: '2026-07-02T21:12:43.360205+00:00'
+last_updated: '2026-07-09T14:45:02.539285+00:00'
+valid_at: '2026-07-09T14:45:02.539285+00:00'
 source_episodes: []
-links_out: []
+links_out:
+- refinery_mangaluru
 coordinates: {}
 ---
 
 
 ## Profile
-[[Basrah Medium]] is a crude oil grade originating from Iraq. It has an API gravity of 27.9, classifying it as a medium crude, and a high sulfur content of 3.00%, making it a sour crude. 
+[[Basrah Medium]] is a CrudeGrade tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
 
-## Role
-[[Basrah Medium]] is primarily refined into various petroleum products. Its yield percentages are as follows: naphtha at 17%, kerosene at 11%, diesel at 18%, vacuum gas oil (VGO) at 21%, and residue at 33%. These yields make it versatile for different refining processes.
+## Relations
+- [[Mangaluru]]
 
-## Risk
-The geopolitical instability in Iraq poses significant risks to the consistent supply of [[Basrah Medium]]. Additionally, its high sulfur content requires refineries to have suitable desulphurization capabilities, limiting the pool of potential buyers.
+_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/grade_basrah_medium.md to enrich._
