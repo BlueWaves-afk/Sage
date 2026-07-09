@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T15:23:16.934590+00:00'
-valid_at: '2026-07-09T15:23:14.916969+00:00'
+last_updated: '2026-07-09T15:24:20.827117+00:00'
+valid_at: '2026-07-09T15:24:19.031359+00:00'
 source_episodes: []
 links_out:
 - event_2019_hormuz_attacks
@@ -28,7 +28,7 @@ coordinates:
 
 
 ## Current Assessment
-The [[Strait of Hormuz]] has experienced a confirmed action crossing with no deviation from the predicted timeline, indicating stable conditions in the corridor.
+The [[Strait of Hormuz]] has experienced a confirmed action crossing with no deviation from the predicted timeline, indicating stable conditions in the corridor. The risk score is not available for this signal.
 
 ## Historical Pattern
 The current event shows similarity to the [[2019 Tanker Attacks]] with a feature-overlap percentage of approximately 30%.
