@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T14:45:02.000111+00:00'
-valid_at: '2026-07-09T14:45:02.000111+00:00'
+last_updated: '2026-07-09T14:45:35.902060+00:00'
+valid_at: '2026-07-09T14:45:35.902060+00:00'
 source_episodes: []
 links_out:
 - grade_arab_light
