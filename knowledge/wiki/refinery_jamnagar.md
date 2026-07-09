@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T19:38:30.334136+00:00'
-valid_at: '2026-07-09T19:38:30.334136+00:00'
+last_updated: '2026-07-09T19:43:53.353022+00:00'
+valid_at: '2026-07-09T19:43:53.353022+00:00'
 source_episodes: []
 links_out:
 - supplier_adnoc
@@ -27,6 +27,7 @@ coordinates:
   lat: 22.47
   lon: 70.07
 ---
+
 
 
 
