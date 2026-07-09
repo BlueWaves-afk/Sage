@@ -5,16 +5,16 @@ aliases:
 entity_type: Corridor
 tags:
 - sage/corridor
-- risk/action
-risk_score: 0.8539
-risk_band: ACTION
+- risk/calm
+risk_score: 0.0
+risk_band: CALM
 factors:
   ais: 0.0
   gdelt: 0.0
   price: 0.0
-  sanctions: 0.2833
-last_updated: '2026-07-09T18:03:52.355263+00:00'
-valid_at: '2026-07-09T18:03:52.355263+00:00'
+  sanctions: 0.0
+last_updated: '2026-07-09T18:06:18.689157+00:00'
+valid_at: '2026-07-09T18:05:46.347478+00:00'
 source_episodes: []
 links_out:
 - authority_ofac
@@ -22,11 +22,15 @@ links_out:
 - supplier_nioc
 - supplier_aramco
 - supplier_adnoc
+- grade_murban
+- corridor_cape
+- supplier_kazmunaygas
+- corridor_suez
+- supplier_nnpc
 coordinates:
   lat: 26.5
   lon: 56.4
 ---
-
 
 
 ## Current Assessment
@@ -42,6 +46,7 @@ The current event shows similarity to the [[2019 Tanker Attacks]] with a feature
 
 ## Signal Basis
 - Designation of a second sanctioned tanker by [[OFAC]].
+- System 3 procurement analysis for Strait of Hormuz: 9 alternative crude sources ranked. Top option: [[ADNOC]] ([[Murban]]) via [[Cape of Good Hope]] — $80.10/bbl, 24 day lead time, grade compatibility 0.50, TOPSIS score 0.78. Alternative options: [[KazMunayGas]] via [[Suez Canal]] ($80.55/bbl, TOPSIS 0.69); [[NNPC]] via [[Suez Canal]] ($80.85/bbl, TOPSIS 0.63).
 
 ## Relations
 | Relation | Entity | Type | Strength |
@@ -51,3 +56,7 @@ The current event shows similarity to the [[2019 Tanker Attacks]] with a feature
 | supply_dependency | [[ADNOC]] | supply_dependency | medium |
 | historical_precedent | [[2019 Tanker Attacks]] | historical_precedent | medium |
 | sanctions_link | [[OFAC]] | sanctions_link | high |
+| bypass_option | [[Cape of Good Hope]] | bypass_option | medium |
+| bypass_option | [[Suez Canal]] | bypass_option | medium |
+| supply_dependency | [[KazMunayGas]] | supply_dependency | low |
+| supply_dependency | [[NNPC]] | supply_dependency | low |
