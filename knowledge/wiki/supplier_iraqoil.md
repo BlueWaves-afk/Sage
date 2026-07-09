@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-02T21:06:50.716739+00:00'
-valid_at: '2026-07-02T21:06:50.716739+00:00'
+last_updated: '2026-07-09T14:45:01.115492+00:00'
+valid_at: '2026-07-09T14:45:01.115492+00:00'
 source_episodes: []
 links_out:
 - corridor_hormuz
@@ -22,14 +22,10 @@ coordinates: {}
 ---
 
 
-## Overview
-The [[Iraqi Oil Ministry]] is a key entity in the global oil supply chain, responsible for the management and export of Iraq's oil resources. 
+## Profile
+[[Iraqi Oil Ministry]] is a Supplier tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
 
-## Export Capacity
-Iraq, under the administration of the [[Iraqi Oil Ministry]], exports approximately 3.4 million barrels per day (mbpd) of oil. 
+## Relations
+- [[Strait of Hormuz]]
 
-## Geopolitical Considerations
-The export routes of Iraqi oil, particularly through the [[Strait of Hormuz]], are critical chokepoints in the global oil supply chain. 
-
-## Sanctions
-As of the latest available data, Iraq is not subject to international sanctions that impede its oil export activities.
+_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/supplier_iraqoil.md to enrich._
