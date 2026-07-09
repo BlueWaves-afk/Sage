@@ -5,16 +5,16 @@ aliases:
 entity_type: Refinery
 tags:
 - sage/refinery
-- risk/calm
-risk_score: 0.0
-risk_band: CALM
+- risk/watch
+risk_score: 0.337
+risk_band: WATCH
 factors:
   ais: 0.0
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T15:11:11.958176+00:00'
-valid_at: '2026-07-09T15:11:11.958176+00:00'
+last_updated: '2026-07-09T19:17:27.404629+00:00'
+valid_at: '2026-07-09T19:17:27.404629+00:00'
 source_episodes: []
 links_out:
 - grade_arab_medium
@@ -23,6 +23,7 @@ coordinates:
   lat: 12.91
   lon: 74.84
 ---
+
 
 
 ## Capacity and Inventory
