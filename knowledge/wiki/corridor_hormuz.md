@@ -9,7 +9,7 @@ tags:
 risk_score: 0.9196
 risk_band: CRITICAL
 factors:
-  ais: 0.0
+  ais: 0.3685
   gdelt: 0.595
   price: 0.35
   sanctions: 0.55
@@ -32,6 +32,7 @@ coordinates:
   lat: 26.5
   lon: 56.4
 ---
+
 
 
 
