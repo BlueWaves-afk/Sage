@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T14:57:24.247452+00:00'
-valid_at: '2026-07-09T14:57:24.247452+00:00'
+last_updated: '2026-07-09T15:05:11.664346+00:00'
+valid_at: '2026-07-09T15:05:11.664346+00:00'
 source_episodes: []
 links_out:
 - supplier_aramco
