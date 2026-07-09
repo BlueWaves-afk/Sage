@@ -13,13 +13,13 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T13:25:52.256697+00:00'
-valid_at: '2026-07-09T13:22:30.868316+00:00'
+last_updated: '2026-07-09T13:25:36.165452+00:00'
+valid_at: '2026-07-09T13:24:27.870953+00:00'
 source_episodes: []
 links_out:
 - authority_ofac
-- supplier_aramco
 - event_tanker_war
+- supplier_aramco
 - supplier_adnoc
 - supplier_nioc
 - supplier_iraqoil
@@ -38,7 +38,7 @@ coordinates:
 
 
 ## Current Assessment
-The [[Strait of Hormuz]] remains under immediate threat of closure following Iran's declaration to shut down the strait in response to recent strikes. The [[OFAC]] has added a tanker operator to the SDN list, further complicating the transit of oil through the strait. System 3 procurement analysis has identified 24 alternative crude sources, with the top option being [[Saudi Aramco]] (Arab Light) via [[Strait of Hormuz]] at $96.80/bbl with a 20-day lead time and a TOPSIS score of 0.64.
+The [[Strait of Hormuz]] remains under immediate threat of closure following Iran's declaration to shut down the strait in response to recent strikes. The [[OFAC]] has added a tanker operator to the SDN list, further complicating the transit of oil through the strait.
 
 ## Historical Pattern
 The current situation has a clear precedent in the [[Tanker War]] with a feature-overlap percentage of approximately 70%.
@@ -58,22 +58,21 @@ The current situation has a clear precedent in the [[Tanker War]] with a feature
 ## Signal Basis
 - News report indicating Iran's threat to close the [[Strait of Hormuz]] after strikes.
 - [[OFAC]] adds tanker operator to SDN list.
-- System 3 procurement analysis for Strait of Hormuz: 24 alternative crude sources ranked.
 
 ## Relations
-| Relation         | Entity                                 | Type               | Strength |
-|------------------|----------------------------------------|--------------------|----------|
-| supply_dependency| [[Saudi Aramco]]                       | supply_dependency  | high     |
-| supply_dependency| [[ADNOC]]                              | supply_dependency  | high     |
-| supply_dependency| [[NIOC]]                               | supply_dependency  | high     |
-| supply_dependency| [[Iraqi Oil Ministry]]                 | supply_dependency  | high     |
-| supply_dependency| [[Kuwait Petroleum Corporation]]        | supply_dependency  | high     |
-| threat_actor     | Iran                                   | threat_actor       | high     |
-| threat_actor     | Israel                                 | threat_actor       | high     |
-| historical_precedent| [[Tanker War]]                       | historical_precedent| high     |
-| bypass_option    | [[Yanbu]]                              | bypass_option      | medium   |
-| bypass_option    | [[Fujairah]]                           | bypass_option      | medium   |
-| supply_dependency| [[Jamnagar Refinery]]                  | supply_dependency  | high     |
-| supply_dependency| [[Chennai Refinery]]                   | supply_dependency  | high     |
-| supply_dependency| [[Visakhapatnam Refinery]]             | supply_dependency  | high     |
-| sanctions_link   | [[OFAC]]                               | sanctions_link     | high     |
+| Relation         | Entity                 | Type               | Strength |
+|------------------|------------------------|--------------------|----------|
+| supply_dependency| [[Saudi Aramco]]       | supply_dependency  | high     |
+| supply_dependency| [[ADNOC]]              | supply_dependency  | high     |
+| supply_dependency| [[NIOC]]               | supply_dependency  | high     |
+| supply_dependency| [[Iraqi Oil Ministry]] | supply_dependency  | high     |
+| supply_dependency| [[Kuwait Petroleum Corporation]] | supply_dependency  | high     |
+| threat_actor     | Iran                   | threat_actor       | high     |
+| threat_actor     | Israel                 | threat_actor       | high     |
+| historical_precedent| [[Tanker War]]      | historical_precedent| high     |
+| bypass_option    | [[Yanbu]]              | bypass_option      | medium   |
+| bypass_option    | [[Fujairah]]           | bypass_option      | medium   |
+| supply_dependency| [[Jamnagar Refinery]]  | supply_dependency  | high     |
+| supply_dependency| [[Chennai Refinery]]   | supply_dependency  | high     |
+| supply_dependency| [[Visakhapatnam Refinery]]| supply_dependency  | high     |
+| sanctions_link   | [[OFAC]]               | sanctions_link     | high     |
