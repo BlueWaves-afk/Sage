@@ -5,16 +5,16 @@ aliases:
 entity_type: Supplier
 tags:
 - sage/supplier
-- risk/calm
-risk_score: 0.0
-risk_band: CALM
+- risk/critical
+risk_score: 0.92
+risk_band: CRITICAL
 factors:
-  ais: 0.0
-  gdelt: 0.0
-  price: 0.0
-  sanctions: 0.0
-last_updated: '2026-07-09T14:45:35.111096+00:00'
-valid_at: '2026-07-09T14:45:35.111096+00:00'
+  ais: 0.1
+  gdelt: 0.88
+  price: 0.4
+  sanctions: 1.0
+last_updated: '2026-07-09T14:45:38.397926+00:00'
+valid_at: '2026-07-09T14:45:38.397926+00:00'
 source_episodes: []
 links_out:
 - refinery_mangaluru
@@ -23,6 +23,7 @@ links_out:
 - corridor_hormuz
 coordinates: {}
 ---
+
 
 
 ## Profile
