@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T14:57:26.158325+00:00'
-valid_at: '2026-07-09T14:57:26.158325+00:00'
+last_updated: '2026-07-09T15:13:48.832528+00:00'
+valid_at: '2026-07-09T15:13:48.832528+00:00'
 source_episodes: []
 links_out:
 - refinery_jamnagar
@@ -23,9 +23,10 @@ coordinates: {}
 
 
 ## Profile
-[[Urals]] is a CrudeGrade tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
+The [[Urals]] crude grade, originating from Russia, is characterized by an API gravity of 31.3 and a sulfur content of 1.30%. It is a medium sour crude, making it suitable for refineries configured to handle such specifications.
 
-## Relations
-- [[Jamnagar Refinery]]
+## Role
+Urals crude is pivotal in the European refining landscape, particularly in Mediterranean refineries. Its yield structure—19% naphtha, 12% kerosene, 20% diesel, 22% vacuum gas oil (VGO), and 27% residue—makes it valuable for producing middle distillates and feedstocks for further processing. Notably, it is a key input for refineries like the [[Jamnagar Refinery]], which has the capacity to process a diverse range of crude grades.
 
-_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/grade_urals.md to enrich._
+## Risk
+The geopolitical tensions surrounding Russia introduce supply chain risks for Urals crude. Sanctions, political instability, and shifts in export policies can impact its availability and pricing. Additionally, the crude's high residue yield requires refineries to have adequate upgrading capabilities to maximize value, posing a risk for less complex refineries.
