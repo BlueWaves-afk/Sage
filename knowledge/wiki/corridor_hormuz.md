@@ -5,14 +5,14 @@ aliases:
 entity_type: Corridor
 tags:
 - sage/corridor
-- risk/watch
-risk_score: 0.261
-risk_band: WATCH
+- risk/calm
+risk_score: 0.1105
+risk_band: CALM
 factors:
-  ais: 0.0
-  gdelt: 0.595
+  ais: 0.3685
+  gdelt: 0.0
   price: 0.0
-  sanctions: 0.55
+  sanctions: 0.0
 last_updated: '2026-07-09T13:20:39.322764+00:00'
 valid_at: '2026-07-09T13:20:39.322764+00:00'
 source_episodes: []
@@ -35,6 +35,7 @@ coordinates:
   lat: 26.5
   lon: 56.4
 ---
+
 
 
 
