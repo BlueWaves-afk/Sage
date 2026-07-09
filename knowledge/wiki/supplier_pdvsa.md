@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T14:57:25.193611+00:00'
-valid_at: '2026-07-09T14:57:25.193611+00:00'
+last_updated: '2026-07-09T15:10:04.180726+00:00'
+valid_at: '2026-07-09T15:10:04.180726+00:00'
 source_episodes: []
 links_out:
 - corridor_cape
@@ -23,9 +23,10 @@ coordinates: {}
 
 
 ## Profile
-[[PDVSA]] is a Supplier tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
+[[PDVSA]], or Petróleos de Venezuela, S.A., is the state-owned oil and natural gas company of Venezuela. It plays a critical role in the nation's economy, contributing significantly to its GDP and public finances. PDVSA operates both upstream and downstream segments of the oil supply chain, including exploration, production, refining, and marketing.
 
-## Relations
-- [[Cape of Good Hope]]
+## Role
+PDVSA is a key supplier in the global oil market, with a daily export capacity of approximately 0.7 million barrels per day (mbpd). The company has a vast network of international clients and operates several refineries outside Venezuela. Its crude oil is known for its high API gravity, making it valuable for producing light and medium fuels.
 
-_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/supplier_pdvsa.md to enrich._
+## Risk
+PDVSA is currently under international sanctions, primarily led by the United States, which restrict its ability to trade freely in global markets. These sanctions have led to a decline in its production capabilities and export volumes. The geopolitical instability in Venezuela further exacerbates the risks associated with relying on PDVSA as a stable supplier. Additionally, the company's operations are vulnerable to disruptions at critical maritime chokepoints like the [[Cape of Good Hope]].
