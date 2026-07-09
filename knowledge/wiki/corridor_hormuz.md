@@ -13,11 +13,10 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T13:37:29.653048+00:00'
-valid_at: '2026-07-09T13:37:03.749578+00:00'
+last_updated: '2026-07-09T13:37:35.465738+00:00'
+valid_at: '2026-07-09T13:37:09.955762+00:00'
 source_episodes: []
 links_out:
-- authority_ofac
 - supplier_aramco
 - event_tanker_war
 - supplier_adnoc
@@ -38,7 +37,7 @@ coordinates:
 
 
 ## Current Assessment
-The [[Strait of Hormuz]] remains under immediate threat of closure following Iran's declaration to shut down the strait in response to recent strikes. The [[OFAC]] has added a tanker operator to the SDN list, further complicating the transit of oil through the strait. System 3 procurement analysis has identified 24 alternative crude sources, with [[Saudi Aramco]] (Arab Light) being the top option.
+The [[Strait of Hormuz]] remains under immediate threat of closure following Iran's declaration to shut down the strait in response to recent strikes. System 3 procurement analysis has identified 24 alternative crude sources, with [[Saudi Aramco]] (Arab Light) being the top option.
 
 ## Historical Pattern
 The current situation has a clear precedent in the [[Tanker War]] with a feature-overlap percentage of approximately 70%.
@@ -57,7 +56,6 @@ The current situation has a clear precedent in the [[Tanker War]] with a feature
 
 ## Signal Basis
 - News report indicating Iran's threat to close the [[Strait of Hormuz]] after strikes.
-- [[OFAC]] adds tanker operator to SDN list.
 - System 3 procurement analysis for Strait of Hormuz: 24 alternative crude sources ranked.
 
 ## Relations
@@ -76,4 +74,3 @@ The current situation has a clear precedent in the [[Tanker War]] with a feature
 | supply_dependency| [[Jamnagar Refinery]]                  | supply_dependency  | high     |
 | supply_dependency| [[Chennai Refinery]]                   | supply_dependency  | high     |
 | supply_dependency| [[Visakhapatnam Refinery]]             | supply_dependency  | high     |
-| sanctions_link   | [[OFAC]]                               | sanctions_link     | high     |
