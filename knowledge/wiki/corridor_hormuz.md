@@ -13,20 +13,17 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T14:06:42.871261+00:00'
-valid_at: '2026-07-09T14:06:17.488707+00:00'
+last_updated: '2026-07-09T14:06:44.476698+00:00'
+valid_at: '2026-07-09T14:05:54.111731+00:00'
 source_episodes: []
 links_out:
-- supplier_adnoc
-- corridor_cape
+- authority_ofac
 - event_2019_hormuz_attacks
 - supplier_aramco
 - supplier_nioc
+- supplier_adnoc
 - supplier_kpc
 - supplier_qatarenergy
-- corridor_suez
-- supplier_kazmunaygas
-- supplier_nnpc
 coordinates:
   lat: 26.5
   lon: 56.4
@@ -34,7 +31,7 @@ coordinates:
 
 
 ## Current Assessment
-Iran has threatened to close the [[Strait of Hormuz]] following recent strikes, potentially disrupting a critical chokepoint for global oil supply. This development significantly elevates geopolitical tensions in the region. System 3 procurement analysis has identified 20 alternative crude sources, with the top option being [[ADNOC]] (Murban) via [[Cape of Good Hope]] at $98.05/bbl with a 24-day lead time and a TOPSIS score of 0.78.
+Iran has threatened to close the [[Strait of Hormuz]] following recent strikes, potentially disrupting a critical chokepoint for global oil supply. This development significantly elevates geopolitical tensions in the region. Additionally, the [[OFAC]] has added a tanker operator to the SDN list, further complicating the transit of oil through the strait.
 
 ## Historical Pattern
 The situation echoes the [[2019 Tanker Attacks]], where similar threats and actions led to heightened global oil market volatility.
@@ -48,7 +45,7 @@ The situation echoes the [[2019 Tanker Attacks]], where similar threats and acti
 
 ## Signal Basis
 - News report indicating Iran's threat to close the [[Strait of Hormuz]].
-- System 3 procurement analysis for alternative crude sources.
+- [[OFAC]] adds tanker operator to SDN list.
 
 ## Relations
 | Relation         | Entity                 | Type               | Strength |
@@ -60,7 +57,4 @@ The situation echoes the [[2019 Tanker Attacks]], where similar threats and acti
 | supply_dependency| [[Kuwait Petroleum Corporation]] | supply_dependency | medium   |
 | supply_dependency| [[QatarEnergy]]        | supply_dependency  | medium   |
 | historical_precedent | [[2019 Tanker Attacks]] | historical_precedent | high    |
-| bypass_option    | [[Cape of Good Hope]]  | bypass_option      | medium   |
-| bypass_option    | [[Suez Canal]]         | bypass_option      | medium   |
-| supply_dependency| [[KazMunayGas]]        | supply_dependency  | low      |
-| supply_dependency| [[NNPC]]               | supply_dependency  | low      |
+| sanctions_link   | [[OFAC]]               | sanctions_link     | high     |
