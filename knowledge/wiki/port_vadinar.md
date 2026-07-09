@@ -5,16 +5,16 @@ aliases:
 entity_type: Port
 tags:
 - sage/port
-- risk/watch
-risk_score: 0.3931
-risk_band: WATCH
+- risk/calm
+risk_score: 0.234
+risk_band: CALM
 factors:
   ais: 0.0
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T19:38:39.630724+00:00'
-valid_at: '2026-07-09T19:38:39.630724+00:00'
+last_updated: '2026-07-09T19:44:22.055628+00:00'
+valid_at: '2026-07-09T19:44:22.055628+00:00'
 source_episodes: []
 links_out:
 - refinery_jamnagar
@@ -27,6 +27,7 @@ coordinates:
   lat: 22.47
   lon: 69.77
 ---
+
 
 
 
