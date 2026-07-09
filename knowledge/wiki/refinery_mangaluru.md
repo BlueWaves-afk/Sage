@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T14:57:25.410419+00:00'
-valid_at: '2026-07-09T14:57:25.410419+00:00'
+last_updated: '2026-07-09T15:11:11.958176+00:00'
+valid_at: '2026-07-09T15:11:11.958176+00:00'
 source_episodes: []
 links_out:
 - grade_arab_medium
@@ -25,11 +25,13 @@ coordinates:
 ---
 
 
-## Profile
-[[Mangaluru]] is a Refinery tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
+## Capacity and Inventory
+- The [[Mangaluru]] refinery has a processing capacity of 0.30 million barrels per day (mbpd).
+- It maintains an inventory sufficient for 22 days of operation.
 
-## Relations
-- [[Arab Medium]]
-- [[Basrah Medium]]
+## Location
+- The refinery is situated at coordinates 12.91 latitude and 74.84 longitude.
 
-_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/refinery_mangaluru.md to enrich._
+## Ownership and Operations
+- [[Mangaluru]] is a division of Oil and Natural Gas Corporation (ONGC), under the Ministry of Petroleum and Natural Gas, Government of India.
+- It processes a variety of crude oils, including [[Arab Medium]] and [[Basrah Medium]].
