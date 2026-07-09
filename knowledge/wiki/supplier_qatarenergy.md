@@ -13,19 +13,28 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T14:57:24.974982+00:00'
-valid_at: '2026-07-09T14:57:24.974982+00:00'
+last_updated: '2026-07-09T15:09:01.824232+00:00'
+valid_at: '2026-07-09T15:09:01.824232+00:00'
 source_episodes: []
 links_out:
+- supplier_kpc
+- supplier_us
+- supplier_petrobras
 - corridor_hormuz
 coordinates: {}
 ---
 
 
-## Profile
-[[QatarEnergy]] is a Supplier tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
+## Overview
+QatarEnergy is the state-owned national petroleum and natural gas company of Qatar. It operates all oil and gas-related activities in the country, including exploration, production, refining, transport, and storage. The company is not sanctioned and exports approximately 0.6 million barrels per day (mbpd).
 
-## Relations
-- [[Strait of Hormuz]]
+## International Business
+QatarEnergy has a significant international presence, with operations and partnerships in various countries across Europe, Asia, North America, Africa, and South America. Notable countries include Germany, Hungary, Italy, France, Bangladesh, China, India, Japan, [[Kuwait Petroleum Corporation]], Lebanon, United Arab Emirates, Taiwan, Canada, [[United States]], Namibia, Egypt, Republic of Suriname, [[Petrobras]], and Uruguay.
 
-_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/supplier_qatarenergy.md to enrich._
+## Key Projects
+- **North Field LNG Project**: A major liquefied natural gas (LNG) initiative.
+- **Dolphin Project**: Focused on gas-to-liquids (GTL) technology.
+- **Gas-to-Liquids (GTL)**: Conversion of natural gas into liquid fuels.
+
+## Geopolitical Considerations
+QatarEnergy's operations and exports are strategically significant, particularly given Qatar's location and the importance of the [[Strait of Hormuz]] for global oil transit.
