@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T19:38:49.757004+00:00'
-valid_at: '2026-07-09T19:38:49.757004+00:00'
+last_updated: '2026-07-09T19:44:04.372938+00:00'
+valid_at: '2026-07-09T19:44:04.372938+00:00'
 source_episodes: []
 links_out:
 - refinery_jamnagar
@@ -23,6 +23,7 @@ coordinates:
   lat: 22.6
   lon: 69.87
 ---
+
 
 
 
