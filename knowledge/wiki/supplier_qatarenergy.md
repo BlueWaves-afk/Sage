@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-02T21:08:44.297146+00:00'
-valid_at: '2026-07-02T21:08:44.297146+00:00'
+last_updated: '2026-07-09T14:45:01.404161+00:00'
+valid_at: '2026-07-09T14:45:01.404161+00:00'
 source_episodes: []
 links_out:
 - corridor_hormuz
@@ -22,14 +22,10 @@ coordinates: {}
 ---
 
 
-## Overview
-- **QatarEnergy** is the state-owned national petroleum and natural gas company of [[QatarEnergy]].
-- It operates all oil and gas-related activities in the country, including exploration, production, refining, transport, and storage.
-- The company is not sanctioned.
+## Profile
+[[QatarEnergy]] is a Supplier tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
 
-## Production and Exports
-- **Daily Export**: 0.6 million barrels per day (mbpd).
-- The company's operations are crucial for [[QatarEnergy]]'s economy, contributing significantly to its GDP.
+## Relations
+- [[Strait of Hormuz]]
 
-## Geopolitical Considerations
-- QatarEnergy's exports pass through critical chokepoints such as the [[Strait of Hormuz]], making the region's stability vital for global energy security.
+_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/supplier_qatarenergy.md to enrich._
