@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T13:56:13.818579+00:00'
-valid_at: '2026-07-09T13:55:47.284198+00:00'
+last_updated: '2026-07-09T13:56:17.366136+00:00'
+valid_at: '2026-07-09T13:55:52.499607+00:00'
 source_episodes: []
 links_out:
 - supplier_adnoc
@@ -22,8 +22,8 @@ links_out:
 - event_2019_hormuz_attacks
 - supplier_aramco
 - supplier_nioc
-- corridor_suez
 - supplier_kazmunaygas
+- corridor_suez
 - supplier_nnpc
 coordinates:
   lat: 26.5
@@ -41,6 +41,8 @@ The current event shows similarity to the [[2019 Tanker Attacks]] with a feature
 - [[Saudi Aramco]]: low exposure due to diversified export routes.
 - [[NIOC]]: medium exposure as a significant portion of exports pass through the [[Strait of Hormuz]].
 - [[ADNOC]]: low exposure due to alternative shipping routes.
+- [[KazMunayGas]]: low exposure due to alternative shipping routes via [[Suez Canal]].
+- [[NNPC]]: low exposure due to alternative shipping routes via [[Suez Canal]].
 
 ## Signal Basis
 - System 3 procurement analysis for [[Strait of Hormuz]]: 20 alternative crude sources ranked.
