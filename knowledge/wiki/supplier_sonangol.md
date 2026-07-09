@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T14:57:25.301482+00:00'
-valid_at: '2026-07-09T14:57:25.301482+00:00'
+last_updated: '2026-07-09T15:10:28.651300+00:00'
+valid_at: '2026-07-09T15:10:28.651300+00:00'
 source_episodes: []
 links_out:
 - corridor_cape
@@ -23,9 +23,17 @@ coordinates: {}
 
 
 ## Profile
-[[Sonangol]] is a Supplier tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
+- **Name**: Sonangol
+- **Country**: [[Sonangol]]
+- **Type**: National oil company
+- **Daily Export**: 1.1 million barrels per day (mbpd)
 
-## Relations
-- [[Cape of Good Hope]]
+## Role
+- **Market Position**: Dominant player in [[Sonangol]]'s oil sector, crucial for the nation's economy.
+- **Operations**: Involved in exploration, production, refining, and distribution of oil and gas.
+- **Global Impact**: Significant exporter, with routes often passing through critical maritime chokepoints like the [[Cape of Good Hope]].
 
-_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/supplier_sonangol.md to enrich._
+## Risk
+- **Geopolitical**: Susceptible to political instability in [[Sonangol]], which can affect production and export capabilities.
+- **Economic**: Fluctuations in global oil prices directly impact revenue and operational stability.
+- **Operational**: Reliance on maritime routes poses risks from piracy and maritime security threats near the [[Cape of Good Hope]].
