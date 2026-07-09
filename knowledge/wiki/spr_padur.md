@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-02T21:17:17.423390+00:00'
-valid_at: '2026-07-02T21:17:17.423390+00:00'
+last_updated: '2026-07-09T14:45:03.665937+00:00'
+valid_at: '2026-07-09T14:45:03.665937+00:00'
 source_episodes: []
 links_out: []
 coordinates:
@@ -24,10 +24,9 @@ coordinates:
 
 
 ## Profile
-The Padur Strategic Petroleum Reserve (SPR) Cavern is located in Padur, Udupi, Karnataka. It has a storage capacity of 2.50 million metric tons (mmt) of crude oil.
+[[Padur SPR]] is a SPRCavern tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
 
-## Role
-The Padur SPR Cavern serves as a critical component of national energy security, designed to store emergency crude oil supplies. Its role is to mitigate the impact of supply disruptions in the global oil market, ensuring a stable energy supply for the country.
+## Relations
+- (no structural relationships in this bundle)
 
-## Risk
-The primary risks associated with the Padur SPR Cavern include potential geopolitical tensions affecting oil supply chains, technical failures in storage and retrieval systems, and natural disasters that could impact the facility's operations. Maintaining optimal fill levels, currently at 1.43 mmt, is essential to effectively manage these risks.
+_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/spr_padur.md to enrich._
