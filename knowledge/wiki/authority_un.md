@@ -13,18 +13,37 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T14:57:27.401134+00:00'
-valid_at: '2026-07-09T14:57:27.401134+00:00'
+last_updated: '2026-07-09T15:19:39.861256+00:00'
+valid_at: '2026-07-09T15:19:39.861256+00:00'
 source_episodes: []
 links_out: []
 coordinates: {}
 ---
 
 
-## Profile
-[[UN]] is a Authority tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
+## Jurisdiction Overview
 
-## Relations
-- (no structural relationships in this bundle)
+The [[UN]] (UN) plays a critical role in the global governance of oil supply chains through various mechanisms, primarily via the United Nations Security Council (UNSC). The UNSC has the authority to impose sanctions that can directly impact the oil supply chain, including restrictions on the trade of petroleum and petroleum products.
 
-_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/authority_un.md to enrich._
+## Sanctions and Oil Supply Chains
+
+UNSC sanctions can target specific countries or entities involved in the oil supply chain. These sanctions may include:
+- **Trade Restrictions**: Prohibitions on the import or export of oil and related products.
+- **Asset Freezes**: Measures to prevent entities from accessing financial resources derived from oil sales.
+- **Travel Bans**: Restrictions on individuals involved in the oil sector from traveling internationally.
+
+These measures are designed to influence the behavior of targeted states or non-state actors by disrupting their revenue streams dependent on oil exports.
+
+## Enforcement and Compliance
+
+The UN relies on member states to enforce sanctions. This involves:
+- **Monitoring**: Tracking compliance through national and international agencies.
+- **Reporting**: Member states are required to report violations to the UNSC.
+- **Penalties**: Non-compliance can result in further sanctions or other punitive measures.
+
+## Impact on Global Oil Markets
+
+UN sanctions can have significant repercussions on global oil markets by:
+- **Reducing Supply**: Limiting the amount of oil available on the global market.
+- **Increasing Prices**: Creating shortages that drive up oil prices.
+- **Altering Trade Routes**: Forcing changes in the routes and methods used for oil transportation.
