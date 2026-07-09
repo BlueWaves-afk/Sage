@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-02T21:10:07.080306+00:00'
-valid_at: '2026-07-02T21:10:07.080306+00:00'
+last_updated: '2026-07-09T14:45:01.756316+00:00'
+valid_at: '2026-07-09T14:45:01.756316+00:00'
 source_episodes: []
 links_out:
 - corridor_cape
@@ -23,10 +23,9 @@ coordinates: {}
 
 
 ## Profile
-[[Sonangol]] is the national oil company of Angola, established in 1980. It operates across the entire oil supply chain, from exploration and production to refining and distribution. Sonangol holds significant stakes in joint ventures with international oil companies and is a key player in Angola's oil sector, which is crucial to the country's economy.
+[[Sonangol]] is a Supplier tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
 
-## Role
-Sonangol plays a pivotal role in Angola's oil export strategy, managing a substantial portion of the country's 1.1 million barrels per day (mbpd) of oil exports. The company's operations extend to global markets, with a notable presence in regions such as Europe and Asia. Sonangol's shipping routes often pass through critical maritime chokepoints, including the [[Cape of Good Hope]], underscoring its importance in global oil trade logistics.
+## Relations
+- [[Cape of Good Hope]]
 
-## Risk
-Sonangol operates in a high-risk environment characterized by political instability and regulatory challenges within Angola. Despite not being sanctioned, the company faces risks associated with corruption allegations and governance issues. Additionally, fluctuations in global oil prices and the reliance on oil revenues for Angola's economy pose significant financial risks to Sonangol's operations and stability.
+_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/supplier_sonangol.md to enrich._
