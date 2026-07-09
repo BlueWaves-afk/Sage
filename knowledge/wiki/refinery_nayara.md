@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T14:57:25.616812+00:00'
-valid_at: '2026-07-09T14:57:25.616812+00:00'
+last_updated: '2026-07-09T15:12:01.225073+00:00'
+valid_at: '2026-07-09T15:12:01.225073+00:00'
 source_episodes: []
 links_out:
 - grade_arab_light
@@ -25,9 +25,10 @@ coordinates:
 
 
 ## Profile
-[[Vadinar Refinery]] is a Refinery tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
+The [[Vadinar Refinery]], located at coordinates 22.28°N latitude and 69.73°E longitude, is a significant refining facility with a processing capacity of 0.40 million barrels per day (mbpd). It maintains an inventory sufficient for 22 days of operation.
 
-## Relations
-- [[Arab Light]]
+## Role
+The [[Vadinar Refinery]] plays a critical role in processing [[Arab Light]] and other crude oils, contributing to the regional refining capacity and supporting the energy needs of the area. Its strategic location and capacity make it a key node in the oil supply chain.
 
-_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/refinery_nayara.md to enrich._
+## Risk
+Potential risks associated with the [[Vadinar Refinery]] include vulnerabilities to supply chain disruptions, geopolitical tensions affecting crude oil imports, and operational challenges due to its inventory holding capacity of 22 days.
