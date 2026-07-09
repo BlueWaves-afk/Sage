@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-02T21:10:49.365662+00:00'
-valid_at: '2026-07-02T21:10:49.365662+00:00'
+last_updated: '2026-07-09T14:45:01.879828+00:00'
+valid_at: '2026-07-09T14:45:01.879828+00:00'
 source_episodes: []
 links_out:
 - grade_arab_medium
@@ -25,13 +25,11 @@ coordinates:
 ---
 
 
-## Capacity and Inventory
-- The refinery has a processing capacity of 0.30 million barrels per day (mbpd).
-- Inventory days stand at 22.
+## Profile
+[[Mangaluru]] is a Refinery tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
 
-## Location
-- The refinery is located at coordinates 12.91 latitude and 74.84 longitude.
-
-## Related Entities
+## Relations
 - [[Arab Medium]]
 - [[Basrah Medium]]
+
+_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/refinery_mangaluru.md to enrich._
