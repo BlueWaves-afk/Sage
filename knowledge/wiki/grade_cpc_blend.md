@@ -13,21 +13,19 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-02T21:14:49.738725+00:00'
-valid_at: '2026-07-02T21:14:49.738725+00:00'
+last_updated: '2026-07-09T14:45:03.097322+00:00'
+valid_at: '2026-07-09T14:45:03.097322+00:00'
 source_episodes: []
 links_out:
-- supplier_kazmunaygas
 - refinery_visakh
 coordinates: {}
 ---
 
 
 ## Profile
-[[CPC Blend]] is a light crude oil with an API gravity of 45.0 and a sulfur content of 0.55%. Originating from [[KazMunayGas]], it is extracted primarily from the Caspian Pipeline Consortium (CPC) system, which transports oil from Kazakhstan's Tengiz and Karachaganak fields to the Russian Black Sea port of Novorossiysk.
+[[CPC Blend]] is a CrudeGrade tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
 
-## Role
-CPC Blend is valued for its high yield of light products. Upon refining, it produces 32% naphtha, 16% kerosene, 22% diesel, 18% vacuum gas oil (VGO), and 12% residue. This composition makes it particularly suitable for refineries configured to maximize light-end products, such as [[Visakhapatnam Refinery]] in India.
+## Relations
+- [[Visakhapatnam Refinery]]
 
-## Risk
-Geopolitical tensions in the Caspian region and the reliance on Russian infrastructure for export pose significant risks to the stability of CPC Blend supply. Additionally, the blend's transportation through the Bosphorus Strait introduces logistical challenges and potential bottlenecks.
+_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/grade_cpc_blend.md to enrich._
