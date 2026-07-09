@@ -13,18 +13,18 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T14:09:42.813591+00:00'
-valid_at: '2026-07-09T14:09:17.713229+00:00'
+last_updated: '2026-07-09T14:09:19.808416+00:00'
+valid_at: '2026-07-09T14:09:01.276986+00:00'
 source_episodes: []
 links_out:
-- supplier_adnoc
-- corridor_cape
 - event_2019_hormuz_attacks
 - supplier_aramco
 - supplier_nioc
-- corridor_suez
-- supplier_kazmunaygas
-- supplier_nnpc
+- supplier_adnoc
+- supplier_qatarenergy
+- supplier_iraqoil
+- supplier_kpc
+- supplier_us
 coordinates:
   lat: 26.5
   lon: 56.4
@@ -32,27 +32,31 @@ coordinates:
 
 
 ## Current Assessment
-The [[Strait of Hormuz]] has experienced a confirmed action crossing with no risk score available for this signal. The event aligns with the predicted timeline, indicating a stable yet monitored situation. System 3 procurement analysis has identified 20 alternative crude sources, with [[ADNOC]] (Murban) via [[Cape of Good Hope]] being the top option.
+Iran has threatened to close the [[Strait of Hormuz]] following recent strikes, potentially disrupting a critical chokepoint for global oil supply. The situation remains fluid with no immediate risk score available.
 
 ## Historical Pattern
-The current event shows feature-overlap with the [[2019 Tanker Attacks]], though specific details and outcomes may differ.
+The threat to close the [[Strait of Hormuz]] echoes the [[2019 Tanker Attacks]], where geopolitical tensions led to significant disruptions in oil transit.
 
 ## Affected Entities
-- [[Saudi Aramco]]: medium exposure due to significant throughput share.
-- [[NIOC]]: high exposure as a major supplier reliant on the corridor.
-- [[ADNOC]]: medium exposure based on inventory days at risk.
+- [[Saudi Aramco]]: High exposure due to significant throughput share.
+- [[NIOC]]: High exposure as a major supplier reliant on the strait.
+- [[ADNOC]]: Medium exposure due to inventory days at risk.
+- [[QatarEnergy]]: Medium exposure based on throughput dependency.
+- [[Iraqi Oil Ministry]]: High exposure due to critical supply route.
+- [[Kuwait Petroleum Corporation]]: Medium exposure from inventory risk.
+- [[United States]]: Low exposure, but potential secondary impacts on global markets.
 
 ## Signal Basis
-- System 3 procurement analysis for [[Strait of Hormuz]]: 20 alternative crude sources ranked.
+- News report indicating Iran's threat to close the [[Strait of Hormuz]].
 
 ## Relations
 | Relation         | Entity                 | Type               | Strength |
 |------------------|------------------------|--------------------|----------|
-| supply_dependency| [[Saudi Aramco]]       | supply_dependency  | medium   |
+| supply_dependency| [[Saudi Aramco]]       | supply_dependency  | high     |
 | supply_dependency| [[NIOC]]               | supply_dependency  | high     |
 | supply_dependency| [[ADNOC]]              | supply_dependency  | medium   |
-| historical_precedent| [[2019 Tanker Attacks]] | historical_precedent | medium |
-| bypass_option    | [[Cape of Good Hope]]  | bypass_option      | medium   |
-| bypass_option    | [[Suez Canal]]         | bypass_option      | medium   |
-| supply_dependency| [[KazMunayGas]]        | supply_dependency  | medium   |
-| supply_dependency| [[NNPC]]               | supply_dependency  | medium   |
+| supply_dependency| [[QatarEnergy]]        | supply_dependency  | medium   |
+| supply_dependency| [[Iraqi Oil Ministry]] | supply_dependency  | high     |
+| supply_dependency| [[Kuwait Petroleum Corporation]] | supply_dependency | medium   |
+| threat_actor     | Iran               | threat_actor       | high     |
+| historical_precedent| [[2019 Tanker Attacks]] | historical_precedent | high     |
