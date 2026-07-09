@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T14:57:25.563622+00:00'
-valid_at: '2026-07-09T14:57:25.563622+00:00'
+last_updated: '2026-07-09T15:11:49.124185+00:00'
+valid_at: '2026-07-09T15:11:49.124185+00:00'
 source_episodes: []
 links_out:
 - grade_qatar_marine
@@ -26,10 +26,10 @@ coordinates:
 
 
 ## Profile
-[[Kochi]] is a Refinery tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
+The [[Kochi]], located at coordinates 9.97°N latitude and 76.28°E longitude, has a processing capacity of 0.31 million barrels per day (mbpd). It maintains an inventory sufficient for 22 days of operation.
 
-## Relations
-- [[Qatar Marine]]
-- [[Bonny Light]]
+## Role
+The refinery plays a critical role in processing various crude oil types, including [[Qatar Marine]] and [[Bonny Light]], contributing to the regional energy supply and supporting downstream petroleum product distribution.
 
-_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/refinery_kochi.md to enrich._
+## Risk
+Operational risks include vulnerability to supply chain disruptions affecting crude oil inputs like [[Qatar Marine]] and [[Bonny Light]], and potential logistical challenges due to its geographic location.
