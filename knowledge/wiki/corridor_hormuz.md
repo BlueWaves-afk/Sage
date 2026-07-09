@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T19:16:08.217889+00:00'
-valid_at: '2026-07-09T19:15:45.328814+00:00'
+last_updated: '2026-07-09T19:16:19.878867+00:00'
+valid_at: '2026-07-09T19:15:59.751662+00:00'
 source_episodes: []
 links_out:
 - authority_ofac
