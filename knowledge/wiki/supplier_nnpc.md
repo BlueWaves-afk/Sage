@@ -13,22 +13,19 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-02T21:08:54.252354+00:00'
-valid_at: '2026-07-02T21:08:54.252354+00:00'
+last_updated: '2026-07-09T14:45:01.470611+00:00'
+valid_at: '2026-07-09T14:45:01.470611+00:00'
 source_episodes: []
-links_out: []
+links_out:
+- corridor_cape
 coordinates: {}
 ---
 
 
-## Overview
-The Nigerian National Petroleum Company (NNPC) is a state-owned oil company in Nigeria. It operates as a limited liability company and is the only entity licensed to operate in the country's petroleum industry. NNPC partners with foreign oil companies to explore Nigeria's fossil fuel resources.
+## Profile
+[[NNPC]] is a Supplier tracked in the india-energy-2026 context bundle. Structured attributes (capacity, assay, throughput, etc.) are carried on its graph node; see the facts layer for sourced values.
 
-## Operations
-NNPC manages joint ventures with several multinational corporations including Royal Dutch Shell, Agip, ExxonMobil, TotalEnergies, Chevron, and Texaco (now merged with Chevron). It conducts petroleum exploration and production through these collaborations. NNPC has extensive infrastructure and investments in the downstream, midstream, and upstream sectors of the Nigerian petroleum industry.
+## Relations
+- [[Cape of Good Hope]]
 
-## Leadership
-The current Group Chief Executive Officer (GCEO) of NNPC is Bayo Ojulari, appointed by President Bola Ahmed Tinubu. The non-executive chairman is Ahmadu Musa Kida. The board comprises representatives from Nigeria’s six geopolitical zones.
-
-## Export Data
-NNPC exports approximately 1.4 million barrels per day (mbpd) of crude oil. The company is not under any sanctions.
+_Foundational stub — auto-generated from facts. Replace with a hand-authored narrative in narratives/supplier_nnpc.md to enrich._
