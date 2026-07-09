@@ -6,15 +6,15 @@ entity_type: Corridor
 tags:
 - sage/corridor
 - risk/calm
-risk_score: 0.0875
+risk_score: 0.0
 risk_band: CALM
 factors:
   ais: 0.0
   gdelt: 0.0
-  price: 0.35
+  price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T13:52:50.033425+00:00'
-valid_at: '2026-07-09T13:52:50.033425+00:00'
+last_updated: '2026-07-09T13:53:05.355731+00:00'
+valid_at: '2026-07-09T13:52:50.045112+00:00'
 source_episodes: []
 links_out:
 - event_2019_hormuz_attacks
@@ -27,10 +27,8 @@ coordinates:
 ---
 
 
-
-
 ## Current Assessment
-The [[Strait of Hormuz]] has experienced a confirmed action crossing with no risk score available for this signal. The event aligns with previous patterns of maritime activity in the region.
+The [[Strait of Hormuz]] is under immediate threat of closure following recent strikes, as Iran has publicly threatened to close the strait. No risk score is available for this signal at the moment.
 
 ## Historical Pattern
 This event is reminiscent of the [[2019 Tanker Attacks]] with a feature-overlap percentage of approximately 70%.
@@ -41,7 +39,7 @@ This event is reminiscent of the [[2019 Tanker Attacks]] with a feature-overlap 
 - [[ADNOC]]: medium exposure due to inventory days at risk.
 
 ## Signal Basis
-- Confirmed action crossing based on news reports.
+- Confirmed threat of closure based on news reports.
 
 ## Relations
 | Relation         | Entity           | Type               | Strength |
