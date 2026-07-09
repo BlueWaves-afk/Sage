@@ -5,18 +5,19 @@ aliases:
 entity_type: Corridor
 tags:
 - sage/corridor
-- risk/watch
-risk_score: 0.266
-risk_band: WATCH
+- risk/calm
+risk_score: 0.0
+risk_band: CALM
 factors:
   ais: 0.0
-  gdelt: 0.595
-  price: 0.35
+  gdelt: 0.0
+  price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T13:55:30.951984+00:00'
+last_updated: '2026-07-09T13:56:27.306168+00:00'
 valid_at: '2026-07-09T13:55:30.951984+00:00'
 source_episodes: []
 links_out:
+- authority_ofac
 - event_2019_hormuz_attacks
 - supplier_aramco
 - supplier_nioc
@@ -29,9 +30,8 @@ coordinates:
 ---
 
 
-
 ## Current Assessment
-Iran has threatened to close the [[Strait of Hormuz]] following recent strikes, potentially disrupting a critical chokepoint for global oil supply. The situation remains fluid with no immediate risk score available.
+Iran has threatened to close the [[Strait of Hormuz]] following recent strikes, potentially disrupting a critical chokepoint for global oil supply. The [[OFAC]] has added a tanker operator to the SDN list, further complicating the transit of oil through the strait. No risk score is available for this signal.
 
 ## Historical Pattern
 The threat to close the [[Strait of Hormuz]] echoes the [[2019 Tanker Attacks]], where geopolitical tensions led to significant disruptions in oil transit.
@@ -45,6 +45,7 @@ The threat to close the [[Strait of Hormuz]] echoes the [[2019 Tanker Attacks]],
 
 ## Signal Basis
 - News report indicating Iran's threat to close the [[Strait of Hormuz]].
+- [[OFAC]] adds tanker operator to SDN list.
 
 ## Relations
 | Relation         | Entity                 | Type               | Strength |
@@ -55,3 +56,4 @@ The threat to close the [[Strait of Hormuz]] echoes the [[2019 Tanker Attacks]],
 | supply_dependency| [[QatarEnergy]]        | supply_dependency  | high     |
 | supply_dependency| [[Kuwait Petroleum Corporation]] | supply_dependency | medium   |
 | historical_precedent | [[2019 Tanker Attacks]] | historical_precedent | high    |
+| sanctions_link   | [[OFAC]]               | sanctions_link     | high     |
