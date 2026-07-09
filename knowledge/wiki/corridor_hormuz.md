@@ -5,11 +5,11 @@ aliases:
 entity_type: Corridor
 tags:
 - sage/corridor
-- risk/watch
-risk_score: 0.3485
-risk_band: WATCH
+- risk/elevated
+risk_score: 0.4591
+risk_band: ELEVATED
 factors:
-  ais: 0.0
+  ais: 0.3685
   gdelt: 0.595
   price: 0.35
   sanctions: 0.55
@@ -26,6 +26,7 @@ coordinates:
   lat: 26.5
   lon: 56.4
 ---
+
 
 
 
