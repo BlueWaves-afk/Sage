@@ -5,16 +5,16 @@ aliases:
 entity_type: Corridor
 tags:
 - sage/corridor
-- risk/critical
-risk_score: 0.9173
-risk_band: CRITICAL
+- risk/calm
+risk_score: 0.0875
+risk_band: CALM
 factors:
   ais: 0.0
   gdelt: 0.0
   price: 0.35
   sanctions: 0.0
-last_updated: '2026-07-09T13:52:50.045112+00:00'
-valid_at: '2026-07-09T13:52:50.045112+00:00'
+last_updated: '2026-07-09T13:52:50.033425+00:00'
+valid_at: '2026-07-09T13:52:50.033425+00:00'
 source_episodes: []
 links_out:
 - event_2019_hormuz_attacks
@@ -25,6 +25,7 @@ coordinates:
   lat: 26.5
   lon: 56.4
 ---
+
 
 
 
