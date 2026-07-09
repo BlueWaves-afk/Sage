@@ -13,14 +13,39 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T15:23:06.016907+00:00'
-valid_at: '2026-07-09T15:23:05.975998+00:00'
+last_updated: '2026-07-09T18:07:05.945229+00:00'
+valid_at: '2026-07-09T18:06:27.478071+00:00'
 source_episodes: []
-links_out: []
+links_out:
+- supplier_adnoc
+- grade_murban
+- corridor_cape
+- supplier_kazmunaygas
+- supplier_rosneft
 coordinates:
   lat: 22.47
   lon: 70.07
 ---
 
 
-[STUB] Jamnagar Refinery (entity_id: refinery_jamnagar) — LLM_PROVIDER=stub. Set LLM_PROVIDER=openai or bedrock in .env to enable real synthesis.
+## Current Assessment
+The [[Jamnagar Refinery]] is currently evaluating alternative crude sources, with [[ADNOC]]'s [[Murban]] crude via the [[Cape of Good Hope]] emerging as the top option due to its favorable cost, lead time, and grade compatibility.
+
+## Affected Entities
+- [[ADNOC]]: high exposure due to being the top-ranked crude supplier.
+- [[Murban]]: high exposure as the preferred crude grade.
+- [[Cape of Good Hope]]: medium exposure as the recommended shipping route.
+- [[KazMunayGas]]: medium exposure as an alternative supplier.
+- [[Rosneft]]: medium exposure as an alternative supplier.
+
+## Signal Basis
+- System 3 procurement analysis for Jamnagar Refinery.
+
+## Relations
+| Relation        | Entity             | Type               | Strength |
+|-----------------|--------------------|--------------------|----------|
+| supply_dependency | [[ADNOC]]         | supply_dependency  | high     |
+| supply_dependency | [[Murban]]         | supply_dependency  | high     |
+| bypass_option   | [[Cape of Good Hope]] | bypass_option     | medium   |
+| supply_dependency | [[KazMunayGas]]    | supply_dependency  | medium   |
+| supply_dependency | [[Rosneft]]        | supply_dependency  | medium   |
