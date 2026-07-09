@@ -6,20 +6,22 @@ entity_type: Supplier
 tags:
 - sage/supplier
 - risk/calm
-risk_score: 0.0
+risk_score: 0.0488
 risk_band: CALM
 factors:
   ais: 0.0
-  gdelt: 0.0
+  gdelt: 0.1625
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T19:04:54.851714+00:00'
-valid_at: '2026-07-09T19:04:38.217587+00:00'
+last_updated: '2026-07-09T19:00:13.341863+00:00'
+valid_at: '2026-07-09T19:00:13.341863+00:00'
 source_episodes: []
 links_out:
 - corridor_suez
 coordinates: {}
 ---
+
+
 
 
 ## Current Assessment
