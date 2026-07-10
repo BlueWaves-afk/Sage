@@ -5,35 +5,32 @@ aliases:
 entity_type: Refinery
 tags:
 - sage/refinery
-- risk/elevated
-risk_score: 0.5616
-risk_band: ELEVATED
+- risk/calm
+risk_score: 0.0
+risk_band: CALM
 factors:
   ais: 0.0
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T19:43:53.353022+00:00'
-valid_at: '2026-07-09T19:43:53.353022+00:00'
+last_updated: '2026-07-10T09:51:52.988870+00:00'
+valid_at: '2026-07-10T09:51:45.462310+00:00'
 source_episodes: []
 links_out:
 - supplier_adnoc
 - grade_murban
 - corridor_cape
 - supplier_kazmunaygas
-- corridor_suez
 - supplier_rosneft
+- corridor_suez
 coordinates:
   lat: 22.47
   lon: 70.07
 ---
 
 
-
-
-
 ## Current Assessment
-The [[Jamnagar Refinery]] is currently evaluating alternative crude sources, with [[ADNOC]]'s [[Murban]] crude via the [[Cape of Good Hope]] emerging as the top option due to its favorable cost, lead time, and grade compatibility. The refinery is also considering [[KazMunayGas]] via the [[Suez Canal]] and [[Rosneft]] via the ESPO Pipeline as viable alternatives.
+The [[Jamnagar Refinery]] has no alternative crude sources currently ranked, indicating a potential vulnerability in its supply chain. This situation requires immediate re-evaluation of supply dependencies and bypass options to mitigate risks.
 
 ## Affected Entities
 - [[ADNOC]]: high exposure due to being the top-ranked crude supplier.
