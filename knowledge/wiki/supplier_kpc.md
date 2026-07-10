@@ -5,21 +5,23 @@ aliases:
 entity_type: Supplier
 tags:
 - sage/supplier
-- risk/elevated
-risk_score: 0.5616
-risk_band: ELEVATED
+- risk/calm
+risk_score: 0.2141
+risk_band: CALM
 factors:
   ais: 0.0
-  gdelt: 0.0
+  gdelt: 0.6775
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T19:45:07.588409+00:00'
-valid_at: '2026-07-09T19:45:07.588409+00:00'
+last_updated: '2026-07-09T07:56:04'
+valid_at: '2026-07-09T07:56:04'
 source_episodes: []
 links_out:
 - corridor_hormuz
 coordinates: {}
 ---
+
+
 
 
 

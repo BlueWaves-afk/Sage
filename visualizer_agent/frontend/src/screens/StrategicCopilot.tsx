@@ -36,7 +36,15 @@ export default function StrategicCopilot() {
     setMsgs((m) => [...m, { role: "user", text: question }]);
     setBusy(true);
     const { data, live } = await api.copilot(question);
-    setMsgs((m) => [...m, { role: "sage", answer: data, live }]);
+    // No fabricated fallback — if the KB is unreachable, show an explicit offline
+    // notice (never an invented answer).
+    const answer: CopilotAnswer = data ?? {
+      answer: "_Knowledge base offline — no answer available. Reconnect to query SAGE._",
+      citations: [],
+      sources: [],
+      route: "vector",
+    };
+    setMsgs((m) => [...m, { role: "sage", answer, live }]);
     setBusy(false);
     requestAnimationFrame(() => endRef.current?.scrollIntoView({ behavior: "smooth" }));
   };

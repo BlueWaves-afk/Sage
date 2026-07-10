@@ -53,10 +53,11 @@ SANCTIONS_LISTS = [
         "name": "UN",
         "url": "https://scsanctions.un.org/resources/xml/en/consolidated.xml",
     },
-    {
-        "name": "EU",
-        "url": "https://data.europa.eu/api/hub/repo/datasets/consolidated-list-of-persons-groups-and-entities-subject-to-eu-financial-sanctions/download/",
-    },
+    # EU consolidated list: the old open data.europa.eu download now 404s (the EU
+    # FSF endpoint requires a per-user token). Disabled to avoid recurring fetch
+    # errors — OFAC SDN + UN cover the sanctions signal. Re-enable with a valid
+    # EU FSF token URL when available.
+    # {"name": "EU", "url": "https://webgate.ec.europa.eu/fsd/fsf/public/files/..."},
 ]
 
 # Energy / maritime keywords for filtering relevant sanctions

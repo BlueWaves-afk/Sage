@@ -6,21 +6,22 @@ entity_type: CrudeGrade
 tags:
 - sage/crudegrade
 - risk/calm
-risk_score: 0.0
+risk_score: 0.03
 risk_band: CALM
 factors:
   ais: 0.0
-  gdelt: 0.0
+  gdelt: 0.1
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T15:15:27.459343+00:00'
-valid_at: '2026-07-09T15:15:27.459343+00:00'
+last_updated: '2026-07-09T19:30:22.177322+00:00'
+valid_at: '2026-07-09T19:30:22.177322+00:00'
 source_episodes: []
 links_out:
 - supplier_kazmunaygas
 - refinery_visakh
 coordinates: {}
 ---
+
 
 
 ## Profile

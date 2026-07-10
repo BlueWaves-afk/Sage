@@ -20,7 +20,7 @@ export default function AppShell() {
   const [live, setLive] = useState<boolean | undefined>(undefined);
 
   useEffect(() => {
-    api.health().then((env) => setLive(env.live && env.data.kb_ready));
+    api.health().then((env) => setLive(env.live && !!env.data?.kb_ready));
   }, []);
 
   return (

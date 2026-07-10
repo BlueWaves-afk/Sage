@@ -124,41 +124,17 @@ async def _fast_path(client: object, entity: str, score: float, scenario_ref: st
 # ---------------------------------------------------------------------------
 
 async def _cold_pipeline(client: object, entity: str, score: float) -> None:
-    """Run Systems 2→3→4. System 2 first, then 3+4 in parallel."""
-    scenario_id = f"cold-{uuid.uuid4().hex[:8]}"
-    log.info("[trigger] cold pipeline — '%s' ref=%s", entity, scenario_id)
-
-    # System 2 — LLM decides scenario params from live signals, then runs cascade.
-    await _publish_stage(client, "SCENARIO", entity, "running")
-    scenario_params: dict = {}
-    try:
-        from orchestration.scenario_params import decide_scenario_params
-        from scenario_agent.runner import run as run_scenario
-        scenario_params = await decide_scenario_params(entity)
-        log.info("[trigger] scenario params for '%s': %s", entity, scenario_params)
-        scenario_id = await run_scenario(trigger_entity=entity, status="confirmed", scenario=scenario_params)
-        await _publish_stage(client, "SCENARIO", entity, "done")
-    except Exception as exc:
-        log.error("[trigger] scenario_agent failed for '%s': %s", entity, exc)
-        await _publish_stage(client, "SCENARIO", entity, "error")
-        return
-
-    # Systems 3 + 4 run in parallel, both informed by the scenario result.
-    await _publish_stage(client, "PROCURE", entity, "running")
-    await _publish_stage(client, "RESERVE", entity, "running")
-
-    results = await asyncio.gather(
-        _run_procurement(scenario_id, entity),
-        _run_spr(scenario_id, scenario_params),
-        return_exceptions=True,
-    )
-    for result, label in zip(results, ("PROCURE", "RESERVE")):
-        stage_status = "error" if isinstance(result, Exception) else "done"
-        await _publish_stage(client, label, entity, stage_status)
-        if isinstance(result, Exception):
-            log.error("[trigger] %s failed for '%s': %s", label, entity, result)
-
-    log.info("[trigger] cold pipeline complete — '%s' ref=%s", entity, scenario_id)
+    """
+    Autonomous response — Systems 2→3→4 on a confirmed crossing. This now delegates
+    to the compiled LangGraph response pipeline (orchestration.graph.run_response_pipeline),
+    which is the single declarative orchestrator (refresh → scenario → procure →
+    reserve), with Redis checkpointing and per-node stage events. The imperative
+    sequence that used to live here is gone — LangGraph is the source of truth.
+    """
+    from orchestration.graph import run_response_pipeline
+    log.info("[trigger] response pipeline (LangGraph) — '%s' score=%.3f", entity, score)
+    await run_response_pipeline(entity, score, client=client)
+    log.info("[trigger] response pipeline complete — '%s'", entity)
 
 
 async def _run_procurement(scenario_id: str, trigger_entity: str) -> None:

@@ -6,21 +6,22 @@ entity_type: Corridor
 tags:
 - sage/corridor
 - risk/calm
-risk_score: 0.0
+risk_score: 0.03
 risk_band: CALM
 factors:
   ais: 0.0
-  gdelt: 0.0
+  gdelt: 0.1
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T15:06:23.381984+00:00'
-valid_at: '2026-07-09T15:06:23.381984+00:00'
+last_updated: '2026-07-09T06:53:51'
+valid_at: '2026-07-09T06:53:51'
 source_episodes: []
 links_out: []
 coordinates:
   lat: 2.5
   lon: 102.0
 ---
+
 
 
 ## Geopolitical Significance

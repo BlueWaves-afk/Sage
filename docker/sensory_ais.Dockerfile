@@ -12,4 +12,4 @@ COPY knowledge/    knowledge/
 COPY sensory_agent/ sensory_agent/
 
 ENV PYTHONUNBUFFERED=1
-CMD ["python", "-m", "sensory_agent.ais"]
+CMD ["python", "-m", "sensory_agent.runner", "ais"]

@@ -19,5 +19,7 @@ Shared scaffolding:
 Runner:
   runner.py     — Launch all sub-agents: ``python -m sensory_agent.runner``
 """
-from sensory_agent import ais, news, prices, sanctions  # noqa: F401
-from sensory_agent.runner import run_all  # noqa: F401
+# NOTE: do NOT eager-import the sub-agents here. Each runs in its own container
+# with only its own deps (e.g. the news/sanctions/ais images don't ship yfinance).
+# Eager-importing prices → yfinance would crash those containers. Import sub-agents
+# lazily where needed (runner.py does this inside its functions).

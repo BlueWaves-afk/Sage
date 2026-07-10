@@ -1,6 +1,9 @@
 # SAGE Live — Voice Interface Design Spec (System 6)
 
-**Status:** Design only — not yet implemented. This is the spec to build against.
+**Status:** ✅ Implemented (v1, push-to-talk + WebSocket transport). `voicebridge/`
+backend (intent classifier, speakable, Gnani STT/TTS seam with mock fallback,
+`/ws/voice`) + `src/voice/` frontend (VoiceOrb, action bus, all 5 screens wired).
+Deferred to v2: real Gnani streaming, LiveKit transport, Porcupine wake word.
 **Owner:** Voice/UX
 **Depends on:** System 5 frontend (routes, WikiDrawer, KnowledgeGraphMap), the
 Strategic Copilot's EA-GraphRAG engine (`knowledge/api/read.py::copilot_query`),

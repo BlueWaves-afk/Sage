@@ -1,7 +1,7 @@
 // Small data-fetching + WebSocket hooks. No external state library — the app is
 // read-mostly and these keep it dependency-light.
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { api, type Envelope } from "./client";
 
 /** Fetch once on mount; expose data, live-flag, and loading. */
@@ -41,17 +41,16 @@ export const WS_STAGES = [
 export type Stage = (typeof WS_STAGES)[number];
 
 /**
- * Subscribe to the /ws event stream. Falls back to a simulated pipeline sweep
- * when the socket can't connect, so the pipeline bar animates in the demo.
+ * Subscribe to the /ws event stream for real pipeline-stage events. If the socket
+ * can't connect, the pipeline bar stays idle (no simulated sweep) — the bar only
+ * ever reflects real LangGraph stage transitions pushed by the backend.
  */
 export function usePipeline() {
   const [active, setActive] = useState<Stage | null>(null);
   const [connected, setConnected] = useState(false);
-  const timer = useRef<number | null>(null);
 
   useEffect(() => {
     let ws: WebSocket | null = null;
-    let closed = false;
 
     const base = import.meta.env.VITE_WS_BASE ?? `ws://${location.host}`;
     try {
@@ -65,28 +64,14 @@ export function usePipeline() {
           /* ignore malformed frames */
         }
       };
-      ws.onclose = () => {
-        setConnected(false);
-        if (!closed) startSim();
-      };
+      ws.onclose = () => setConnected(false);
       ws.onerror = () => ws?.close();
     } catch {
-      startSim();
-    }
-
-    // Simulated sweep for offline demo mode.
-    function startSim() {
-      let i = 0;
-      timer.current = window.setInterval(() => {
-        setActive(WS_STAGES[i % WS_STAGES.length]);
-        i++;
-      }, 1100);
+      setConnected(false);
     }
 
     return () => {
-      closed = true;
       ws?.close();
-      if (timer.current) window.clearInterval(timer.current);
     };
   }, []);
 

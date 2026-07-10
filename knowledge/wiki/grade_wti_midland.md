@@ -6,20 +6,23 @@ entity_type: CrudeGrade
 tags:
 - sage/crudegrade
 - risk/calm
-risk_score: 0.0
+risk_score: 0.03
 risk_band: CALM
 factors:
   ais: 0.0
-  gdelt: 0.0
+  gdelt: 0.1
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T15:14:42.727700+00:00'
-valid_at: '2026-07-09T15:14:42.727700+00:00'
+last_updated: '2026-07-09T08:52:17'
+valid_at: '2026-07-09T08:52:17'
 source_episodes: []
 links_out:
 - refinery_jamnagar
 coordinates: {}
 ---
+
+
+
 
 
 ## Profile

@@ -6,19 +6,20 @@ entity_type: Authority
 tags:
 - sage/authority
 - risk/calm
-risk_score: 0.0
+risk_score: 0.0375
 risk_band: CALM
 factors:
   ais: 0.0
-  gdelt: 0.0
+  gdelt: 0.125
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T15:19:39.861256+00:00'
-valid_at: '2026-07-09T15:19:39.861256+00:00'
+last_updated: '2026-07-09T19:45:25.984961+00:00'
+valid_at: '2026-07-09T19:45:25.984961+00:00'
 source_episodes: []
 links_out: []
 coordinates: {}
 ---
+
 
 
 ## Jurisdiction Overview

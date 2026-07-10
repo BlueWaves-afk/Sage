@@ -382,14 +382,17 @@ After this update, here is the complete state of every data input in the system.
 | Assay yield curves (representative) | docs only → grade.py | BP/Aramco assays (§4a) |
 | Maritime distances / canal fees | docs only → routing.py | sea-distances.org, SCA (§8a) |
 
-### ✅ REAL but LIVE (pulled at runtime by System 1 — feeds identified, free, not yet wired)
+### ✅ REAL and LIVE (pulled at runtime by System 1 — implemented and verified live)
 
 | Data | Feed | Status |
 |---|---|---|
-| AIS positions / dark vessels | aisstream.io (free websocket) | feed ready; `ais.py` is a stub |
-| News / GDELT events | GDELT 2.0 + NewsAPI (free) | feed ready; `news.py` is a stub |
-| Sanctions adds/removals | OFAC/EU/UN XML (free) | feed ready; `sanctions.py` is a stub |
-| Brent/WTI prices + changepoints | yfinance + EIA (free) | feed ready; `prices.py` is a stub |
+| AIS positions / dark vessels | aisstream.io (free websocket) | ✅ live — `ais.py` (WebSocket + H3 + dark-vessel gaps) |
+| News / GDELT events | GDELT 2.0 + NewsData.io (free) | ✅ live — `news.py` (entity/action extraction) |
+| Sanctions adds/removals | OFAC/EU/UN XML (free) | ✅ live — `sanctions.py` (diff detection) |
+| Brent/WTI prices + changepoints | yfinance + EIA (free) | ✅ live — `prices.py` (BOCD changepoints) |
+
+_All four verified against live endpoints (EIA Brent, yfinance BZ=F, newsdata.io,
+GDELT, OFAC SDN, aisstream.io WebSocket). Keys in `.env.local` (gitignored)._
 
 ### ⚠️ STILL SIMULATED — no clean public source, must stay estimated or hand-built
 

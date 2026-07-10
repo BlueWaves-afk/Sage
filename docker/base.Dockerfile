@@ -26,6 +26,12 @@ COPY alt_procurement_agent/ alt_procurement_agent/
 COPY reserve_optim_agent/ reserve_optim_agent/
 COPY visualizer_agent/ visualizer_agent/
 COPY demo_cache/   demo_cache/
+# scripts + data bundle + env loader so the container can self-seed the graph
+# (docker compose exec sage-core python -m scripts.seed_kb) with the SAME
+# graphiti-core version that reads it — avoids cross-version schema mismatches.
+COPY scripts/      scripts/
+COPY data/         data/
+COPY config_env.py .
 
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1

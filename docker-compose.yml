@@ -14,7 +14,10 @@ version: "3.9"
 # To use AWS Bedrock: set LLM_PROVIDER=bedrock and AWS_* in .env
 
 x-common-env: &common-env
-  env_file: .env
+  env_file:
+    - .env
+    - path: .env.local   # real API keys (gitignored); overrides .env
+      required: false
 
 x-kb-build: &kb-build
   build:
@@ -64,9 +67,11 @@ services:
     environment:
       FALKORDB_HOST: falkordb
       REDIS_URL: redis://redis:6379/0
-      WIKI_DIR: /app/wiki   # bind-mounted to ./knowledge/wiki (single source on host)
+      WIKI_DIR: /app/wiki
+      SAGE_BUNDLE_PATH: data/india-energy-2026.context   # bind-mounted to ./knowledge/wiki (single source on host)
     volumes:
       - ./knowledge/wiki:/app/wiki
+      - ./data:/app/data:ro          # context bundle
     depends_on:
       falkordb: { condition: service_healthy }
       redis:    { condition: service_healthy }
@@ -84,8 +89,10 @@ services:
       FALKORDB_HOST: falkordb
       REDIS_URL: redis://redis:6379/0
       WIKI_DIR: /app/wiki
+      SAGE_BUNDLE_PATH: data/india-energy-2026.context
     volumes:
       - ./knowledge/wiki:/app/wiki   # shares wiki dir with sage-core
+      - ./data:/app/data:ro          # context bundle (host = single source)
     depends_on:
       falkordb: { condition: service_healthy }
       redis:    { condition: service_healthy }
@@ -191,4 +198,16 @@ services:
     depends_on:
       sage-core: { condition: service_started }
     profiles: ["agents"]
+
+  # ── Frontend (System 5 UI) — nginx serving the built React/deck.gl SPA ───────
+  # Proxies /api, /health, /ws to api-gateway:8000. Exposed on host port 80.
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      api-gateway: { condition: service_started }
+    ports:
+      - "80:80"
 

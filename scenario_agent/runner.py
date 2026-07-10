@@ -210,16 +210,21 @@ def _extract_refineries(subgraph, trigger_entity: str) -> list[dict]:
 
 
 def _baseline_brent() -> float:
-    """Baseline Brent price for IO normalisation. Read from bundle; falls back to 75.0."""
+    """Baseline Brent for IO normalisation. Volatile override > bundle seed > 75.0."""
+    seed = 75.0
     bundle_path = os.environ.get("SAGE_BUNDLE_PATH", os.environ.get("SAGE_CONTEXT_BUNDLE", ""))
     if bundle_path:
         try:
             from knowledge.context.loader import load_bundle
             ep = load_bundle(bundle_path).economics_params
-            return float(ep.get("baseline_brent_usd_per_bbl", {"value": 75.0})["value"])
+            seed = float(ep.get("baseline_brent_usd_per_bbl", {"value": 75.0})["value"])
         except Exception:
             pass
-    return 75.0
+    try:
+        from knowledge.context.volatile import get_volatile
+        return get_volatile("baseline_brent_usd_per_bbl", seed)
+    except Exception:
+        return seed
 
 
 def _run_io_and_abm(ario_result, params, refineries):

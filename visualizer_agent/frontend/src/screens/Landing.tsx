@@ -33,7 +33,7 @@ export default function Landing() {
   const { data: dash, live: dashLive } = useApi(api.dashboard);
 
   useEffect(() => {
-    api.health().then((env) => setLive(env.live && env.data.kb_ready));
+    api.health().then((env) => setLive(env.live && !!env.data?.kb_ready));
   }, []);
 
   const threatTone =

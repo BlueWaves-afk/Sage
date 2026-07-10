@@ -11,25 +11,9 @@ import type { GraphNode } from "../api/types";
 import { IconRss, IconAnchor, IconChart, IconAlert, IconBot } from "../components/icons";
 import { api } from "../api/hooks";
 import { useApi } from "../api/hooks";
-import { mockIntel } from "../api/mock";
-import type { IntelItem } from "../api/types";
 import { useVoice, voiceStore } from "../voice/useVoiceStore";
 import type { KpiKey } from "../voice/types";
 import "./command.css";
-
-const INTEL_ICON: Record<IntelItem["source"], typeof IconRss> = {
-  REUTERS: IconRss,
-  "AIS ALERTS": IconAnchor,
-  "PRICE MVT": IconChart,
-  "SAGE CORE": IconAlert,
-  OFAC: IconAlert,
-};
-const TONE_CLASS: Record<IntelItem["tone"], string> = {
-  info: "c-cyan",
-  warn: "c-amber",
-  good: "c-green",
-  crit: "c-red",
-};
 
 type Kpi = {
   // Key mirrors the voice action taxonomy — a `flash_kpi` action from voice
@@ -56,8 +40,24 @@ export default function CommandCenter() {
   const { data: proc, live: procLive } = useApi(api.procurement);
   const { data: sched, live: schedLive } = useApi(api.sprSchedule);
   const { data: scen, live: scenLive } = useApi(api.scenario);
+  const { data: intel } = useApi(api.intelligence);
   const [selected, setSelected] = useState<GraphNode | null>(null);
   const [briefLoading, setBriefLoading] = useState(true);
+  // Supporting-evidence drill-down: the real source signals behind a risk state.
+  const [evSource, setEvSource] = useState<string | null>(null);
+  const [evidence, setEvidence] = useState<import("../api/types").IntelSignal[] | null>(null);
+
+  const showEvidence = async (src: string) => {
+    const entity = dash?.top_risk_entity;
+    if (!entity) return;
+    setEvSource(src);
+    setEvidence(null);
+    const env = await api.evidence(entity, 20);
+    const items = (env.data || []).filter(
+      (s) => s.source.toLowerCase().startsWith(src.toLowerCase().slice(0, 4)),
+    );
+    setEvidence(items.length ? items : env.data || []);
+  };
 
   // Opens the wiki drawer for an entity referenced via a [[wikilink]] in narrative
   // text (brief, procurement rationale, SPR memo) — same drawer the map uses.
@@ -76,7 +76,7 @@ export default function CommandCenter() {
     }
     setBriefLoading(true);
     api.wiki(entity).then((env) => {
-      const m = env.data.content.match(/##\s*Current Assessment\s*\n([\s\S]*?)(?=\n##|\n---|$)/i);
+      const m = env.data?.content.match(/##\s*Current Assessment\s*\n([\s\S]*?)(?=\n##|\n---|$)/i);
       setBrief(m ? m[1].trim() : null);
       setBriefLive(env.live && !!m);
       setBriefLoading(false);
@@ -256,20 +256,52 @@ export default function CommandCenter() {
                   tone={dash?.threat_level === "MEDIUM" ? "amber" : dash?.threat_level === "LOW" ? "green" : "red"}
                 />
               </div>
-              <div className="label-sm cc-brief-sec">Supporting Evidence</div>
+              <div className="label-sm cc-brief-sec">
+                Supporting Evidence
+                {dash?.top_risk_entity && (
+                  <span className="cc-ev-for mono"> · {dash.top_risk_entity}</span>
+                )}
+              </div>
               <div className="cc-evidence">
                 {!live || loading ? (
                   <>
                     <Skel w={70} h={22} /> <Skel w={70} h={22} /> <Skel w={60} h={22} />
                   </>
                 ) : (
-                  ["News", "AIS", "Sanctions"].map((s) => (
-                    <Badge key={s} tone="muted" outline>
+                  ["News", "AIS", "Sanctions", "Price"].map((s) => (
+                    <button
+                      key={s}
+                      className={`cc-ev-btn${evSource === s ? " on" : ""}`}
+                      onClick={() => showEvidence(s)}
+                    >
                       {s}
-                    </Badge>
+                    </button>
                   ))
                 )}
               </div>
+              {evSource && (
+                <div className="cc-ev-list">
+                  {evidence === null ? (
+                    <div className="offline-hint mono">loading {evSource} evidence…</div>
+                  ) : evidence.length === 0 ? (
+                    <div className="offline-hint mono">
+                      No {evSource} signals recorded for this entity yet.
+                    </div>
+                  ) : (
+                    evidence.map((s) => (
+                      <div key={s.id} className="cc-ev-item">
+                        <span className={`cc-feed-src cc-src-${s.source}`}>{s.source.toUpperCase()}</span>
+                        <div className="cc-feed-body">
+                          <div className="cc-feed-text">{s.headline}</div>
+                          <div className="cc-feed-time mono">
+                            {s.recorded_at ? new Date(s.recorded_at).toLocaleString() : ""}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
             </Panel>
           </div>
 
@@ -304,27 +336,42 @@ export default function CommandCenter() {
                 Live Intelligence <span className="cc-live-dot" />
               </span>
             }
-            right={<span className="offline-hint mono">awaiting System&nbsp;1</span>}
+            right={
+              <span className="offline-hint mono">
+                {intel && intel.length ? `${intel.length} live signals` : "awaiting System 1"}
+              </span>
+            }
           >
-            {/* No signal-stream endpoint yet — the feed is populated by System 1
-                (news / AIS / price / sanctions). Until then it stays a skeleton
-                rather than showing fabricated headlines. */}
+            {/* Real signals ingested by System 1 (news / GDELT / AIS / price /
+                sanctions), newest first. Skeleton only while the feed is empty. */}
             <div className="cc-feed">
-              {[0, 1, 2, 3].map((i) => (
-                <div key={i} className="cc-feed-item">
-                  <Skel w={8} h={8} radius={4} className="cc-feed-bullet-skel" />
-                  <div className="cc-feed-body">
-                    <div className="cc-feed-head">
-                      <Skel w={80} h={11} />
-                      <Skel w={54} h={11} />
+              {intel && intel.length > 0
+                ? intel.map((s) => (
+                    <div key={s.id} className="cc-feed-item">
+                      <span className={`cc-feed-src cc-src-${s.source}`}>{s.source.toUpperCase()}</span>
+                      <div className="cc-feed-body">
+                        <div className="cc-feed-text">{s.headline}</div>
+                        <div className="cc-feed-time mono">
+                          {s.recorded_at ? new Date(s.recorded_at).toLocaleString() : ""}
+                        </div>
+                      </div>
                     </div>
-                    <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 4 }}>
-                      <Skel w="100%" h={12} />
-                      <Skel w="72%" h={12} />
+                  ))
+                : [0, 1, 2, 3].map((i) => (
+                    <div key={i} className="cc-feed-item">
+                      <Skel w={8} h={8} radius={4} className="cc-feed-bullet-skel" />
+                      <div className="cc-feed-body">
+                        <div className="cc-feed-head">
+                          <Skel w={80} h={11} />
+                          <Skel w={54} h={11} />
+                        </div>
+                        <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 4 }}>
+                          <Skel w="100%" h={12} />
+                          <Skel w="72%" h={12} />
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              ))}
+                  ))}
             </div>
           </Panel>
 

@@ -95,7 +95,9 @@ export function Meter({ value, tone = "cyan" }: { value: number; tone?: Tone }) 
 
 export function OfflineHint({ live }: { live: boolean }) {
   if (live) return null;
-  return <span className="offline-hint mono">demo data</span>;
+  // There is NO fallback/demo data — when not live, the value simply has no
+  // knowledge-base source. Label it honestly as offline, never "demo".
+  return <span className="offline-hint mono">offline · no live data</span>;
 }
 
 /**

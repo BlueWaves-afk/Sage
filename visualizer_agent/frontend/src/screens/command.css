@@ -343,3 +343,56 @@
 @media (max-width: 720px) {
   .cc-recs { grid-template-columns: 1fr; }
 }
+
+/* ── Live intelligence feed + supporting evidence (real signals) ─────────────── */
+.cc-feed-src, .cc-ev-item .cc-feed-src {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 5px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: 1px;
+  background: var(--bg-4);
+  color: var(--text-2);
+  border: 1px solid var(--border-2);
+}
+.cc-src-news    { color: #7cc4ff; border-color: #2b6cb0; }
+.cc-src-gdelt   { color: #7cc4ff; border-color: #2b6cb0; }
+.cc-src-ais     { color: #6fd3c6; border-color: #2c7a72; }
+.cc-src-price   { color: #f4c05a; border-color: #8a6a1e; }
+.cc-src-sanctions { color: #f0864a; border-color: #8a451e; }
+.cc-feed-text {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-1);
+}
+.cc-feed-time { font-size: 10px; color: var(--text-3); margin-top: 2px; }
+
+.cc-ev-btn {
+  background: var(--bg-3);
+  border: 1px solid var(--border-2);
+  color: var(--text-2);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) ease, color var(--dur-fast) ease, background var(--dur-fast) ease;
+}
+.cc-ev-btn:hover { border-color: var(--cyan-dim); color: var(--cyan); }
+.cc-ev-btn.on { background: var(--cyan-soft); border-color: var(--cyan-dim); color: var(--cyan); }
+.cc-ev-for { color: var(--text-3); font-weight: 400; }
+
+.cc-ev-list {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+  border-top: 1px solid var(--border-1);
+  padding-top: 8px;
+}
+.cc-ev-item { display: flex; gap: 8px; align-items: flex-start; }

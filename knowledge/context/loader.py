@@ -317,7 +317,13 @@ class ContextBundle:
             # Materialise per-refinery corridor exposure (derived-attributes pass).
             dedup["exposures_derived"] = await derive_exposures()
 
-        return {"facts": facts_written, "narratives": narr_written, **dedup}
+        # ── Phase 4: provenance — stamp source/tier/url onto every node ────────
+        # So each FalkorDB node value traces back to a real, cited source (not just
+        # the CSV on disk). Runs after canonicalize so node names are final.
+        from knowledge.context.provenance import write_node_provenance
+        prov = await write_node_provenance(self, graphiti)
+
+        return {"facts": facts_written, "narratives": narr_written, "provenance": prov, **dedup}
 
 
 # ── prose formatters (one fact per sentence → reliable LLM extraction) ────────

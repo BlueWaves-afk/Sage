@@ -56,23 +56,49 @@ def _load_model():
         raise
 
 
+# Keyword lexicon for the no-torch fallback (containers/light instances that don't
+# ship transformers). Coarser than the transformer, but keeps news tone/severity
+# meaningful instead of crashing or returning neutral for everything.
+_RISK_LEXICON = {
+    "Highly Risky": ["closure", "close the strait", "attack", "strike", "war", "missile",
+                     "explosion", "seize", "blockade", "shut", "killed", "escalat", "invasion"],
+    "Risky":        ["threat", "sanction", "tension", "warning", "disrupt", "risk", "conflict",
+                     "hostil", "protest", "cut", "halt", "suspend", "premium", "spike"],
+    "Safe":         ["deal", "agreement", "ceasefire", "resume", "ease", "stabil", "cooperat",
+                     "truce", "reopen", "recover", "calm"],
+}
+
+
+def _lexicon_sentiment(text: str) -> str:
+    """Coarse keyword-based sentiment when the transformer model is unavailable."""
+    t = (text or "").lower()
+    if any(k in t for k in _RISK_LEXICON["Highly Risky"]):
+        return "Highly Risky"
+    if any(k in t for k in _RISK_LEXICON["Risky"]):
+        return "Risky"
+    if any(k in t for k in _RISK_LEXICON["Safe"]):
+        return "Safe"
+    return "Satisfactory"
+
+
 def predict_sentiment(texts: list[str] | str) -> list[str]:
     """
     Predict sentiment for one or more texts.
 
-    Args:
-        texts: A single string or list of strings to analyse.
-
-    Returns:
-        List of sentiment labels: "Highly Risky", "Risky",
-        "Satisfactory", "Safe", or "Completely Safe".
+    Returns labels: "Highly Risky", "Risky", "Satisfactory", "Safe", "Completely Safe".
+    Uses the HuggingFace transformer when available; falls back to a keyword lexicon
+    (no torch) so light containers still produce meaningful tone/severity.
     """
-    import torch
-
     if isinstance(texts, str):
         texts = [texts]
 
-    tokenizer, model = _load_model()
+    try:
+        import torch
+        tokenizer, model = _load_model()
+    except Exception as exc:
+        log.warning("sentiment model unavailable (%s) — using keyword lexicon", type(exc).__name__)
+        return [_lexicon_sentiment(t) for t in texts]
+
     inputs = tokenizer(
         texts,
         return_tensors="pt",

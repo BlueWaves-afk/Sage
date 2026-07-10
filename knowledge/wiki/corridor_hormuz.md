@@ -6,15 +6,15 @@ entity_type: Corridor
 tags:
 - sage/corridor
 - risk/calm
-risk_score: 0.0
+risk_score: 0.2197
 risk_band: CALM
 factors:
   ais: 0.0
-  gdelt: 0.0
+  gdelt: 0.4275
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T19:51:50.455478+00:00'
-valid_at: '2026-07-09T19:51:46.838398+00:00'
+last_updated: '2026-07-09T08:52:59'
+valid_at: '2026-07-09T08:52:59'
 source_episodes: []
 links_out:
 - authority_ofac
@@ -29,6 +29,8 @@ coordinates:
   lat: 26.5
   lon: 56.4
 ---
+
+
 
 
 ## Current Assessment

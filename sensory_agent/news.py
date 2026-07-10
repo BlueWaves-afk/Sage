@@ -43,10 +43,7 @@ POLL_INTERVAL_S = int(os.environ.get("NEWS_POLL_INTERVAL_S", "900"))  # 15 min
 
 # ── newsdata.io API ──────────────────────────────────────────────────────────
 
-NEWSDATA_API_KEY = os.environ.get(
-    "NEWSDATA_API_KEY",
-    "pub_54d46581374d4c9ab6376d49396659bd",
-)
+NEWSDATA_API_KEY = os.environ.get("NEWSDATA_API_KEY", "")  # set in .env.local (gitignored)
 NEWSDATA_BASE = "https://newsdata.io/api/1"
 
 # Energy/geopolitics keywords for newsdata.io search

@@ -172,6 +172,15 @@ async def dashboard() -> dict:
     except Exception:
         node_count = len(scores)
 
+    # India Supply-Chain Stability Index — KB-computed aggregate across ALL
+    # entities (not a single corridor). Reflects any crisis, fully derived.
+    sci = None
+    try:
+        from knowledge.api.read import get_supply_chain_index
+        sci = (await get_supply_chain_index()).model_dump()
+    except Exception as exc:
+        log.warning("dashboard: supply-chain index unavailable: %s", exc)
+
     return {
         "threat_level": threat,
         "active_alerts": active_alerts,
@@ -181,6 +190,7 @@ async def dashboard() -> dict:
         "monitoring_entities": node_count,
         "bottlenecks": bottlenecks,
         "top_risk_entity": scores[0].entity if scores else None,
+        "supply_chain_index": sci,   # {index, band, method, contributors, entities_scored}
     }
 
 
@@ -261,6 +271,37 @@ async def wiki(entity: str) -> dict:
     """Narrative synthesis page for a node click."""
     page = await get_wiki_page(entity)
     return page.model_dump()
+
+
+@app.get("/api/intelligence")
+async def intelligence(limit: int = 15) -> list:
+    """Live intelligence stream — recent real signals/episodes the KB ingested."""
+    from knowledge.api.read import get_recent_intelligence
+    items = await get_recent_intelligence(limit=limit)
+    return [i.model_dump() for i in items]
+
+
+@app.get("/api/evidence/{entity}")
+async def evidence(entity: str, limit: int = 12) -> list:
+    """The source signals that drove an entity's risk (Supporting Evidence)."""
+    from knowledge.api.read import get_evidence_for
+    items = await get_evidence_for(entity, limit=limit)
+    return [i.model_dump() for i in items]
+
+
+@app.get("/api/provenance/volatile")
+async def volatile_provenance() -> dict:
+    """
+    Current volatile-tier overrides with their as_of + source — lets the UI show
+    "Brent $103 · as of 2026-02-25" so recommendations visibly reflect fresh crisis
+    economics vs the bundle cold-start seeds. Empty dict when nothing refreshed yet.
+    """
+    try:
+        from knowledge.context.volatile import get_all_volatile
+        return {"overrides": get_all_volatile()}
+    except Exception as exc:
+        log.warning("volatile provenance unavailable: %s", exc)
+        return {"overrides": {}}
 
 
 @app.post("/api/copilot")

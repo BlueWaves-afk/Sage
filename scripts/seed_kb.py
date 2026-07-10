@@ -25,6 +25,14 @@ from pathlib import Path
 # Allow running from repo root
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# Load .env / .env.local so LLM_PROVIDER=bedrock + AWS creds are set (else the
+# stub LLM runs and no entities are extracted from episodes).
+try:
+    from config_env import load_local_env
+    load_local_env()
+except Exception:
+    pass
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
 log = logging.getLogger("seed_kb")
 

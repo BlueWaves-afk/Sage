@@ -80,7 +80,12 @@ export default function WikiDrawer({
     setContent("");
     if (bodyRef.current) bodyRef.current.scrollTop = 0;
     api.wiki(current.name).then((env) => {
-      setContent(env.data.content || `_No wiki page found for **${current.name}**._`);
+      setContent(
+        env.data?.content ||
+          (env.live
+            ? `_No wiki page found for **${current.name}**._`
+            : `_Knowledge base offline — cannot load **${current.name}**._`),
+      );
       setLive(env.live);
       setLoading(false);
     });

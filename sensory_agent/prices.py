@@ -45,10 +45,7 @@ INSTRUMENTS = ["BZ=F", "CL=F"]  # Brent, WTI
 POLL_INTERVAL_S = int(os.environ.get("PRICE_POLL_INTERVAL_S", "300"))  # 5 min
 
 # ── EIA Open Data API ────────────────────────────────────────────────────────
-EIA_API_KEY = os.environ.get(
-    "EIA_API_KEY",
-    "uvHN4ZnezdnCdjRdQMa9UmQzvgKV8DMBUieULWXq",
-)
+EIA_API_KEY = os.environ.get("EIA_API_KEY", "")  # set in .env.local (gitignored)
 EIA_BASE_URL = "https://api.eia.gov/v2"
 EIA_POLL_INTERVAL_S = int(os.environ.get("EIA_POLL_INTERVAL_S", "3600"))  # 1 hour
 _last_eia_poll: float = 0.0
@@ -175,6 +172,19 @@ async def _poll_instrument(instrument: str) -> NormalizedSignal | None:
     except Exception as exc:
         log.error("yfinance fetch failed for %s: %s", instrument, exc)
         return None
+
+    # ── Feed the SEMI-STATIC (volatile) tier ──────────────────────────────────
+    # Every Brent poll also refreshes the baseline_brent override that Systems
+    # 2/3/4 read for economics — so System 1 is the single writer of ALL live
+    # data (dynamic signals AND the semi-static tier), not a separate refresher.
+    if instrument == "BZ=F":
+        try:
+            from knowledge.context.volatile import set_volatile
+            set_volatile("baseline_brent_usd_per_bbl", round(price, 2),
+                         source="yfinance BZ=F (System 1 prices agent)",
+                         unit="usd_per_bbl")
+        except Exception as exc:
+            log.debug("volatile baseline_brent update failed: %s", exc)
 
     _series[instrument].append(price)
 

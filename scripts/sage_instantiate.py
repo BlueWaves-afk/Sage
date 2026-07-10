@@ -31,6 +31,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# Load .env / .env.local so LLM_PROVIDER (bedrock) + AWS creds are set — otherwise
+# the KB falls back to the STUB LLM which writes episodes but extracts NO entities.
+try:
+    from config_env import load_local_env
+    load_local_env()
+except Exception:
+    pass
+
 _SPIN = itertools.cycle("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏")
 _PHASE_LABEL = {
     "facts":          "facts    ",

@@ -55,6 +55,14 @@ REDIS_URL         = os.environ.get("REDIS_URL", "redis://redis:6379/0")
 BATCH_SIZE        = int(os.environ.get("SAGE_BATCH_SIZE", "10"))
 FLUSH_INTERVAL_S  = int(os.environ.get("SAGE_FLUSH_INTERVAL_S", "30"))
 FUSION_MODEL_PATH = Path(os.environ.get("FUSION_MODEL_PATH", "sensory_agent/fusion_model.pkl"))
+# Risk decay half-life (hours): a prior score halves after this long without
+# reinforcing signals. Escalation is instant (max); recession is gradual.
+RISK_HALF_LIFE_H  = float(os.environ.get("RISK_HALF_LIFE_H", "48"))
+
+# In-process last-known RISK_STATE per entity: (score, recorded_wall_epoch_s).
+# The consumer is the single writer, so this is authoritative and race-free —
+# avoids a FalkorDB read-after-write consistency race when computing decay.
+_last_risk: dict[str, tuple[float, float]] = {}
 
 _signal_buffer: dict[str, list[NormalizedSignal]] = defaultdict(list)
 _last_flush     = time.monotonic()
@@ -237,9 +245,24 @@ async def _handle_raw(raw: str, redis_client: Optional[object] = None) -> None:
         if signal.priority_hint == "HIGH":
             for entity in signal.entity_refs:
                 asyncio.create_task(_maybe_sandbox_fork(signal, entity))
+            # Second-brain learning: let the LLM refine dependency-edge exposure
+            # weights bitemporally if this signal implies a supply-chain shift.
+            # Background + best-effort so it never delays ingest.
+            asyncio.create_task(_maybe_learn_edges(signal))
 
     except Exception as exc:
         log.error("ingest_signal failed for %s: %s", signal.signal_id, exc)
+
+
+async def _maybe_learn_edges(signal: NormalizedSignal) -> None:
+    """Background: refine edge exposure weights from a dependency-changing signal."""
+    try:
+        from knowledge.edge_learning import learn_dependency_updates
+        n = await learn_dependency_updates(signal)
+        if n:
+            log.info("[learn] refined %d edge weight(s) from signal %s", n, signal.signal_id)
+    except Exception as exc:
+        log.debug("[learn] edge learning non-fatal error: %s", exc)
 
 
 async def _flush_risk_states() -> None:
@@ -340,27 +363,94 @@ async def _run_fusion_for_entity(entity: str, signals: list[NormalizedSignal]) -
     fv.sanctions_major_entity     = major_entity
 
     result      = _predict(fv)
-    observed_at = max(s.observed_at for s in signals)
+    # Coerce to tz-aware UTC — live agents may emit naive datetimes, and mixing
+    # naive/aware in max() raises. Normalise before comparing.
+    def _aware(dt):
+        return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt
+    observed_at = max(_aware(s.observed_at) for s in signals)
+
+    # ── Escalate-fast / decay-slow ────────────────────────────────────────────
+    # A fresh fusion window must never ERASE a genuine crisis: a couple of benign
+    # signals would otherwise overwrite a CRITICAL score outright. Blend the new
+    # fusion score with the TIME-DECAYED prior and keep the higher of the two —
+    # risk climbs instantly on strong signals, but only recedes gradually
+    # (RISK_HALF_LIFE_H) as signals subside. Standard for alerting/risk systems.
+    effective_score = result.score
+    sustained = False
+    try:
+        # Prefer the in-process cache (race-free); fall back to a DB read on
+        # cold start. Decay by WALL-CLOCK time since the prior was recorded.
+        prior_score = None
+        prior_epoch = None
+        if entity in _last_risk:
+            prior_score, prior_epoch = _last_risk[entity]
+            elapsed_h = max(0.0, (time.time() - prior_epoch) / 3600.0)
+        else:
+            from datetime import datetime, timezone
+            prior_score, prior_recorded = await _prior_risk_state(entity)
+            elapsed_h = (
+                max(0.0, (datetime.now(timezone.utc) - prior_recorded).total_seconds() / 3600.0)
+                if prior_recorded is not None else RISK_HALF_LIFE_H
+            )
+        if prior_score is not None:
+            decayed_prior = prior_score * (0.5 ** (elapsed_h / RISK_HALF_LIFE_H))
+            if decayed_prior > effective_score:
+                effective_score = decayed_prior
+                sustained = True
+    except Exception as exc:
+        log.debug("prior risk-state read failed for '%s': %s", entity, exc)
+
+    # Update the in-process cache with what we're about to persist.
+    _last_risk[entity] = (effective_score, time.time())
+
+    rationale = result.rationale
+    if sustained:
+        rationale = f"{result.rationale}; sustained from prior crisis (time-decayed)"
 
     log.info(
         "Risk state for '%s': score=%.3f band=%s [%s]",
-        entity, result.score, _band_from_score(result.score), result.rationale,
+        entity, effective_score, _band_from_score(effective_score), rationale,
     )
 
     try:
         await write_risk_state(
             entity=entity,
-            score=result.score,
+            score=effective_score,
             factor_ais=result.factor_ais,
             factor_gdelt=result.factor_gdelt,
             factor_price=result.factor_price,
             factor_sanctions=result.factor_sanctions,
-            rationale=result.rationale,
+            rationale=rationale,
             model_version=result.model_version,
             observed_at=observed_at,
         )
+        # Cascade this primary score to dependents across the supply-chain graph
+        # (a risky corridor raises its refineries/ports; a sanctioned supplier
+        # raises the refineries it feeds). Only ever raises risk, never lowers.
+        try:
+            from knowledge.cascade import cascade_risk_from
+            await cascade_risk_from(entity, effective_score)
+        except Exception as exc:
+            log.debug("risk cascade from '%s' failed: %s", entity, exc)
     except Exception as exc:
         log.error("write_risk_state failed for '%s': %s", entity, exc)
+
+
+async def _prior_risk_state(entity: str):
+    """Return (score, recorded_at_datetime) for the entity's current RISK_STATE, else (None, None)."""
+    from datetime import datetime, timezone
+    from knowledge.api.read import get_risk_scores
+    for r in await get_risk_scores():
+        if r.entity == entity:
+            ts = None
+            try:
+                ts = datetime.fromisoformat(str(r.recorded_at).replace("Z", "+00:00"))
+                if ts.tzinfo is None:
+                    ts = ts.replace(tzinfo=timezone.utc)
+            except Exception:
+                ts = None
+            return float(r.score), ts
+    return None, None
 
 
 async def _maybe_sandbox_fork(signal: NormalizedSignal, entity: str) -> None:

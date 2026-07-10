@@ -1,0 +1,12 @@
+{
+  "_comment": "Feb-2026 Hormuz-crisis volatile values for DEMO_MODE. Replaces the bundle cold-start seeds so Systems 2/3/4 compute on crisis economics, not calm defaults. Values reflect the real Feb 23-28 2026 escalation.",
+  "as_of": "2026-02-25T09:00:00+00:00",
+  "params": {
+    "baseline_brent_usd_per_bbl": { "value": 103.4, "unit": "usd_per_bbl", "source": "EIA-STEO (Feb-2026 crisis)" },
+    "vlcc_cost_usd_bbl":          { "value": 18.5,  "unit": "usd_bbl",     "source": "Baltic-BDTI (war-risk spike ~10x)" },
+    "hormuz_share_pct":           { "value": 30.0,  "unit": "pct",         "source": "PPAC live routing (70% diverted)" },
+    "global_spare_mbpd":          { "value": 3.2,   "unit": "mbpd",        "source": "EIA spare (cuts unwinding)" },
+    "refinery_inventory_days":    { "value": 18.0,  "unit": "days",        "source": "ops estimate (drawdown)" },
+    "war_risk_premium":           { "value": 0.85,  "unit": "fraction",    "source": "GDELT shipping tone proxy" }
+  }
+}

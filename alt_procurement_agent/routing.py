@@ -84,15 +84,22 @@ def _load_baseline_brent() -> float:
     ~$2-5/bbl, nowhere near a real landed crude price.
     """
     bundle_path = os.environ.get("SAGE_BUNDLE_PATH", "")
-    if not bundle_path:
-        return _DEFAULT_BASELINE_BRENT
+    seed = _DEFAULT_BASELINE_BRENT
+    if bundle_path:
+        try:
+            from knowledge.context.loader import load_bundle
+            ep = load_bundle(bundle_path).economics_params
+            row = ep.get("baseline_brent_usd_per_bbl")
+            if row:
+                seed = float(row["value"])
+        except Exception:
+            pass
+    # Volatile tier: a live/refreshed Brent overrides the bundle cold-start seed.
     try:
-        from knowledge.context.loader import load_bundle
-        ep = load_bundle(bundle_path).economics_params
-        row = ep.get("baseline_brent_usd_per_bbl")
-        return float(row["value"]) if row else _DEFAULT_BASELINE_BRENT
+        from knowledge.context.volatile import get_volatile
+        return get_volatile("baseline_brent_usd_per_bbl", seed)
     except Exception:
-        return _DEFAULT_BASELINE_BRENT
+        return seed
 
 
 def _load_routing_bundle():

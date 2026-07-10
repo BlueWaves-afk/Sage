@@ -96,6 +96,23 @@ async def sandbox_node(state: PipelineState) -> PipelineState:
     return state
 
 
+async def refresh_node(state: PipelineState) -> PipelineState:
+    """
+    Event-driven volatile-tier refresh. Fires only when the band has crossed action —
+    pulls fresh Brent/freight/etc. into the override store (live, or the DEMO_MODE
+    fixture) so Systems 2/3/4 below compute on CURRENT crisis economics, not the
+    calm bundle seeds. Also busts the scenario param cache.
+    """
+    try:
+        from knowledge.context.volatile_refresh import refresh_volatile
+        state["volatile_changed"] = await refresh_volatile()
+    except Exception as exc:
+        log.warning("[graph] refresh_node failed: %s", exc)
+        state["volatile_changed"] = {}
+    _log_stage(state, "REFRESH")
+    return state
+
+
 async def scenario_node(state: PipelineState) -> PipelineState:
     """Run System 2 with LLM-decided scenario params (confirmed threshold crossing)."""
     from orchestration.scenario_params import decide_scenario_params
@@ -180,6 +197,7 @@ def _build_langgraph():
     g.add_node("triage", triage_node)
     g.add_node("sage", sage_node)
     g.add_node("sandbox", sandbox_node)
+    g.add_node("refresh", refresh_node)
     g.add_node("scenario", scenario_node)
     g.add_node("procure", procure_node)
     g.add_node("reserve", reserve_node)
@@ -197,11 +215,13 @@ def _build_langgraph():
     g.add_edge("sandbox", "sage")
 
     # After SAGE, run the response pipeline only if the band crossed action.
+    # Refresh the volatile tier first so Systems 2/3/4 use fresh crisis economics.
     g.add_conditional_edges(
         "sage",
-        lambda s: "scenario" if _crossed_action(s) else "end",
-        {"scenario": "scenario", "end": END},
+        lambda s: "refresh" if _crossed_action(s) else "end",
+        {"refresh": "refresh", "end": END},
     )
+    g.add_edge("refresh", "scenario")
     g.add_edge("scenario", "procure")
     g.add_edge("procure", "reserve")
     g.add_edge("reserve", END)
@@ -238,7 +258,9 @@ class _FallbackPipeline:
             state = await sage_node(state)
 
         # Response pipeline only on an action-band crossing.
+        # Refresh the volatile tier first so Systems 2/3/4 use fresh economics.
         if _crossed_action(state):
+            state = await refresh_node(state)
             state = await scenario_node(state)
             state = await procure_node(state)
             state = await reserve_node(state)
@@ -271,3 +293,73 @@ async def run_pipeline(signal: NormalizedSignal) -> PipelineState:
     """Convenience entry point: build the graph and run one signal through it."""
     graph = build_graph()
     return await graph.ainvoke({"signal": signal})
+
+
+# ---------------------------------------------------------------------------
+# Response pipeline — the AUTONOMOUS orchestrator the threshold monitor invokes
+# on a confirmed crossing (entity + score already computed by fusion). This is
+# the LangGraph path that replaces the hand-wired cold pipeline.
+# ---------------------------------------------------------------------------
+
+class _ResponseFallback:
+    """Sequential refresh→scenario→procure→reserve with the same astream contract."""
+    async def astream(self, state: PipelineState):
+        for name, node in (("refresh", refresh_node), ("scenario", scenario_node),
+                           ("procure", procure_node), ("reserve", reserve_node)):
+            state = await node(state)
+            yield {name: state}
+
+    async def ainvoke(self, state: PipelineState) -> PipelineState:
+        async for _ in self.astream(state):
+            pass
+        return state
+
+
+def build_response_graph(prefer_langgraph: bool = True):
+    """Compiled response graph: refresh → scenario → procure → reserve."""
+    if prefer_langgraph:
+        try:
+            from langgraph.graph import StateGraph, END
+            g = StateGraph(dict)
+            g.add_node("refresh", refresh_node)
+            g.add_node("scenario", scenario_node)
+            g.add_node("procure", procure_node)
+            g.add_node("reserve", reserve_node)
+            g.set_entry_point("refresh")
+            g.add_edge("refresh", "scenario")
+            g.add_edge("scenario", "procure")
+            g.add_edge("procure", "reserve")
+            g.add_edge("reserve", END)
+            return g.compile()
+        except Exception as exc:
+            log.info("[graph] response: langgraph unavailable (%s) — sequential fallback", exc)
+    return _ResponseFallback()
+
+
+async def run_response_pipeline(entity: str, score: float, client: Any = None) -> PipelineState:
+    """
+    Autonomous response orchestration via the compiled LangGraph. Streams the graph
+    and publishes a pipeline-bar stage event per node as it completes — so the UI
+    reflects the REAL LangGraph execution, node by node.
+    """
+    graph = build_response_graph()
+    state: PipelineState = {
+        "entity": entity, "risk_score": float(score),
+        "risk_band": "critical" if score >= 0.85 else "action" if score >= 0.70 else "elevated",
+        "scenario_params": {},
+    }
+    try:
+        from orchestration.triggers import _publish_stage
+    except Exception:
+        _publish_stage = None
+
+    try:
+        async for step in graph.astream(state):
+            for node_name, node_state in (step or {}).items():
+                if isinstance(node_state, dict):
+                    state.update(node_state)
+                if _publish_stage and client is not None:
+                    await _publish_stage(client, str(node_name).upper(), entity, "done")
+    except Exception as exc:
+        log.error("[graph] response pipeline failed for '%s': %s", entity, exc)
+    return state

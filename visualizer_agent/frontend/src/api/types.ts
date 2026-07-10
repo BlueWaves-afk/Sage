@@ -181,6 +181,14 @@ export interface Bottleneck {
   risk: number | null;
 }
 
+export interface SupplyChainIndex {
+  index: number;
+  band: string;
+  method: string;
+  contributors: { entity: string; risk: number; weight: number; contribution: number; band: string }[];
+  entities_scored: number;
+}
+
 export interface DashboardSummary {
   threat_level: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
   active_alerts: number;
@@ -190,6 +198,17 @@ export interface DashboardSummary {
   monitoring_entities: number;
   bottlenecks: Bottleneck[];
   top_risk_entity: string | null;
+  supply_chain_index?: SupplyChainIndex | null;
+}
+
+/** One piece of live intelligence (a real ingested signal/episode). */
+export interface IntelSignal {
+  id: string;
+  source: string; // news | gdelt | ais | price | sanctions | synthesis
+  headline: string;
+  detail: string;
+  entities: string[];
+  recorded_at: string;
 }
 
 export interface PipelineState {

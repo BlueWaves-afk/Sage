@@ -33,10 +33,7 @@ from sensory_agent._base import emit, new_signal_id, utcnow
 
 log = logging.getLogger(__name__)
 
-AISSTREAM_API_KEY = os.environ.get(
-    "AISSTREAM_API_KEY",
-    "a4d27ca56811dbbecb92d992bc2a584af0536ad7",
-)
+AISSTREAM_API_KEY = os.environ.get("AISSTREAM_API_KEY", "")  # set in .env.local (gitignored)
 AISSTREAM_WS_URL = "wss://stream.aisstream.io/v0/stream"
 
 # Gap threshold for dark vessel detection (hours)

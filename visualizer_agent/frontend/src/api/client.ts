@@ -1,7 +1,7 @@
 // Thin REST client for the SAGE API gateway.
-// Every call falls back to mock data (from ./mock) on network/HTTP error, so the
-// UI always renders. `live` on the returned envelope tells the UI whether the
-// data came from the backend or the fallback.
+// STRICT: the frontend renders ONLY data retrieved from the knowledge base. There
+// is NO mock/fallback data. On network/HTTP error a call returns { data: null,
+// live: false } and the UI shows an explicit OFFLINE state — never fabricated data.
 
 import type {
   RiskScore,
@@ -13,88 +13,69 @@ import type {
   SprSchedule,
   CopilotAnswer,
   GraphData,
-  WikiPage,
   DashboardSummary,
+  IntelSignal,
 } from "./types";
-import * as mock from "./mock";
 
 const BASE = import.meta.env.VITE_API_BASE ?? "";
 
 export interface Envelope<T> {
-  data: T;
+  data: T | null;
   live: boolean;
 }
 
-async function get<T>(path: string, fallback: T): Promise<Envelope<T>> {
+async function get<T>(path: string, opts?: RequestInit): Promise<Envelope<T>> {
   try {
     const res = await fetch(`${BASE}${path}`, {
       headers: { Accept: "application/json" },
-      signal: AbortSignal.timeout(4000),
+      signal: AbortSignal.timeout(8000),
+      ...opts,
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = (await res.json()) as T;
     return { data, live: true };
   } catch {
-    return { data: fallback, live: false };
+    // No fallback data — the KB is the single source of truth.
+    return { data: null, live: false };
   }
 }
 
 export const api = {
-  health: () => get<{ status: string; kb_ready: boolean }>("/health", { status: "degraded", kb_ready: false }),
+  health: () => get<{ status: string; kb_ready: boolean }>("/health"),
 
-  riskScores: () => get<RiskScore[]>("/api/risk-scores", mock.mockRiskScores),
+  riskScores: () => get<RiskScore[]>("/api/risk-scores"),
 
-  graph: () => get<GraphData>("/api/graph", mock.mockGraph),
+  graph: () => get<GraphData>("/api/graph"),
 
-  dashboard: () => get<DashboardSummary>("/api/dashboard", mock.mockDashboard),
+  dashboard: () => get<DashboardSummary>("/api/dashboard"),
 
-  suppliers: () => get<Supplier[]>("/api/suppliers", mock.mockSuppliers),
+  suppliers: () => get<Supplier[]>("/api/suppliers"),
 
-  routes: () => get<Route[]>("/api/routes", mock.mockRoutes),
+  routes: () => get<Route[]>("/api/routes"),
 
-  spr: () => get<SprCavern[]>("/api/spr", mock.mockSpr),
+  spr: () => get<SprCavern[]>("/api/spr"),
 
-  scenario: () => get<ScenarioOutput>("/api/scenario", mock.mockScenario),
+  scenario: () => get<ScenarioOutput>("/api/scenario"),
 
-  procurement: () => get<ProcurementRecData>("/api/procurement", mock.mockProcurement),
+  procurement: () => get<ProcurementRecData>("/api/procurement"),
 
-  sprSchedule: () => get<SprSchedule>("/api/spr-schedule", mock.mockSprSchedule),
+  sprSchedule: () => get<SprSchedule>("/api/spr-schedule"),
 
   wiki: (entity: string) =>
-    get<{ entity: string; content: string }>(`/api/wiki/${encodeURIComponent(entity)}`, {
-      entity,
-      content: `# ${entity}\n\n_No wiki page available (backend offline)._`,
+    get<{ entity: string; content: string }>(`/api/wiki/${encodeURIComponent(entity)}`),
+
+  accuracy: () => get<{ detection_lead_hours: number; prestage_accuracy: number }>("/api/accuracy"),
+
+  intelligence: (limit = 15) => get<IntelSignal[]>(`/api/intelligence?limit=${limit}`),
+
+  evidence: (entity: string, limit = 12) =>
+    get<IntelSignal[]>(`/api/evidence/${encodeURIComponent(entity)}?limit=${limit}`),
+
+  copilot: (question: string) =>
+    get<CopilotAnswer>("/api/copilot", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: question }),
+      signal: AbortSignal.timeout(25000),
     }),
-
-  accuracy: () => get<{ detection_lead_hours: number; prestage_accuracy: number }>("/api/accuracy", {
-    detection_lead_hours: 120,
-    prestage_accuracy: 0.91,
-  }),
-
-  async copilot(question: string): Promise<Envelope<CopilotAnswer>> {
-    try {
-      const res = await fetch(`${BASE}/api/copilot`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: question }),
-        signal: AbortSignal.timeout(20000),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return { data: (await res.json()) as CopilotAnswer, live: true };
-    } catch {
-      return {
-        data: {
-          answer:
-            "**SAGE ranks ADNOC's Murban first** for Jamnagar.\n\n## Why\n- Its light-sweet assay closely matches Jamnagar's configured slate [1].\n- The **Fujairah land-bypass** routes crude to the Gulf of Oman without transiting the elevated-risk Strait of Hormuz [2] — the lowest corridor risk in the set.\n\n_(Backend offline — illustrative answer.)_",
-          citations: ["ADNOC", "Strait of Hormuz"],
-          sources: [
-            { index: 1, entity: "ADNOC", type: "Supplier", kind: "wiki" },
-            { index: 2, entity: "Strait of Hormuz", type: "Corridor", kind: "wiki" },
-          ],
-          route: "graph" as const,
-        },
-        live: false,
-      };
-    }
-  },
 };

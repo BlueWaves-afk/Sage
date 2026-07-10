@@ -78,6 +78,13 @@ async def run_single(agent_name: str) -> None:
 
 def main() -> None:
     """CLI entry point."""
+    # Load .env.local / .env before any sub-agent module reads its API key
+    # (sensory modules read keys at import time; runner imports them lazily).
+    try:
+        from config_env import load_local_env
+        load_local_env()
+    except Exception:
+        pass
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s | %(name)-20s | %(levelname)-5s | %(message)s",

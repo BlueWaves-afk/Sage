@@ -1,6 +1,9 @@
 # SAGE Build TODO — Post-Bundle-Parameterisation
 
-Status as of 2026-07-02. System 1 (sensory agents) is **out of scope** for this pass.
+Status as of 2026-07-02 (this pass). **UPDATE 2026-07-09:** System 1 (all four sensory
+agents), the React frontend, and the voice interface are now **built and verified live** —
+they were "out of scope"/"deferred" only for the pass this file documents. See
+`docs/DEPLOY_EC2.md` for current deployment status.
 
 This list reflects a **direct code audit**, correcting an earlier automated audit that was wrong on
 several points:
@@ -61,6 +64,6 @@ The genuine remaining gaps, in build order:
 
 ## Deferred (not this pass)
 
-- [ ] React frontend (`visualizer_agent/frontend/`) — Teammate D; needs a browser to be useful.
-- [ ] Chronos-2 real model — optional drop-in behind `_forecast_trajectories`.
+- [x] React frontend (`visualizer_agent/frontend/`) — ✅ built (deck.gl map, copilot, radar, wiki drawer, voice).
+- [ ] Chronos-2 real model — optional drop-in behind `_forecast_trajectories` (drift+mean-reversion in use).
 - [ ] Random-Forest grade upgrade, 140-sector IO, GNN-MCTS multi-site SPR — post-hackathon.

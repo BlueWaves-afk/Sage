@@ -67,6 +67,12 @@ class GraphNodeView(BaseModel):
     score: float = 0.0            # current risk score (0 if none)
     band: str = "CALM"            # risk band (traffic-light colouring)
     degree: int = 0               # link count → node prominence/size
+    # Provenance — every node value traces to a real, cited source.
+    prov_tier: Optional[str] = None          # real | derived | estimated
+    prov_source_label: Optional[str] = None  # human-readable source
+    prov_source_url: Optional[str] = None     # clickable citation link
+    prov_as_of: Optional[str] = None
+    prov_notes: Optional[str] = None
 
 
 class GraphEdgeView(BaseModel):
@@ -470,6 +476,155 @@ def _band_from_score(score: float) -> str:
     return "CALM"
 
 
+class IntelSignal(BaseModel):
+    """One piece of intelligence the KB ingested — a real signal/episode."""
+    id: str
+    source: str            # news | gdelt | ais | price | sanctions | synthesis
+    headline: str          # first line of the episode content
+    detail: str = ""       # short excerpt
+    entities: list[str] = []
+    recorded_at: str = ""
+
+
+def _source_of(source_desc: str, source: str) -> str:
+    """Extract the real feed source (news/ais/price/sanctions) from an episode."""
+    import re
+    m = re.search(r"source=(\w+)", source_desc or "")
+    if m:
+        return m.group(1).lower()
+    if "sandbox" in (source_desc or "").lower():
+        return "synthesis"
+    return (source or "synthesis").lower()
+
+
+def _headline(content: str) -> str:
+    """First substantive prose sentence — skips markdown headings/frontmatter/bullets
+    and the '[RAW] <source> | <ts> |' signal envelope."""
+    import re
+    text = re.sub(r"^---[\s\S]*?---", "", content or "").strip()
+    for raw in text.splitlines():
+        ln = raw.strip().lstrip("#").lstrip("*").lstrip("-").strip()
+        # Strip the raw-signal envelope: "[RAW] news | 2026-.. | Actual headline"
+        ln = re.sub(r"^\[RAW\][^|]*\|[^|]*\|\s*", "", ln).strip()
+        if len(ln) > 15 and not ln.lower().startswith(("current assessment", "historical", "affected")):
+            m = re.split(r"(?<=[.!?])\s", ln)
+            return (m[0] if m else ln)[:160]
+    return (text[:120] or "signal").replace("\n", " ")
+
+
+async def get_recent_intelligence(limit: int = 15) -> list[IntelSignal]:
+    """
+    Recent ingested episodes — the live intelligence stream that drives risk. Powers
+    the Command Center 'Live Intelligence' rail: real signals, newest first.
+    """
+    # Pull a wider window, then keep only real intelligence signals (news/ais/
+    # sanctions/price) — skip the internal risk-assessment episodes.
+    rows = await _cypher(
+        "MATCH (e:Episodic) "
+        "RETURN e.uuid AS uuid, e.content AS content, e.source_description AS sd, "
+        "       e.source AS src, e.created_at AS created_at "
+        "ORDER BY e.created_at DESC LIMIT $limit",
+        {"limit": int(limit) * 5},
+    )
+    out: list[IntelSignal] = []
+    for r in rows or []:
+        sd = r.get("sd", "") or ""
+        source = _source_of(sd, r.get("src", ""))
+        content = (r.get("content") or "").strip()
+        # Skip internal risk-assessment / sandbox bookkeeping episodes.
+        if source in ("text", "synthesis"):
+            continue
+        if "risk level is assessed" in content.lower():
+            continue
+        out.append(IntelSignal(
+            id=str(r.get("uuid") or ""),
+            source=source,
+            headline=_headline(content),
+            detail=content[:280],
+            recorded_at=str(r.get("created_at") or ""),
+        ))
+        if len(out) >= limit:
+            break
+    return out
+
+
+async def get_evidence_for(entity: str, limit: int = 12) -> list[IntelSignal]:
+    """
+    The source signals that drove an entity's risk — episodes MENTIONING it, newest
+    first. Powers 'Supporting Evidence': lets a user see exactly what elevated a risk.
+    """
+    rows = await _cypher(
+        "MATCH (e:Episodic)-[:MENTIONS]->(n:Entity {name:$entity}) "
+        "RETURN e.uuid AS uuid, e.content AS content, e.source_description AS sd, "
+        "       e.source AS src, e.created_at AS created_at "
+        "ORDER BY e.created_at DESC LIMIT $limit",
+        {"entity": entity, "limit": int(limit)},
+    )
+    out: list[IntelSignal] = []
+    for r in rows or []:
+        content = (r.get("content") or "").strip()
+        head = _headline(content)
+        out.append(IntelSignal(
+            id=str(r.get("uuid") or ""),
+            source=_source_of(r.get("sd", ""), r.get("src", "")),
+            headline=head,
+            detail=content[:280],
+            entities=[entity],
+            recorded_at=str(r.get("created_at") or ""),
+        ))
+    return out
+
+
+class SupplyChainIndex(BaseModel):
+    """India's overall geopolitical supply-chain risk — a KB-computed aggregate."""
+    index: float                       # 0..1 importance-weighted risk
+    band: str                          # CALM..CRITICAL
+    method: str                        # how it's computed (transparency)
+    contributors: list[dict] = []      # top entities driving the index (entity, risk, weight, contribution)
+    entities_scored: int = 0
+
+
+async def get_supply_chain_index() -> SupplyChainIndex:
+    """
+    Compute India's overall supply-chain stability risk as the importance-weighted
+    mean of every entity's fused RISK_STATE, where importance = the entity's
+    structural centrality (graph degree) in the India supply graph. A crisis at a
+    high-throughput chokepoint (e.g. the Strait of Hormuz, the most-connected node)
+    moves the national index far more than a peripheral node — and it reflects ANY
+    crisis, not one hardcoded scenario. Everything is derived from the knowledge
+    base: risk scores from System-1 fusion, weights from the .context-sourced graph.
+    """
+    graph = await get_full_graph(placed_only=False)
+    degree_by_name = {n.name: max(n.degree, 1) for n in graph.nodes}
+
+    scores = await get_risk_scores()
+    num = 0.0
+    den = 0.0
+    contribs: list[dict] = []
+    for s in scores:
+        w = float(degree_by_name.get(s.entity, 1))
+        num += w * float(s.score)
+        den += w
+        contribs.append({
+            "entity": s.entity, "risk": round(float(s.score), 4),
+            "weight": w, "band": s.band,
+        })
+
+    index = round(num / den, 4) if den > 0 else 0.0
+    # contribution share of the numerator (how much each entity drives the index)
+    for c in contribs:
+        c["contribution"] = round((c["weight"] * c["risk"]) / num, 4) if num > 0 else 0.0
+    contribs.sort(key=lambda c: -c["contribution"])
+
+    return SupplyChainIndex(
+        index=index,
+        band=_band_from_score(index),
+        method="degree-weighted mean of per-entity RISK_STATE (importance = graph centrality)",
+        contributors=contribs[:6],
+        entities_scored=len(scores),
+    )
+
+
 async def get_full_graph(placed_only: bool = True) -> GraphView:
     """
     Return the entity graph — nodes plus their structural relationships — positioned
@@ -491,7 +646,10 @@ async def get_full_graph(placed_only: bool = True) -> GraphView:
         MATCH (n:Entity)
         RETURN n.uuid AS uuid, n.name AS name, n.labels AS labels,
                n.country AS country, n.origin AS origin,
-               n.lat AS lat, n.lon AS lon
+               n.lat AS lat, n.lon AS lon,
+               n.prov_tier AS prov_tier, n.prov_source_label AS prov_source_label,
+               n.prov_source_url AS prov_source_url, n.prov_as_of AS prov_as_of,
+               n.prov_notes AS prov_notes
         """
     )
 
@@ -570,6 +728,11 @@ async def get_full_graph(placed_only: bool = True) -> GraphView:
             score=score,
             band=_band_from_score(score),
             degree=degree.get(uuid, 0),
+            prov_tier=n.get("prov_tier"),
+            prov_source_label=n.get("prov_source_label"),
+            prov_source_url=n.get("prov_source_url"),
+            prov_as_of=n.get("prov_as_of"),
+            prov_notes=n.get("prov_notes"),
         )
         prev = best_by_name.get(name)
         if prev is None or node.degree > prev.degree:

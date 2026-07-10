@@ -69,6 +69,51 @@ A written walkthrough of the design decisions behind SAGE, each an introspective
 
 ---
 
+## The Learning Cascade — A Second Brain That Grows
+
+SAGE's risk model is not a set of isolated per-node scores, and its dependency
+graph is not static config. It is a **self-improving knowledge structure**: risk
+propagates through the graph along real, weighted dependencies, and those weights
+are **refined from live signals** — the clearest expression of the "second brain".
+
+**1. Risk cascade (not isolated scores).**
+Fusion assigns a *primary* risk to an entity from its own signals
+(`knowledge/ingest_queue.py`). The cascade (`knowledge/cascade.py`) then propagates
+that risk to everything that **depends** on it — refineries a corridor exposes,
+ports it feeds, suppliers that export through it — via `EXPOSES` / `FEEDS` /
+`SUPPLIES` / `EXPORTS_VIA` edges. One CRITICAL Strait of Hormuz lights up its whole
+dependent chain, each cascaded score tagged `cascade-v1` with the source and path.
+
+**2. Exposure-weighted, from sourced data.**
+Propagation is weighted by the **real** dependency share on each edge
+(`throughput_share_pct` in the `.context` bundle — e.g. `Hormuz→Vadinar 0.42`,
+`Hormuz→Sikka 0.45`, PPAC/derived, cited). A port 45%-dependent on Hormuz inherits
+more risk than one 42%-dependent — not a flat decay. Every node also carries
+`prov_source_url` so each value traces to its citation.
+
+**3. The LLM learns the weights bitemporally (`knowledge/edge_learning.py`).**
+When a live System-1 signal implies a dependency change ("Vadinar cuts Hormuz
+intake to ~25% after rerouting via the Cape"), the synthesis LLM **detects and
+extracts** the new share and writes it **bitemporally** — the prior value is kept
+with the time it was superseded, the new value stamped `tier="learned"` with the
+**source signal** as provenance. The cascade then propagates risk using the updated
+weight. The LLM **reconciles evidence into a number; it never invents one** — the
+detector only fires when a signal genuinely describes a change.
+
+```
+seed (.context, sourced)  →  reconciled onto edges  →  cascade reads weights
+        ▲                                                      │
+        │  bitemporal update, cited to the signal              ▼
+   LLM reconciles  ◄──  live System-1 signal implies a dependency shift
+```
+
+So the dependency graph **starts from sourced seed knowledge and evolves from real
+observation**, every version traced to either `.context` (seed) or a specific
+signal (learned). Risk propagation gets more accurate as the brain accumulates
+evidence — a knowledge base that learns, not a database that stores.
+
+---
+
 ## Role in the SAGE System
 
 ```
