@@ -13,7 +13,7 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-10T09:48:57.581288+00:00'
+last_updated: '2026-07-10T09:49:20.514957+00:00'
 valid_at: '2026-07-10T09:47:36.880559+00:00'
 source_episodes: []
 links_out:
@@ -30,7 +30,7 @@ coordinates:
 
 
 ## Current Assessment
-The [[Strait of Hormuz]] is experiencing heightened geopolitical tensions following direct military strikes between Iran and Israel near the Persian Gulf. The [[OFAC]] has added NIOC-linked tanker operators to the SDN list, further complicating the supply chain dynamics.
+The [[Strait of Hormuz]] is experiencing heightened geopolitical tensions following direct military strikes between Iran and Israel near the Persian Gulf. The [[OFAC]] has now designated a second sanctioned tanker, further complicating the supply chain dynamics and increasing the risk for entities dependent on this corridor.
 
 ## Historical Pattern
 The current event shows similarity to the [[2019 Tanker Attacks]] with a feature-overlap percentage of approximately 30%.
@@ -45,6 +45,7 @@ The current event shows similarity to the [[2019 Tanker Attacks]] with a feature
 - News report of direct military strikes between Iran and Israel near the Persian Gulf.
 - OFAC adds NIOC-linked tanker operators to the SDN list.
 - System 2 scenario modelling (confirmed) for Strait of Hormuz: projected supply gap 0.21 mbpd over 10 days (timeline: day1:0.0, day2:0.1, day3:0.1, day4:0.1, day5:0.2, day6:0.2, day7:0.2).
+- OFAC designates a second sanctioned tanker.
 
 ## Relations
 | Relation | Entity | Type | Strength |
