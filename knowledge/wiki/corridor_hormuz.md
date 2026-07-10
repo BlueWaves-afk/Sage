@@ -6,15 +6,15 @@ entity_type: Corridor
 tags:
 - sage/corridor
 - risk/calm
-risk_score: 0.2197
+risk_score: 0.0
 risk_band: CALM
 factors:
   ais: 0.0
-  gdelt: 0.4275
+  gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T08:52:59'
-valid_at: '2026-07-09T08:52:59'
+last_updated: '2026-07-10T09:47:40.119176+00:00'
+valid_at: '2026-07-10T09:47:36.880559+00:00'
 source_episodes: []
 links_out:
 - authority_ofac
@@ -31,10 +31,8 @@ coordinates:
 ---
 
 
-
-
 ## Current Assessment
-The [[Strait of Hormuz]] is experiencing heightened geopolitical tensions following direct military strikes between Iran and Israel near the Persian Gulf. The [[OFAC]] has designated a second sanctioned tanker, further complicating the supply chain dynamics. System 3 procurement analysis has identified alternative crude sources, with the top option being from the [[United States]] via the [[Suez Canal]].
+The [[Strait of Hormuz]] is experiencing escalated geopolitical tensions following direct military strikes between Iran and Israel near the Persian Gulf. The [[OFAC]] has designated a second sanctioned tanker, further complicating the supply chain dynamics. System 3 procurement analysis has identified alternative crude sources, with the top option being from the [[United States]] via the [[Suez Canal]].
 
 ## Historical Pattern
 The current event shows similarity to the [[2019 Tanker Attacks]] with a feature-overlap percentage of approximately 30%.
