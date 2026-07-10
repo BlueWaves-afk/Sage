@@ -63,20 +63,33 @@ curl -s localhost:8000/health         # {"status":"ok","kb_ready":true}
 docker compose ps                     # all healthy
 ```
 
-## 4. Seed the golden path (first boot)
+## 4. Instantiate the knowledge base (first boot)
 
-The graph store is empty on a fresh volume. Seed the Feb-2026 Hormuz golden path
-(writes the 61-node graph + Hormuz CRITICAL 0.92 + runs Systems 2/3/4):
+The graph store is empty on a fresh volume. Instantiate the sourced `.context`
+bundle — this loads the 61 real, cited entities + edges + params (no fabricated
+data):
 
 ```bash
-docker compose exec sage-core python -m scripts.seed_golden_path
+docker compose exec sage-core python -m scripts.seed_kb
 # or from host with the stack up:
 PYTHONPATH=. FALKORDB_HOST=localhost REDIS_URL=redis://localhost:6380/0 \
-  python3.11 scripts/seed_golden_path.py
+  python3.11 scripts/seed_kb.py
 ```
 
-Open `http://<ec2-ip>/` — Command Center should show CRITICAL threat, live KPIs,
-the geospatial graph, procurement radar, and the copilot.
+Then start System 1 so real signals flow in and the KB computes risk on its own:
+
+```bash
+docker compose --profile sensory up -d
+```
+
+Open `http://<ec2-ip>/` — the Command Center reads live from the KB. Risk reflects
+**reality**: it stays LOW/CALM when the feeds are quiet and rises autonomously only
+when real signals (news / AIS / sanctions / price) warrant it — Systems 2/3/4 fire
+on a genuine threshold crossing. Nothing is seeded, authored, or hardcoded.
+
+> Optional manual poll: `python3.11 scripts/seed_from_live.py` pulls one batch of
+> real signals immediately instead of waiting for the agents' intervals. It is
+> **not required** — the running agents do this continuously.
 
 ## 5. Ports
 
