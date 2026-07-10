@@ -254,7 +254,13 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  /* Bounded + scrollable so the Strategic Copilot below stays visible. */
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
+.cc-feed::-webkit-scrollbar { width: 6px; }
+.cc-feed::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 3px; }
 .cc-feed-item {
   display: flex;
   gap: 8px;
@@ -396,3 +402,13 @@
   padding-top: 8px;
 }
 .cc-ev-item { display: flex; gap: 8px; align-items: flex-start; }
+
+.cc-feed-link {
+  color: var(--text-1);
+  text-decoration: none;
+  cursor: pointer;
+  border-bottom: 1px solid transparent;
+  transition: color var(--dur-fast) ease, border-color var(--dur-fast) ease;
+}
+.cc-feed-link:hover { color: var(--cyan); border-bottom-color: var(--cyan-dim); }
+.cc-feed-ext { color: var(--cyan-dim); font-size: 10px; }

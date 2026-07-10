@@ -47,16 +47,23 @@ export default function CommandCenter() {
   const [evSource, setEvSource] = useState<string | null>(null);
   const [evidence, setEvidence] = useState<import("../api/types").IntelSignal[] | null>(null);
 
+  // Which episode sources count for each evidence button.
+  const EV_SOURCES: Record<string, string[]> = {
+    News: ["news", "gdelt"],
+    AIS: ["ais"],
+    Sanctions: ["sanctions"],
+    Price: ["price"],
+  };
+
   const showEvidence = async (src: string) => {
     const entity = dash?.top_risk_entity;
     if (!entity) return;
     setEvSource(src);
     setEvidence(null);
-    const env = await api.evidence(entity, 20);
-    const items = (env.data || []).filter(
-      (s) => s.source.toLowerCase().startsWith(src.toLowerCase().slice(0, 4)),
-    );
-    setEvidence(items.length ? items : env.data || []);
+    const env = await api.evidence(entity, 30);
+    const allow = EV_SOURCES[src] ?? [src.toLowerCase()];
+    // Filter strictly — no fallback to "all" (that's what made AIS show News).
+    setEvidence((env.data || []).filter((s) => allow.includes(s.source.toLowerCase())));
   };
 
   // Opens the wiki drawer for an entity referenced via a [[wikilink]] in narrative
@@ -292,7 +299,18 @@ export default function CommandCenter() {
                       <div key={s.id} className="cc-ev-item">
                         <span className={`cc-feed-src cc-src-${s.source}`}>{s.source.toUpperCase()}</span>
                         <div className="cc-feed-body">
-                          <div className="cc-feed-text">{s.headline}</div>
+                          {s.source_url ? (
+                            <a
+                              className="cc-feed-text cc-feed-link"
+                              href={s.source_url}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              {s.headline} <span className="cc-feed-ext">↗</span>
+                            </a>
+                          ) : (
+                            <div className="cc-feed-text">{s.headline}</div>
+                          )}
                           <div className="cc-feed-time mono">
                             {s.recorded_at ? new Date(s.recorded_at).toLocaleString() : ""}
                           </div>
@@ -350,7 +368,13 @@ export default function CommandCenter() {
                     <div key={s.id} className="cc-feed-item">
                       <span className={`cc-feed-src cc-src-${s.source}`}>{s.source.toUpperCase()}</span>
                       <div className="cc-feed-body">
-                        <div className="cc-feed-text">{s.headline}</div>
+                        {s.source_url ? (
+                          <a className="cc-feed-text cc-feed-link" href={s.source_url} target="_blank" rel="noreferrer">
+                            {s.headline} <span className="cc-feed-ext">↗</span>
+                          </a>
+                        ) : (
+                          <div className="cc-feed-text">{s.headline}</div>
+                        )}
                         <div className="cc-feed-time mono">
                           {s.recorded_at ? new Date(s.recorded_at).toLocaleString() : ""}
                         </div>

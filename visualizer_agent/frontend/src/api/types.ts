@@ -207,6 +207,7 @@ export interface IntelSignal {
   source: string; // news | gdelt | ais | price | sanctions | synthesis
   headline: string;
   detail: string;
+  source_url: string;
   entities: string[];
   recorded_at: string;
 }

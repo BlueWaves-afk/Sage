@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import logging
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Any, Optional
 
 from pydantic import BaseModel
@@ -482,8 +482,18 @@ class IntelSignal(BaseModel):
     source: str            # news | gdelt | ais | price | sanctions | synthesis
     headline: str          # first line of the episode content
     detail: str = ""       # short excerpt
+    source_url: str = ""   # clickable link to the original source
     entities: list[str] = []
     recorded_at: str = ""
+
+
+def _extract_url(content: str) -> str:
+    """Pull the original source URL embedded in the raw-signal envelope."""
+    import re
+    m = re.search(r"source_url:\s*(\S+)", content or "")
+    if m and m.group(1).lower().startswith("http"):
+        return m.group(1).strip()
+    return ""
 
 
 def _source_of(source_desc: str, source: str) -> str:
@@ -506,10 +516,11 @@ def _headline(content: str) -> str:
         ln = raw.strip().lstrip("#").lstrip("*").lstrip("-").strip()
         # Strip the raw-signal envelope: "[RAW] news | 2026-.. | Actual headline"
         ln = re.sub(r"^\[RAW\][^|]*\|[^|]*\|\s*", "", ln).strip()
+        ln = re.sub(r"\[\[([^\]]+)\]\]", r"\1", ln)  # strip [[wikilink]] markup
         if len(ln) > 15 and not ln.lower().startswith(("current assessment", "historical", "affected")):
             m = re.split(r"(?<=[.!?])\s", ln)
             return (m[0] if m else ln)[:160]
-    return (text[:120] or "signal").replace("\n", " ")
+    return re.sub(r"\[\[([^\]]+)\]\]", r"\1", (text[:120] or "signal").replace("\n", " "))
 
 
 async def get_recent_intelligence(limit: int = 15) -> list[IntelSignal]:
@@ -517,30 +528,36 @@ async def get_recent_intelligence(limit: int = 15) -> list[IntelSignal]:
     Recent ingested episodes — the live intelligence stream that drives risk. Powers
     the Command Center 'Live Intelligence' rail: real signals, newest first.
     """
-    # Pull a wider window, then keep only real intelligence signals (news/ais/
-    # sanctions/price) — skip the internal risk-assessment episodes.
+    # Past 5 days of real intelligence signals (news/gdelt/ais/sanctions/price),
+    # newest first, de-duplicated by headline. Episodes persist in FalkorDB, so
+    # this survives page reloads and accumulates rather than being overwritten.
+    since = (datetime.now(timezone.utc) - timedelta(days=5)).isoformat()
     rows = await _cypher(
-        "MATCH (e:Episodic) "
+        "MATCH (e:Episodic) WHERE e.created_at >= $since "
         "RETURN e.uuid AS uuid, e.content AS content, e.source_description AS sd, "
-        "       e.source AS src, e.created_at AS created_at "
-        "ORDER BY e.created_at DESC LIMIT $limit",
-        {"limit": int(limit) * 5},
+        "       e.source AS src, e.created_at AS created_at, e.source_url AS surl "
+        "ORDER BY e.created_at DESC LIMIT $scan",
+        {"since": since, "scan": max(int(limit) * 8, 120)},
     )
     out: list[IntelSignal] = []
+    seen: set[str] = set()
     for r in rows or []:
         sd = r.get("sd", "") or ""
         source = _source_of(sd, r.get("src", ""))
         content = (r.get("content") or "").strip()
-        # Skip internal risk-assessment / sandbox bookkeeping episodes.
-        if source in ("text", "synthesis"):
+        if source in ("text", "synthesis") or "risk level is assessed" in content.lower():
             continue
-        if "risk level is assessed" in content.lower():
+        head = _headline(content)
+        key = head.lower().strip()[:80]
+        if key in seen:            # collapse duplicates
             continue
+        seen.add(key)
         out.append(IntelSignal(
             id=str(r.get("uuid") or ""),
             source=source,
-            headline=_headline(content),
+            headline=head,
             detail=content[:280],
+            source_url=(r.get('surl') or _extract_url(content)),
             recorded_at=str(r.get("created_at") or ""),
         ))
         if len(out) >= limit:
@@ -556,19 +573,28 @@ async def get_evidence_for(entity: str, limit: int = 12) -> list[IntelSignal]:
     rows = await _cypher(
         "MATCH (e:Episodic)-[:MENTIONS]->(n:Entity {name:$entity}) "
         "RETURN e.uuid AS uuid, e.content AS content, e.source_description AS sd, "
-        "       e.source AS src, e.created_at AS created_at "
+        "       e.source AS src, e.created_at AS created_at, e.source_url AS surl "
         "ORDER BY e.created_at DESC LIMIT $limit",
         {"entity": entity, "limit": int(limit)},
     )
     out: list[IntelSignal] = []
+    seen: set[str] = set()
     for r in rows or []:
         content = (r.get("content") or "").strip()
+        source = _source_of(r.get("sd", ""), r.get("src", ""))
+        if source in ("text", "synthesis") or "risk level is assessed" in content.lower():
+            continue
         head = _headline(content)
+        key = head.lower().strip()[:80]
+        if key in seen:
+            continue
+        seen.add(key)
         out.append(IntelSignal(
             id=str(r.get("uuid") or ""),
-            source=_source_of(r.get("sd", ""), r.get("src", "")),
+            source=source,
             headline=head,
             detail=content[:280],
+            source_url=(r.get('surl') or _extract_url(content)),
             entities=[entity],
             recorded_at=str(r.get("created_at") or ""),
         ))

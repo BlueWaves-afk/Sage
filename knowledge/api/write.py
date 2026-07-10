@@ -188,6 +188,17 @@ async def ingest_signal(signal: NormalizedSignal) -> IngestResult:
             # Graphiti doesn't return the episode UUID directly in add_episode();
             # we generate a stable one from signal_id for downstream reference
             episode_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, signal.signal_id))
+            # Stamp the original source URL as a first-class property on the episode
+            # so the intelligence/evidence feeds can render a clickable citation
+            # (robust — no dependence on parsing the body text).
+            if signal.source_url:
+                try:
+                    await g.driver.execute_query(
+                        "MATCH (e:Episodic {name:$name}) SET e.source_url = $url",
+                        name=episode_name, url=signal.source_url,
+                    )
+                except Exception as exc:
+                    log.debug("episode source_url stamp failed for %s: %s", signal.signal_id, exc)
         except Exception as exc:
             log.error("add_episode failed for signal %s: %s", signal.signal_id, exc)
             raise
