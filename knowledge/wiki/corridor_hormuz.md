@@ -13,13 +13,11 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-10T09:47:40.119176+00:00'
+last_updated: '2026-07-10T09:48:57.581288+00:00'
 valid_at: '2026-07-10T09:47:36.880559+00:00'
 source_episodes: []
 links_out:
 - authority_ofac
-- supplier_us
-- corridor_suez
 - event_2019_hormuz_attacks
 - supplier_nioc
 - supplier_aramco
@@ -32,7 +30,7 @@ coordinates:
 
 
 ## Current Assessment
-The [[Strait of Hormuz]] is experiencing escalated geopolitical tensions following direct military strikes between Iran and Israel near the Persian Gulf. The [[OFAC]] has designated a second sanctioned tanker, further complicating the supply chain dynamics. System 3 procurement analysis has identified alternative crude sources, with the top option being from the [[United States]] via the [[Suez Canal]].
+The [[Strait of Hormuz]] is experiencing heightened geopolitical tensions following direct military strikes between Iran and Israel near the Persian Gulf. The [[OFAC]] has added NIOC-linked tanker operators to the SDN list, further complicating the supply chain dynamics.
 
 ## Historical Pattern
 The current event shows similarity to the [[2019 Tanker Attacks]] with a feature-overlap percentage of approximately 30%.
@@ -42,14 +40,11 @@ The current event shows similarity to the [[2019 Tanker Attacks]] with a feature
 - [[Saudi Aramco]]: Medium exposure as a major supplier in the region with diversified but still vulnerable routes.
 - [[ADNOC]]: Medium exposure due to reliance on the [[Strait of Hormuz]] for a portion of its exports.
 - [[Jamnagar Refinery]]: High exposure with a peak gap of 0.21 mbpd from day 0.
-- [[United States]]: New potential supply source identified via [[Suez Canal]].
 
 ## Signal Basis
 - News report of direct military strikes between Iran and Israel near the Persian Gulf.
 - OFAC adds NIOC-linked tanker operators to the SDN list.
-- OFAC designates a second sanctioned tanker.
 - System 2 scenario modelling (confirmed) for Strait of Hormuz: projected supply gap 0.21 mbpd over 10 days (timeline: day1:0.0, day2:0.1, day3:0.1, day4:0.1, day5:0.2, day6:0.2, day7:0.2).
-- System 3 procurement analysis identifies alternative crude sources: [[United States]] via [[Suez Canal]] and Indian Oil Corporation Limited via [[Suez Canal]].
 
 ## Relations
 | Relation | Entity | Type | Strength |
@@ -61,5 +56,3 @@ The current event shows similarity to the [[2019 Tanker Attacks]] with a feature
 | threat_actor | Iran | threat_actor | high |
 | threat_actor | Israel | threat_actor | high |
 | sanctions_link | [[OFAC]] | sanctions_link | high |
-| bypass_option | [[United States]] | bypass_option | medium |
-| bypass_option | [[Suez Canal]] | bypass_option | medium |
