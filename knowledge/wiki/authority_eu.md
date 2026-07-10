@@ -6,19 +6,20 @@ entity_type: Authority
 tags:
 - sage/authority
 - risk/calm
-risk_score: 0.0
+risk_score: 0.0534
 risk_band: CALM
 factors:
   ais: 0.0
-  gdelt: 0.0
+  gdelt: 0.1779
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-09T15:18:16.950271+00:00'
-valid_at: '2026-07-09T15:18:16.950271+00:00'
+last_updated: '2026-07-10T13:45:25.039404+00:00'
+valid_at: '2026-07-10T13:45:25.039404+00:00'
 source_episodes: []
 links_out: []
 coordinates: {}
 ---
+
 
 
 ## Sanctions Overview

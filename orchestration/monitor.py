@@ -89,9 +89,60 @@ async def _poll() -> None:
                 _fired_bands.pop(entity, None)
 
         await _check_expirations(client)
+        await _drain_job_queue(client)
 
     finally:
         await client.aclose()
+
+
+async def _drain_job_queue(client: object) -> None:
+    """
+    Drain `sage:jobs` (enqueued by knowledge/feedback.py::_maybe_trigger_retrain
+    once RETRAIN_THRESHOLD outcome records accumulate) and actually run the
+    retrain — closing the loop that used to just print a message an operator
+    had to notice and act on manually.
+    """
+    while True:
+        raw = await client.rpop("sage:jobs")
+        if not raw:
+            break
+        try:
+            job = json.loads(raw)
+        except Exception:
+            continue
+        if job.get("job") == "calibrate_fusion":
+            await _run_fusion_calibration(job.get("count"))
+
+
+async def _run_fusion_calibration(count: Optional[int]) -> None:
+    """Run sensory_agent.fusion's blocking GBM calibration off the event loop."""
+    try:
+        from knowledge.agent_trace import publish_trace
+        await publish_trace(system="1", agent="fusion",
+                             action=f"Retraining fusion model from {count or '?'} feedback records",
+                             status="started")
+    except Exception:
+        pass
+
+    try:
+        from sensory_agent.fusion import _calibrate
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, _calibrate)
+        log.info("Fusion model retrain complete (%s feedback records)", count)
+        try:
+            from knowledge.agent_trace import publish_trace
+            await publish_trace(system="1", agent="fusion",
+                                 action="Fusion model retrain complete", status="done")
+        except Exception:
+            pass
+    except Exception as exc:
+        log.error("Fusion model retrain failed: %s", exc)
+        try:
+            from knowledge.agent_trace import publish_trace
+            await publish_trace(system="1", agent="fusion",
+                                 action=f"Fusion model retrain failed: {exc}", status="error")
+        except Exception:
+            pass
 
 
 async def _get_pending(client: object, entity: str) -> Optional[str]:

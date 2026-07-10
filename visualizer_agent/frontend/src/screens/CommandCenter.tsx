@@ -4,6 +4,7 @@ import KnowledgeGraphMap from "../components/KnowledgeGraphMap";
 import WikiDrawer from "../components/WikiDrawer";
 import { RichText } from "../components/RichText";
 import PipelineBar from "../components/PipelineBar";
+import AgentTraceFeed from "../components/AgentTraceFeed";
 import AmbientBackground from "../components/AmbientBackground";
 import AnimatedNumber from "../components/AnimatedNumber";
 import { Panel, Badge, Meter, OfflineHint, Skel, Kb } from "../components/ui/ui";
@@ -16,9 +17,6 @@ import type { KpiKey } from "../voice/types";
 import "./command.css";
 
 type Kpi = {
-  // Key mirrors the voice action taxonomy — a `flash_kpi` action from voice
-  // pulses the tile whose `kpiKey` matches. Anything the user might ask about
-  // by voice must live under one of the KpiKey values.
   kpiKey?: KpiKey;
   label: string;
   value?: string;
@@ -30,6 +28,8 @@ type Kpi = {
   up?: boolean;
   warn?: boolean;
   sub?: string;
+  sourceUrl?: string;   // clickable citation link shown under the value
+  sourceLabel?: string; // short label for the link (e.g. "EIA", "PPAC")
 };
 
 
@@ -41,8 +41,8 @@ export default function CommandCenter() {
   const { data: sched, live: schedLive } = useApi(api.sprSchedule);
   const { data: scen, live: scenLive } = useApi(api.scenario);
   const { data: intel } = useApi(api.intelligence);
+  const { data: briefData, live: briefLive, loading: briefLoading } = useApi(api.brief);
   const [selected, setSelected] = useState<GraphNode | null>(null);
-  const [briefLoading, setBriefLoading] = useState(true);
   // Supporting-evidence drill-down: the real source signals behind a risk state.
   const [evSource, setEvSource] = useState<string | null>(null);
   const [evidence, setEvidence] = useState<import("../api/types").IntelSignal[] | null>(null);
@@ -71,38 +71,49 @@ export default function CommandCenter() {
   const openWikilink = (entity: string) =>
     setSelected({ id: entity, name: entity, type: "Entity", lat: null, lon: null, score: 0, band: "CALM", degree: 0 });
 
-  // AI Situation Brief narrative: pulled live from the highest-risk entity's
-  // reconciled wiki page (its "Current Assessment" paragraph) — not hardcoded.
-  const [brief, setBrief] = useState<string | null>(null);
-  const [briefLive, setBriefLive] = useState(false);
-  useEffect(() => {
-    const entity = dash?.top_risk_entity;
-    if (!entity) {
-      setBriefLoading(false);
-      return;
-    }
-    setBriefLoading(true);
-    api.wiki(entity).then((env) => {
-      const m = env.data?.content.match(/##\s*Current Assessment\s*\n([\s\S]*?)(?=\n##|\n---|$)/i);
-      setBrief(m ? m[1].trim() : null);
-      setBriefLive(env.live && !!m);
-      setBriefLoading(false);
-    });
-  }, [dash?.top_risk_entity]);
+  // AI Situation Brief: /api/brief scans all wiki pages and returns the richest
+  // Current Assessment (by risk score + text length). Always populated as long as
+  // any entity has been synthesized — not tied to a single top-risk entity.
+  const brief = briefData?.assessment ?? null;
+  const briefEntity = briefData?.entity ?? null;
+  const briefWikiSlug = briefData?.wiki_entity ?? null;
 
   const threatTone =
     dash?.threat_level === "CRITICAL" ? "c-red" :
     dash?.threat_level === "HIGH" ? "c-coral" :
     dash?.threat_level === "MEDIUM" ? "c-amber" : "c-green";
 
+  const src = dash?.sources;
   const kpis: Kpi[] = useMemo(() => [
-    { kpiKey: "threat_level", label: "Threat Level", value: dash?.threat_level ?? "—", tone: threatTone },
-    { kpiKey: "brent_usd_bbl", label: "Brent Crude", num: dash?.brent_usd_bbl ?? undefined, prefix: "$", decimals: 2, tone: "", up: true, value: dash?.brent_usd_bbl == null ? "—" : undefined, sub: "EIA REF" },
-    { kpiKey: "spr_coverage_pct", label: "SPR Coverage", num: dash?.spr_coverage_pct ?? undefined, suffix: "%", decimals: 1, tone: "", value: dash?.spr_coverage_pct == null ? "—" : undefined },
-    { kpiKey: "active_alerts", label: "Active Alerts", num: dash?.active_alerts ?? 0, tone: (dash?.active_alerts ?? 0) > 0 ? "c-amber" : "c-green", warn: (dash?.active_alerts ?? 0) > 0 },
-    { kpiKey: "monitoring_entities", label: "Tracked Entities", num: dash?.monitoring_entities ?? 0, tone: "", sub: "KB NODES" },
+    {
+      kpiKey: "threat_level", label: "Threat Level", value: dash?.threat_level ?? "—", tone: threatTone,
+      sourceUrl: src?.threat, sourceLabel: "KB",
+    },
+    {
+      kpiKey: "brent_usd_bbl", label: "Brent Crude",
+      num: dash?.brent_usd_bbl ?? undefined, prefix: "$", decimals: 2, tone: "", up: true,
+      value: dash?.brent_usd_bbl == null ? "—" : undefined,
+      sourceUrl: src?.brent, sourceLabel: dash?.brent_source ?? "EIA",
+    },
+    {
+      kpiKey: "spr_coverage_pct", label: "SPR Coverage",
+      num: dash?.spr_coverage_pct ?? undefined, suffix: "%", decimals: 1, tone: "",
+      value: dash?.spr_coverage_pct == null ? "—" : undefined,
+      sourceUrl: src?.spr, sourceLabel: "PPAC",
+    },
+    {
+      kpiKey: "active_alerts", label: "Active Alerts",
+      num: dash?.active_alerts ?? 0, tone: (dash?.active_alerts ?? 0) > 0 ? "c-amber" : "c-green",
+      warn: (dash?.active_alerts ?? 0) > 0,
+      sourceUrl: src?.news, sourceLabel: "LIVE",
+    },
+    {
+      kpiKey: "monitoring_entities", label: "Tracked Entities",
+      num: dash?.monitoring_entities ?? 0, tone: "", sub: "KB NODES",
+    },
     { label: "Mode", value: live ? "LIVE" : "OFFLINE", tone: live ? "c-cyan" : "c-muted" },
-  ], [dash, live, threatTone]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [dash, live, threatTone, src]);
 
   // Voice: which KPI is currently flashing (voice `flash_kpi` action) + which
   // entity the voice bridge asked to open in the drawer.
@@ -181,6 +192,16 @@ export default function CommandCenter() {
                 {k.sub && <span className="cc-kpi-sub">{k.sub}</span>}
               </Kb>
             </div>
+            {k.sourceUrl && (
+              <a
+                href={k.sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="cc-kpi-src mono"
+              >
+                {k.sourceLabel ?? "src"} ↗
+              </a>
+            )}
           </div>
         ))}
       </div>
@@ -232,8 +253,17 @@ export default function CommandCenter() {
               }
               right={<OfflineHint live={live} />}
             >
-              <div className="label-sm">
-                Narrative Summary{briefLive && dash?.top_risk_entity ? ` · ${dash.top_risk_entity}` : ""}
+              <div className="label-sm" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span>Narrative Summary{briefLive && briefEntity ? ` · ${briefEntity}` : ""}</span>
+                {briefLive && briefWikiSlug && (
+                  <button
+                    className="cc-feed-link mono"
+                    style={{ fontSize: 10, background: "none", border: "none", cursor: "pointer", padding: 0, color: "var(--cyan-dim)" }}
+                    onClick={() => briefWikiSlug && openWikilink(briefEntity ?? briefWikiSlug)}
+                  >
+                    View wiki ↗
+                  </button>
+                )}
               </div>
               {briefLoading ? (
                 <div className="cc-narrative">
@@ -244,7 +274,9 @@ export default function CommandCenter() {
                   <RichText text={brief} onWikilink={openWikilink} />
                 </p>
               ) : (
-                <p className="cc-status-line mono">[STATUS: AWAITING SYNTHESIS]</p>
+                <p className="cc-narrative" style={{ color: "var(--text-3)", fontStyle: "italic" }}>
+                  System monitoring — synthesized situation brief will appear as signals are processed.
+                </p>
               )}
               <div className="label-sm cc-brief-sec">Threat Assessment</div>
               <div className="cc-threat">
@@ -347,6 +379,8 @@ export default function CommandCenter() {
 
         {/* Live intelligence rail */}
         <div className="cc-rail">
+          <AgentTraceFeed />
+
           <Panel
             className="cc-intel"
             title={
@@ -474,23 +508,21 @@ function RecCard({
           <RichText text={body} onWikilink={onWikilink} />
         </p>
       ) : (
-        <div className="cc-rec-body" style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <Skel w="100%" h={12} />
-          <Skel w="88%" h={12} />
-          <span className="offline-hint mono" style={{ marginTop: 4 }}>awaiting scenario run</span>
-        </div>
+        <p className="cc-rec-body" style={{ color: "var(--text-3)", fontStyle: "italic" }}>
+          No active disruption detected — system is monitoring. Analysis will appear when a risk threshold is crossed.
+        </p>
       )}
       <div className="cc-rec-foot">
         <div>
           <div className="label-sm">Confidence</div>
           <div className="c-cyan cc-rec-metric">
-            {live && confidence ? confidence : <Skel w={44} h={18} />}
+            {live && confidence ? confidence : <span style={{ color: "var(--text-3)", fontSize: 13 }}>—</span>}
           </div>
         </div>
         <div className="cc-rec-foot-right">
           <div className="label-sm">Impact</div>
-          <div className={`cc-rec-metric ${impactTone}`}>
-            {live && body ? impact : <Skel w={54} h={18} />}
+          <div className={`cc-rec-metric ${live && body ? impactTone : ""}`}>
+            {live && body ? impact : <span style={{ color: "var(--text-3)", fontSize: 13 }}>CALM</span>}
           </div>
         </div>
       </div>

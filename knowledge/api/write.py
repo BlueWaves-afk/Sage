@@ -69,6 +69,120 @@ async def _cache_output(kind: str, scenario_id: str, data: BaseModel) -> None:
         log.warning("Output cache failed for %s:%s (non-fatal): %s", kind, scenario_id, exc)
 
 
+# ---------------------------------------------------------------------------
+# Scenario Library (Feature A) — durable index + meta card, separate from the
+# 24h full-payload cache above so the library survives payload expiry.
+# ---------------------------------------------------------------------------
+
+_META_TTL_S = 30 * 24 * 3600   # 30 days
+
+
+async def write_scenario_index(scenario_id: str, meta: dict) -> None:
+    """
+    Record a scenario run in the durable library index. Best-effort, never
+    blocks the caller — same discipline as `_cache_output`.
+
+    meta keys: trigger_entity, origin (auto|user|preset), label, gap_mbpd,
+    price_impact_high, gdp_proxy_impact_pct, spr_depletion_days, created_at.
+    """
+    import os
+    import time
+    try:
+        import redis.asyncio as aioredis
+        client = aioredis.from_url(os.environ.get("REDIS_URL", "redis://redis:6379/0"),
+                                   decode_responses=True)
+        try:
+            await client.zadd("sage:scenario:index", {scenario_id: time.time()})
+            # Redis hashes need string values.
+            safe_meta = {k: ("" if v is None else str(v)) for k, v in meta.items()}
+            key = f"sage:scenario:meta:{scenario_id}"
+            await client.hset(key, mapping=safe_meta)
+            await client.expire(key, _META_TTL_S)
+        finally:
+            await client.aclose()
+    except Exception as exc:
+        log.warning("write_scenario_index failed for %s (non-fatal): %s", scenario_id, exc)
+
+
+async def write_custom_preset(slug: str, preset: dict) -> None:
+    """Persist a user-promoted scenario as a named preset (curated, no TTL)."""
+    import os
+    try:
+        import redis.asyncio as aioredis
+        client = aioredis.from_url(os.environ.get("REDIS_URL", "redis://redis:6379/0"),
+                                   decode_responses=True)
+        try:
+            safe = {k: ("" if v is None else str(v)) for k, v in preset.items()}
+            await client.hset(f"sage:preset:custom:{slug}", mapping=safe)
+            await client.sadd("sage:preset:custom:index", slug)
+        finally:
+            await client.aclose()
+    except Exception as exc:
+        log.warning("write_custom_preset failed for %s (non-fatal): %s", slug, exc)
+
+
+async def delete_custom_preset(slug: str) -> bool:
+    """Remove a user-promoted preset. Returns True if it existed."""
+    import os
+    try:
+        import redis.asyncio as aioredis
+        client = aioredis.from_url(os.environ.get("REDIS_URL", "redis://redis:6379/0"),
+                                   decode_responses=True)
+        try:
+            existed = bool(await client.exists(f"sage:preset:custom:{slug}"))
+            await client.delete(f"sage:preset:custom:{slug}")
+            await client.srem("sage:preset:custom:index", slug)
+            return existed
+        finally:
+            await client.aclose()
+    except Exception as exc:
+        log.warning("delete_custom_preset failed for %s (non-fatal): %s", slug, exc)
+        return False
+
+
+# ---------------------------------------------------------------------------
+# Scenario calibration store (Feature B) — bounded, per-corridor, visible
+# correction factors applied on top of raw ARIO output.
+# ---------------------------------------------------------------------------
+
+async def write_calibration_factor(entity: str, gap_x: float, price_x: float, n: int) -> None:
+    """Persist a learned per-corridor correction factor (bounded 0.5-1.5)."""
+    import os
+    try:
+        import redis.asyncio as aioredis
+        client = aioredis.from_url(os.environ.get("REDIS_URL", "redis://redis:6379/0"),
+                                   decode_responses=True)
+        try:
+            gap_x = max(0.5, min(1.5, gap_x))
+            price_x = max(0.5, min(1.5, price_x))
+            await client.hset(f"sage:calib:params:{entity}", mapping={
+                "gap_x": str(gap_x), "price_x": str(price_x), "n": str(n),
+            })
+            await client.sadd("sage:calib:index", entity)
+        finally:
+            await client.aclose()
+    except Exception as exc:
+        log.warning("write_calibration_factor failed for %s (non-fatal): %s", entity, exc)
+
+
+async def get_calibration_factor(entity: str) -> tuple[float, float]:
+    """Read the learned (gap_x, price_x) for a corridor; (1.0, 1.0) if unlearned."""
+    import os
+    try:
+        import redis.asyncio as aioredis
+        client = aioredis.from_url(os.environ.get("REDIS_URL", "redis://redis:6379/0"),
+                                   decode_responses=True)
+        try:
+            h = await client.hgetall(f"sage:calib:params:{entity}")
+            if not h:
+                return (1.0, 1.0)
+            return (float(h.get("gap_x", 1.0)), float(h.get("price_x", 1.0)))
+        finally:
+            await client.aclose()
+    except Exception:
+        return (1.0, 1.0)
+
+
 class IngestResult(BaseModel):
     signal_id: str
     decision: Literal["synthesized", "extracted", "stored", "dropped"]
@@ -104,6 +218,26 @@ def _render_raw_signal(signal: NormalizedSignal) -> str:
     if signal.raw_ref:
         lines.append(f"raw_ref: {signal.raw_ref}")
     return "\n".join(lines)
+
+
+async def _force_india_brief() -> None:
+    """Force-refresh the India situation brief after a Systems 2/3/4 output lands."""
+    try:
+        from knowledge.context.india_brief import refresh_india_brief
+        await refresh_india_brief(force=True)
+    except Exception as exc:
+        log.debug("[india_brief] force refresh non-fatal: %s", exc)
+
+
+async def _stamp_episode_url(g, episode_name: str, url: str) -> None:
+    """Stamp source_url on an Episodic node after add_episode() commits."""
+    try:
+        await g.driver.execute_query(
+            "MATCH (e:Episodic {name:$name}) SET e.source_url = $url",
+            name=episode_name, url=url,
+        )
+    except Exception as exc:
+        log.warning("source_url stamp failed for episode %s: %s", episode_name, exc)
 
 
 # ---------------------------------------------------------------------------
@@ -188,17 +322,10 @@ async def ingest_signal(signal: NormalizedSignal) -> IngestResult:
             # Graphiti doesn't return the episode UUID directly in add_episode();
             # we generate a stable one from signal_id for downstream reference
             episode_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, signal.signal_id))
-            # Stamp the original source URL as a first-class property on the episode
-            # so the intelligence/evidence feeds can render a clickable citation
-            # (robust — no dependence on parsing the body text).
+            # Stamp source_url as a first-class property so the intelligence/evidence
+            # feeds can render a clickable citation without parsing body text.
             if signal.source_url:
-                try:
-                    await g.driver.execute_query(
-                        "MATCH (e:Episodic {name:$name}) SET e.source_url = $url",
-                        name=episode_name, url=signal.source_url,
-                    )
-                except Exception as exc:
-                    log.debug("episode source_url stamp failed for %s: %s", signal.signal_id, exc)
+                await _stamp_episode_url(g, episode_name, signal.source_url)
         except Exception as exc:
             log.error("add_episode failed for signal %s: %s", signal.signal_id, exc)
             raise
@@ -230,9 +357,10 @@ async def ingest_signal(signal: NormalizedSignal) -> IngestResult:
             f"entities: {', '.join(signal.entity_refs)} | "
             f"{signal.summary}"
         )
+        extract_name = f"extract_{signal.signal_id}"
         try:
             await g.add_episode(
-                name=f"extract_{signal.signal_id}",
+                name=extract_name,
                 episode_body=episode_body,
                 source=EpisodeType.text,
                 source_description=f"SAGE extract | source={signal.source}",
@@ -242,6 +370,8 @@ async def ingest_signal(signal: NormalizedSignal) -> IngestResult:
                 edge_type_map=EDGE_TYPE_MAP,
             )
             episode_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, signal.signal_id))
+            if signal.source_url:
+                await _stamp_episode_url(g, extract_name, signal.source_url)
         except Exception as exc:
             log.error("add_episode (extract) failed for signal %s: %s", signal.signal_id, exc)
             raise
@@ -255,15 +385,18 @@ async def ingest_signal(signal: NormalizedSignal) -> IngestResult:
     # decision == "store" — raw storage, no Graphiti extraction
     # Still write to Graphiti as a plain text episode (for audit + retrieval)
     # but skip entity_types / edge_types so extraction doesn't run
+    raw_name = f"raw_{signal.signal_id}"
     try:
         await g.add_episode(
-            name=f"raw_{signal.signal_id}",
+            name=raw_name,
             episode_body=f"[RAW] {signal.source} | {signal.observed_at.isoformat()} | {signal.summary}",
             source=EpisodeType.text,
             source_description=f"SAGE raw | source={signal.source}",
             reference_time=signal.observed_at,
         )
         episode_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, signal.signal_id))
+        if signal.source_url:
+            await _stamp_episode_url(g, raw_name, signal.source_url)
     except Exception as exc:
         log.warning("Raw store failed for signal %s (non-fatal): %s", signal.signal_id, exc)
 
@@ -482,6 +615,9 @@ async def write_scenario(data: ScenarioOutputData) -> EpisodeRef:
             )
 
     await _cache_output("scenario", data.scenario_id, data)
+    # India brief always refreshes when a new scenario lands (force=True — no cooldown).
+    import asyncio
+    asyncio.create_task(_force_india_brief())
     return EpisodeRef(episode_uuid=episode_uuid, scenario_id=data.scenario_id)
 
 
@@ -624,6 +760,7 @@ async def write_procurement(data: ProcurementRecData) -> EpisodeRef:
             log.warning("Procurement wiki reconciliation failed for %s: %s", data.scenario_id, exc)
 
     await _cache_output("procurement", data.scenario_id, data)
+    import asyncio; asyncio.create_task(_force_india_brief())
     return EpisodeRef(episode_uuid=episode_uuid, scenario_id=data.scenario_id)
 
 
@@ -744,6 +881,7 @@ async def write_spr_schedule(data: SPRScheduleData) -> EpisodeRef:
             log.warning("SPR wiki reconciliation failed for %s: %s", data.scenario_id, exc)
 
     await _cache_output("spr", data.scenario_id, data)
+    import asyncio; asyncio.create_task(_force_india_brief())
     return EpisodeRef(episode_uuid=episode_uuid, scenario_id=data.scenario_id)
 
 

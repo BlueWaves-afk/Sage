@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import KnowledgeGraphMap from "../components/KnowledgeGraphMap";
 import WikiDrawer from "../components/WikiDrawer";
 import { Panel, Badge, Meter, OfflineHint } from "../components/ui/ui";
 import { IconBrain, IconCheck } from "../components/icons";
 import { api, useApi } from "../api/hooks";
-import type { GraphNode } from "../api/types";
+import type { GraphNode, RiskHistoryPoint } from "../api/types";
 import { useVoice, voiceStore } from "../voice/useVoiceStore";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import "./intelligence.css";
 
 // Entity types double as the map's layer filters.
@@ -28,14 +29,45 @@ const BAND_LEGEND: [string, string][] = [
   ["CRITICAL", "#e63946"],
 ];
 
+const TYPE_LEGEND: [string, string][] = [
+  ["Corridor",   "rgb(230,84,74)"],
+  ["Supplier",   "rgb(90,160,220)"],
+  ["Refinery",   "rgb(45,190,165)"],
+  ["Crude Grade","rgb(168,120,230)"],
+  ["Port",       "rgb(70,195,225)"],
+  ["SPR",        "rgb(233,196,106)"],
+  ["Authority",  "rgb(150,165,190)"],
+  ["Event",      "rgb(244,162,97)"],
+];
+
 export default function GlobalIntelligence() {
   const { data: graph, live } = useApi(api.graph);
+  const { data: sprCurve } = useApi(api.sprCurve);
   const [active, setActive] = useState<string[]>(TYPE_FILTERS);
   const [colorBy, setColorBy] = useState<"risk" | "type">("risk");
   const [selected, setSelected] = useState<GraphNode | null>(null);
+  const [showFlows, setShowFlows] = useState(false);
+  const [showHeatmap, setShowHeatmap] = useState(false);
+  const [blastMode, setBlastMode] = useState(false);
+  const [blastNode, setBlastNode] = useState<GraphNode | null>(null);
+  const [riskHistory, setRiskHistory] = useState<RiskHistoryPoint[]>([]);
+  const [historyEntity, setHistoryEntity] = useState<string | null>(null);
 
   const toggle = (t: string) =>
     setActive((a) => (a.includes(t) ? a.filter((x) => x !== t) : [...a, t]));
+
+  // Fetch risk history when a node is selected.
+  const handleNodeClick = useCallback((node: GraphNode) => {
+    setSelected(node);
+    if (blastMode) {
+      setBlastNode(node);
+    }
+    // Load risk history for the timeline panel.
+    setHistoryEntity(node.name);
+    api.riskHistory(node.name, 24).then((env) => {
+      setRiskHistory(env.data ?? []);
+    });
+  }, [blastMode]);
 
   const filtered = useMemo(() => {
     if (!graph) return { nodes: [], edges: [] };
@@ -61,17 +93,17 @@ export default function GlobalIntelligence() {
     const node =
       graph?.nodes.find((n) => n.name === focusedByVoice) ??
       ({ id: focusedByVoice, name: focusedByVoice, type: "Entity", lat: null, lon: null, score: 0, band: "CALM", degree: 0 } as GraphNode);
-    setSelected(node);
+    handleNodeClick(node);
     voiceStore.focusEntity(null);
-  }, [focusedByVoice, graph]);
+  }, [focusedByVoice, graph, handleNodeClick]);
   useEffect(() => {
     if (!drawerByVoice) return;
     const node =
       graph?.nodes.find((n) => n.name === drawerByVoice) ??
       ({ id: drawerByVoice, name: drawerByVoice, type: "Entity", lat: null, lon: null, score: 0, band: "CALM", degree: 0 } as GraphNode);
-    setSelected(node);
+    handleNodeClick(node);
     voiceStore.openDrawer(null);
-  }, [drawerByVoice, graph]);
+  }, [drawerByVoice, graph, handleNodeClick]);
 
   return (
     <div className="gi">
@@ -94,18 +126,11 @@ export default function GlobalIntelligence() {
             </button>
           ))}
           <div className="gi-colorby">
-            <button
-              className={`gi-colorby-btn${colorBy === "risk" ? " on" : ""}`}
-              onClick={() => setColorBy("risk")}
-            >
-              Risk
-            </button>
-            <button
-              className={`gi-colorby-btn${colorBy === "type" ? " on" : ""}`}
-              onClick={() => setColorBy("type")}
-            >
-              Type
-            </button>
+            <button className={`gi-colorby-btn${colorBy === "risk" ? " on" : ""}`} onClick={() => setColorBy("risk")}>Risk</button>
+            <button className={`gi-colorby-btn${colorBy === "type" ? " on" : ""}`} onClick={() => setColorBy("type")}>Type</button>
+            <button className={`gi-colorby-btn${showFlows ? " on" : ""}`} onClick={() => setShowFlows((v) => !v)} title="Animate supply flows">Flows</button>
+            <button className={`gi-colorby-btn${showHeatmap ? " on" : ""}`} onClick={() => setShowHeatmap((v) => !v)} title="Risk density heatmap">Heat</button>
+            <button className={`gi-colorby-btn${blastMode ? " on" : ""}`} onClick={() => { setBlastMode((v) => !v); setBlastNode(null); }} title="Click a node to see its blast radius">Blast</button>
           </div>
         </div>
         <div className="gi-map card">
@@ -113,7 +138,10 @@ export default function GlobalIntelligence() {
             graph={filtered}
             colorBy={colorBy}
             selectedId={selected?.id ?? null}
-            onNodeClick={setSelected}
+            onNodeClick={handleNodeClick}
+            showFlows={showFlows}
+            showHeatmap={showHeatmap}
+            blastRadiusId={blastMode ? (blastNode?.id ?? null) : null}
           />
           {colorBy === "risk" && (
             <div className="gi-legend glass">
@@ -125,7 +153,19 @@ export default function GlobalIntelligence() {
               ))}
             </div>
           )}
-          <div className="gi-hint mono">Click any node to open its wiki page</div>
+          {colorBy === "type" && (
+            <div className="gi-legend glass">
+              <span className="label-sm">Entity Type</span>
+              {TYPE_LEGEND.map(([name, c]) => (
+                <span key={name} className="gi-legend-item">
+                  <span className="gi-legend-dot" style={{ background: c }} /> {name}
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="gi-hint mono">
+            {blastMode ? "BLAST MODE · Click a node to see its 2-hop impact radius" : "Click any node to open its wiki page"}
+          </div>
         </div>
       </div>
 
@@ -189,6 +229,85 @@ export default function GlobalIntelligence() {
             <span>{live ? "SYNCED" : "CACHED"}</span>
           </div>
         </div>
+
+        {/* ── Risk timeline ─────────────────────────────────────────────── */}
+        {historyEntity && (
+          <div className="gi-section">
+            <div className="label-sm">
+              24h Risk Timeline · <span className="c-cyan">{historyEntity}</span>
+            </div>
+            {riskHistory.length > 0 ? (
+              <div style={{ height: 100 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={riskHistory.map((p) => ({
+                    t: new Date(p.valid_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                    score: Math.round(p.score * 100),
+                    ais: Math.round(p.factor_ais * 100),
+                    price: Math.round(p.factor_price * 100),
+                    sanctions: Math.round(p.factor_sanctions * 100),
+                  }))} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                    <XAxis dataKey="t" tick={{ fontSize: 9, fill: "#8892a4" }} interval="preserveStartEnd" />
+                    <YAxis tick={{ fontSize: 9, fill: "#8892a4" }} domain={[0, 100]} />
+                    <Tooltip
+                      contentStyle={{ background: "#131318", border: "1px solid #2a2a35", fontSize: 11 }}
+                      labelStyle={{ color: "#8892a4" }}
+                    />
+                    <Area type="monotone" dataKey="score" stroke="#4bb8d9" fill="rgba(75,184,217,0.18)" strokeWidth={1.5} dot={false} name="Total" />
+                    <Area type="monotone" dataKey="ais" stroke="#2dd4bf" fill="none" strokeWidth={1} dot={false} name="AIS" strokeDasharray="3 2" />
+                    <Area type="monotone" dataKey="price" stroke="#f4a261" fill="none" strokeWidth={1} dot={false} name="Price" strokeDasharray="3 2" />
+                    <Area type="monotone" dataKey="sanctions" stroke="#e76f51" fill="none" strokeWidth={1} dot={false} name="Sanction" strokeDasharray="3 2" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <p className="gi-situation" style={{ fontSize: 11, color: "var(--text-3)" }}>
+                No history yet — signal data accumulates over time.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* ── SPR depletion curve ───────────────────────────────────────── */}
+        {sprCurve && (
+          <div className="gi-section">
+            <div className="label-sm">
+              SPR Depletion Curve
+              <span className="mono" style={{ marginLeft: 8, fontSize: 9, color: "var(--text-3)" }}>
+                {sprCurve.current_fill_mmt.toFixed(1)} MMT · {sprCurve.days_cover.toFixed(0)}d cover
+              </span>
+            </div>
+            <div style={{ height: 100 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={sprCurve.projection} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                  <XAxis dataKey="day" tick={{ fontSize: 9, fill: "#8892a4" }} label={{ value: "days", position: "insideRight", offset: 0, fontSize: 9, fill: "#8892a4" }} />
+                  <YAxis tick={{ fontSize: 9, fill: "#8892a4" }} />
+                  <Tooltip
+                    formatter={(v: unknown) => [`${v} MMT`]}
+                    contentStyle={{ background: "#131318", border: "1px solid #2a2a35", fontSize: 11 }}
+                    labelFormatter={(l) => `Day ${l}`}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="fill_mmt"
+                    stroke="#e9c46a"
+                    fill="rgba(233,196,106,0.15)"
+                    strokeWidth={1.5}
+                    dot={false}
+                    name="Fill (MMT)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="gi-updated mono" style={{ marginTop: 4 }}>
+              <span>CAPACITY {sprCurve.total_capacity_mmt.toFixed(1)} MMT</span>
+              <span style={{ color: sprCurve.fill_pct < 30 ? "var(--red)" : sprCurve.fill_pct < 60 ? "var(--amber)" : "var(--green)" }}>
+                {sprCurve.fill_pct.toFixed(1)}% FULL
+              </span>
+            </div>
+          </div>
+        )}
       </aside>
 
       <WikiDrawer
@@ -196,9 +315,7 @@ export default function GlobalIntelligence() {
         onClose={() => setSelected(null)}
         graph={graph ?? undefined}
         onNavigate={(n) => {
-          // Only update selectedId if the node has coordinates so the map
-          // actually has somewhere to fly to.
-          if (n.lat != null && n.lon != null) setSelected(n);
+          if (n.lat != null && n.lon != null) handleNodeClick(n);
         }}
       />
     </div>

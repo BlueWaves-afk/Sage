@@ -9,28 +9,69 @@ import "./wikidrawer.css";
 // ── Markdown renderer ────────────────────────────────────────────────────────
 function renderMarkdown(md: string): string {
   const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  const lines = md.replace(/^---[\s\S]*?---/, "").trim().split("\n");
+
+  // Strip YAML front-matter
+  const body = md.replace(/^---[\s\S]*?---\n?/, "").trim();
+  const lines = body.split("\n");
   const out: string[] = [];
   let inList = false;
+  let inTable = false;
+  let tableHeaderDone = false;
+
+  function closeList() { if (inList) { out.push("</ul>"); inList = false; } }
+  function closeTable() { if (inTable) { out.push("</tbody></table>"); inTable = false; tableHeaderDone = false; } }
+
   for (const raw of lines) {
-    const line = esc(raw);
-    if (/^\s*[-*]\s+/.test(raw)) {
-      if (!inList) { out.push("<ul>"); inList = true; }
-      out.push(`<li>${inline(line.replace(/^\s*[-*]\s+/, ""))}</li>`);
+    // ── Tables ──────────────────────────────────────────────────────────────
+    if (/^\s*\|/.test(raw)) {
+      closeList();
+      const cells = raw.split("|").slice(1, -1).map((c) => c.trim());
+      // Separator row (---|---|---)
+      if (cells.every((c) => /^[-: ]+$/.test(c))) {
+        tableHeaderDone = true;
+        continue;
+      }
+      if (!inTable) {
+        out.push('<table class="wd-table">');
+        inTable = true;
+        tableHeaderDone = false;
+        // First row = header
+        out.push("<thead><tr>" + cells.map((c) => `<th>${inline(esc(c))}</th>`).join("") + "</tr></thead><tbody>");
+      } else {
+        out.push("<tr>" + cells.map((c) => `<td>${inline(esc(c))}</td>`).join("") + "</tr>");
+      }
       continue;
     }
-    if (inList) { out.push("</ul>"); inList = false; }
+    closeTable();
+
+    // ── Lists ────────────────────────────────────────────────────────────────
+    if (/^\s*[-*]\s+/.test(raw)) {
+      if (!inList) { out.push("<ul>"); inList = true; }
+      out.push(`<li>${inline(esc(raw).replace(/^\s*[-*]\s+/, ""))}</li>`);
+      continue;
+    }
+    closeList();
+
+    // ── Headings & paragraphs ────────────────────────────────────────────────
+    const line = esc(raw);
     if      (/^###\s/.test(raw)) out.push(`<h4>${inline(line.replace(/^###\s/, ""))}</h4>`);
     else if (/^##\s/.test(raw))  out.push(`<h3>${inline(line.replace(/^##\s/, ""))}</h3>`);
     else if (/^#\s/.test(raw))   out.push(`<h2>${inline(line.replace(/^#\s/, ""))}</h2>`);
     else if (raw.trim() === "")  out.push("");
     else out.push(`<p>${inline(line)}</p>`);
   }
-  if (inList) out.push("</ul>");
+  closeList();
+  closeTable();
   return out.join("\n");
 
   function inline(s: string): string {
     return s
+      // External markdown links [text](url) → anchor opening in new tab
+      .replace(
+        /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,
+        '<a class="wd-ext-link" href="$2" target="_blank" rel="noreferrer">$1 ↗</a>',
+      )
+      // Wiki internal links [[Entity]]
       .replace(/\[\[([^\]]+)\]\]/g, '<span class="wikilink" role="link" tabindex="0">$1</span>')
       .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
       .replace(/\*([^*]+)\*/g, "<em>$1</em>")

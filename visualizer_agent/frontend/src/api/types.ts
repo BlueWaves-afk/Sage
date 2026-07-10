@@ -189,6 +189,15 @@ export interface SupplyChainIndex {
   entities_scored: number;
 }
 
+export interface DashboardSources {
+  brent: string;
+  spr: string;
+  threat: string;
+  ais: string;
+  sanctions: string;
+  news: string;
+}
+
 export interface DashboardSummary {
   threat_level: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
   active_alerts: number;
@@ -199,6 +208,7 @@ export interface DashboardSummary {
   bottlenecks: Bottleneck[];
   top_risk_entity: string | null;
   supply_chain_index?: SupplyChainIndex | null;
+  sources?: DashboardSources;
 }
 
 /** One piece of live intelligence (a real ingested signal/episode). */
@@ -212,6 +222,119 @@ export interface IntelSignal {
   recorded_at: string;
 }
 
+export interface RiskHistoryPoint {
+  valid_at: string;
+  score: number;
+  factor_ais: number;
+  factor_gdelt: number;
+  factor_price: number;
+  factor_sanctions: number;
+}
+
+export interface SprProjectionDay {
+  day: number;
+  fill_mmt: number;
+  days_cover: number;
+  action: "draw" | "hold" | "refill";
+}
+
+export interface SprCurve {
+  caverns: SprCavern[];
+  total_capacity_mmt: number;
+  current_fill_mmt: number;
+  fill_pct: number;
+  days_cover: number;
+  projection: SprProjectionDay[];
+}
+
+export interface ScenarioRunRequest {
+  entity: string;
+  disruption_fraction: number;
+  disruption_days: number;
+  escalation_profile: "constant" | "escalating" | "resolving";
+  bypass_compromised_frac: number;
+  spr_policy: "aggressive" | "moderate" | "none";
+  demand_destruction_pct: number;
+  run_downstream: boolean;
+}
+
+export interface ScenarioRunStatus {
+  stage: "scenario" | "procurement" | "reserve" | "done" | "error";
+  pct: number;
+  scenario_id: string | null;
+  error?: string | null;
+}
+
+export interface ScenarioPreset {
+  id: string;
+  label: string;
+  entity: string;
+  disruption_fraction: number;
+  disruption_days: number;
+  escalation_profile: "constant" | "escalating" | "resolving";
+  bypass_compromised_frac: number;
+  spr_policy: "aggressive" | "moderate" | "none";
+  demand_destruction_pct: number;
+  blurb: string;
+  custom?: boolean;
+  source_scenario_id?: string;
+}
+
+export interface ScenarioCard {
+  scenario_id: string;
+  label: string;
+  origin: "auto" | "user" | "preset";
+  trigger_entity: string;
+  gap_mbpd: number;
+  price_impact_high: number;
+  gdp_proxy_impact_pct: number | null;
+  spr_depletion_days: number;
+  created_at: string;
+  payload_available: boolean;
+}
+
+export interface ScenarioAccuracy {
+  crossing: {
+    total_predictions: number;
+    confirmed: number;
+    expired_false_positives: number;
+    precision: number;
+    mean_lead_time_error_hours: number | null;
+    records_until_retrain: number;
+  } | null;
+  scenario: {
+    total_predictions: number;
+    realized: number;
+    mape: Record<string, { mape: number; n: number }>;
+    per_corridor: Record<string, { n: number; mape_gap: number | null; mape_price: number | null }>;
+  } | null;
+}
+
+export interface CalibrationFactors {
+  per_corridor: Record<string, { gap_x: number; price_x: number; n: number }>;
+}
+
+export interface MonteCarloBands {
+  gap_mbpd: { p10: number; p50: number; p90: number };
+  price_impact_usd: { low: number; high: number };
+  spr_depletion_days: { p10: number; p50: number; p90: number };
+  n: number;
+}
+
+export interface RunSummary {
+  runId: string;
+  label: string;
+  scenarioId: string;
+  entity: string;
+  gap_mbpd: number;
+  price_impact_low: number;
+  price_impact_high: number;
+  gdp_proxy_impact_pct: number | null;
+  spr_depletion_days: number;
+  gap_duration_days: number;
+  timestamp: string;
+}
+
 export interface PipelineState {
   stage:
     | "SENSE"
@@ -222,4 +345,15 @@ export interface PipelineState {
     | "PROCURE"
     | "RESERVE";
   active: boolean;
+}
+
+export interface AgentTraceEvent {
+  type: "agent_trace";
+  system: "1" | "2" | "3" | "4";
+  agent: "ais" | "news" | "prices" | "sanctions" | "fusion" | "scenario" | "procurement" | "reserve";
+  action: string;
+  status: "started" | "done" | "error";
+  entity: string | null;
+  origin: "auto" | "user" | null;
+  ts: string;
 }

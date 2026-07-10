@@ -1,7 +1,8 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import DeckGL from "@deck.gl/react";
 import { WebMercatorViewport, FlyToInterpolator } from "@deck.gl/core";
-import { ScatterplotLayer, LineLayer, TextLayer } from "@deck.gl/layers";
+import { ScatterplotLayer, LineLayer, TextLayer, ArcLayer } from "@deck.gl/layers";
+import { HeatmapLayer } from "@deck.gl/aggregation-layers";
 import { CollisionFilterExtension } from "@deck.gl/extensions";
 import { Map as BaseMap } from "react-map-gl/maplibre";
 import type { GraphData, GraphNode } from "../api/types";
@@ -82,6 +83,9 @@ export interface KnowledgeGraphMapProps {
   selectedId?: string | null;
   initialView?: { longitude: number; latitude: number; zoom: number };
   colorBy?: "risk" | "type";
+  showFlows?: boolean;
+  showHeatmap?: boolean;
+  blastRadiusId?: string | null;
 }
 
 export default function KnowledgeGraphMap({
@@ -90,8 +94,24 @@ export default function KnowledgeGraphMap({
   selectedId,
   initialView = { longitude: 48, latitude: 24, zoom: 3.1 },
   colorBy = "risk",
+  showFlows = false,
+  showHeatmap = false,
+  blastRadiusId = null,
 }: KnowledgeGraphMapProps) {
   const [hoverId, setHoverId] = useState<string | null>(null);
+  // Animation tick for flow pulses (0–1 looping).
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    if (!showFlows) return;
+    let raf: number;
+    const start = performance.now();
+    const loop = (now: number) => {
+      setTick(((now - start) % 3000) / 3000);
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [showFlows]);
   const { theme } = useTheme();
   const light = theme === "light";
   const labelText: [number, number, number, number] = light ? [30, 45, 70, 255] : [210, 224, 240, 235];
@@ -181,6 +201,23 @@ export default function KnowledgeGraphMap({
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId]);
+
+  // Blast-radius: collect all nodes within 2 hops of blastRadiusId.
+  const blastSet = useMemo(() => {
+    if (!blastRadiusId) return new Set<string>();
+    const visited = new Set<string>([blastRadiusId]);
+    let frontier = [blastRadiusId];
+    for (let hop = 0; hop < 2; hop++) {
+      const next: string[] = [];
+      for (const id of frontier) {
+        for (const nb of adjacency.get(id) ?? []) {
+          if (!visited.has(nb)) { visited.add(nb); next.push(nb); }
+        }
+      }
+      frontier = next;
+    }
+    return visited;
+  }, [blastRadiusId, adjacency]);
 
   const layers = useMemo(() => {
     const placed = graph.nodes.filter((n) => n.lat != null && n.lon != null);
@@ -362,9 +399,111 @@ export default function KnowledgeGraphMap({
       } as any),
     });
 
-    return [edges, selectionRing, hubRings, nodes, labels];
+    // ── Heatmap — risk density ───────────────────────────────────────────────
+    const heatmapData = placed.map((n) => ({
+      coordinates: [n.lon!, n.lat!] as [number, number],
+      weight: n.score,
+    }));
+    const heatmap = showHeatmap ? new HeatmapLayer({
+      id: "kg-heatmap",
+      data: heatmapData,
+      getPosition: (d) => d.coordinates,
+      getWeight: (d) => d.weight,
+      radiusPixels: 80,
+      intensity: 1.2,
+      threshold: 0.05,
+      colorRange: [
+        [45, 178, 158, 40],
+        [233, 196, 106, 100],
+        [244, 162, 97, 160],
+        [231, 111, 81, 200],
+        [230, 57, 70, 230],
+      ] as [number, number, number, number][],
+    }) : null;
+
+    // ── Flow arcs — corridor supply routes ───────────────────────────────────
+    // Corridor edges between placed nodes only; animated via offset.
+    const corridorEdges = graph.edges
+      .filter((e) => {
+        const s = byId.get(e.source);
+        const t = byId.get(e.target);
+        return s && t && (s.type === "Corridor" || t.type === "Corridor" || s.type === "Port" || t.type === "Port");
+      })
+      .map((e) => ({ s: byId.get(e.source)!, t: byId.get(e.target)! }))
+      .filter((d) => d.s && d.t);
+
+    const flows = showFlows && corridorEdges.length > 0 ? new ArcLayer({
+      id: "kg-flows",
+      data: corridorEdges,
+      getSourcePosition: (d) => [d.s.lon!, d.s.lat!],
+      getTargetPosition: (d) => [d.t.lon!, d.t.lat!],
+      getSourceColor: [70, 195, 225, 60],
+      getTargetColor: [70, 195, 225, 200],
+      getWidth: 1.5,
+      widthUnits: "pixels",
+      greatCircle: true,
+      getHeight: 0.3,
+    }) : null;
+
+    // Animated pulse dots on flows
+    const pulseData = showFlows
+      ? corridorEdges.flatMap((d, i) => {
+          const t = (tick + i * 0.17) % 1;
+          const lon = d.s.lon! + (d.t.lon! - d.s.lon!) * t;
+          const lat = d.s.lat! + (d.t.lat! - d.s.lat!) * t;
+          return [{ lon, lat, alpha: Math.sin(t * Math.PI) }];
+        })
+      : [];
+
+    const flowPulses = showFlows && pulseData.length > 0
+      ? new ScatterplotLayer({
+          id: "kg-flow-pulses",
+          data: pulseData,
+          getPosition: (d: { lon: number; lat: number; alpha: number }) => [d.lon, d.lat],
+          getRadius: () => 4,
+          radiusUnits: "pixels",
+          getFillColor: (d: { lon: number; lat: number; alpha: number }) => [
+            70, 220, 255, Math.round(d.alpha * 220),
+          ],
+          pickable: false,
+          updateTriggers: { getPosition: tick, getFillColor: tick },
+        })
+      : null;
+
+    // ── Blast radius highlight ───────────────────────────────────────────────
+    const blastNodes = blastRadiusId
+      ? placed.filter((n) => blastSet.has(n.id) && n.id !== blastRadiusId)
+      : [];
+    const blastRings = blastRadiusId
+      ? new ScatterplotLayer<GraphNode>({
+          id: "kg-blast-rings",
+          data: blastNodes,
+          getPosition: (d) => [d.lon!, d.lat!],
+          getRadius: () => NODE_R + 8,
+          radiusUnits: "pixels",
+          getFillColor: [0, 0, 0, 0],
+          getLineColor: [255, 120, 50, 200],
+          lineWidthUnits: "pixels",
+          getLineWidth: 1.5,
+          stroked: true,
+          filled: false,
+          pickable: false,
+        })
+      : null;
+
+    return [
+      heatmap,
+      flows,
+      flowPulses,
+      edges,
+      blastRings,
+      selectionRing,
+      hubRings,
+      nodes,
+      labels,
+    ].filter(Boolean);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [graph, onNodeClick, selectedId, colorBy, hoverId, theme, adjacency, hubThreshold, light, labelText, labelOutline]);
+  }, [graph, onNodeClick, selectedId, colorBy, hoverId, theme, adjacency, hubThreshold, light, labelText, labelOutline, showHeatmap, showFlows, tick, blastRadiusId, blastSet]);
 
   return (
     <div ref={containerRef} style={{ position: "absolute", inset: 0 }}>

@@ -1,0 +1,139 @@
+/* Agent Activity Trace — live "what is SAGE doing right now" feed */
+.agent-trace-panel {
+  background: var(--bg-3);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.agent-trace-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.agent-trace-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-3);
+  flex-shrink: 0;
+}
+.agent-trace-dot.live {
+  background: var(--cyan);
+  animation: trace-pulse 1.6s ease-in-out infinite;
+}
+
+.agent-trace-badge {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--cyan);
+  background: rgba(75,184,217,0.1);
+  border: 1px solid rgba(75,184,217,0.25);
+  border-radius: var(--r-sm);
+  padding: 1px 6px;
+}
+
+.agent-trace-toggle {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--text-3);
+}
+
+.agent-trace-list {
+  max-height: 220px;
+  overflow-y: auto;
+  border-top: 1px solid var(--border-1);
+  padding: 4px 0;
+}
+
+.agent-trace-empty {
+  font-size: 11px;
+  color: var(--text-3);
+  padding: 12px;
+  text-align: center;
+}
+
+.trace-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 12px;
+  transition: background 0.15s;
+}
+.trace-row:hover { background: var(--bg-4); }
+
+.trace-icon {
+  font-size: 13px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  opacity: 0.9;
+}
+
+.trace-body { flex: 1; min-width: 0; }
+
+.trace-sys {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.trace-origin {
+  font-size: 8px;
+  font-weight: 700;
+  padding: 0 5px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+.trace-origin-auto { color: var(--amber); background: rgba(233,196,106,0.12); }
+.trace-origin-user { color: var(--cyan); background: rgba(75,184,217,0.12); }
+
+.trace-action {
+  font-size: 11px;
+  color: var(--text-1);
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.trace-row.trace-error .trace-action { color: var(--red); }
+
+.trace-spinner {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid var(--cyan);
+  border-top-color: transparent;
+  flex-shrink: 0;
+  animation: trace-spin 0.8s linear infinite;
+}
+
+.trace-time {
+  font-size: 9px;
+  color: var(--text-3);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+@keyframes trace-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(75,184,217,0.5); }
+  50% { opacity: 0.5; box-shadow: 0 0 0 4px rgba(75,184,217,0); }
+}
+
+@keyframes trace-spin {
+  to { transform: rotate(360deg); }
+}

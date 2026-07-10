@@ -36,6 +36,7 @@ import time
 from typing import Any, Optional
 
 import boto3
+import httpx
 from openai import RateLimitError
 from graphiti_core.llm_client.errors import EmptyResponseError
 from pydantic import BaseModel
@@ -62,6 +63,21 @@ _TOOL_NAME = "record_result"
 
 def _is_daily_quota(exc: Exception) -> bool:
     return _DAILY_QUOTA_PHRASE in str(exc).lower()
+
+
+def _rate_limit_error(message: str) -> RateLimitError:
+    """
+    Build an openai.RateLimitError from a Bedrock ThrottlingException.
+    openai's APIStatusError.__init__ dereferences response.request/.status_code/
+    .headers — passing response=None crashes with AttributeError instead of
+    surfacing the real throttling message. Construct a minimal real httpx.Response
+    so the error reports cleanly to callers (and Graphiti's tenacity wrapper).
+    """
+    fake_response = httpx.Response(
+        status_code=429,
+        request=httpx.Request("POST", "https://bedrock-runtime.amazonaws.com"),
+    )
+    return RateLimitError(message=message, response=fake_response, body=None)
 
 
 # ---------------------------------------------------------------------------
@@ -179,7 +195,7 @@ class BedrockLLMClient(LLMClient):
                 return None
             except self._bedrock.exceptions.ThrottlingException as exc:
                 if _is_daily_quota(exc) or attempt == _RATE_LIMIT_RETRIES:
-                    raise RateLimitError(message=str(exc), response=None, body=None) from exc  # type: ignore[arg-type]
+                    raise _rate_limit_error(str(exc)) from exc  # type: ignore[arg-type]
                 wait = (2 ** attempt) + random.uniform(0, 1)
                 log.warning("Bedrock tool converse throttled [%s], retry in %.1fs (%d/%d)",
                             model_id, wait, attempt + 1, _RATE_LIMIT_RETRIES)
@@ -216,14 +232,10 @@ class BedrockLLMClient(LLMClient):
             except self._bedrock.exceptions.ThrottlingException as exc:
                 if _is_daily_quota(exc):
                     log.error("Bedrock daily token quota exhausted (%s)", model_id)
-                    raise RateLimitError(
-                        message=str(exc), response=None, body=None  # type: ignore[arg-type]
-                    ) from exc
+                    raise _rate_limit_error(str(exc)) from exc
                 if attempt == _RATE_LIMIT_RETRIES:
                     log.error("Bedrock converse exhausted retries (%s)", model_id)
-                    raise RateLimitError(
-                        message=str(exc), response=None, body=None  # type: ignore[arg-type]
-                    ) from exc
+                    raise _rate_limit_error(str(exc)) from exc
                 wait = (2 ** attempt) + random.uniform(0, 1)
                 log.warning(
                     "Bedrock converse throttled [%s], retrying in %.1fs (attempt %d/%d)",
@@ -323,14 +335,10 @@ class BedrockEmbedder(EmbedderClient):
             except self._bedrock.exceptions.ThrottlingException as exc:
                 if _is_daily_quota(exc):
                     log.error("Bedrock embed daily quota exhausted")
-                    raise RateLimitError(
-                        message=str(exc), response=None, body=None  # type: ignore[arg-type]
-                    ) from exc
+                    raise _rate_limit_error(str(exc)) from exc
                 if attempt == _RATE_LIMIT_RETRIES:
                     log.error("Bedrock embed exhausted retries")
-                    raise RateLimitError(
-                        message=str(exc), response=None, body=None  # type: ignore[arg-type]
-                    ) from exc
+                    raise _rate_limit_error(str(exc)) from exc
                 wait = (2 ** attempt) + random.uniform(0, 1)
                 log.warning(
                     "Bedrock embed throttled, retrying in %.1fs (attempt %d/%d)",

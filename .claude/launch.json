@@ -3,7 +3,7 @@
   "configurations": [
     {
       "name": "sage-frontend",
-      "runtimeExecutable": "/opt/homebrew/bin/npx",
+      "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "--port", "5173"],
       "port": 5173,
       "cwd": "visualizer_agent/frontend"

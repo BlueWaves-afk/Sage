@@ -11,12 +11,15 @@ RUN pip install --no-cache-dir \
     fastapi "uvicorn[standard]" langgraph langchain-core \
     numpy scikit-learn shap
 
-COPY contracts/        contracts/
-COPY knowledge/        knowledge/
-COPY orchestration/    orchestration/
-COPY sensory_agent/    sensory_agent/
-COPY visualizer_agent/ visualizer_agent/
-COPY demo_cache/       demo_cache/
+COPY contracts/              contracts/
+COPY knowledge/              knowledge/
+COPY orchestration/          orchestration/
+COPY sensory_agent/          sensory_agent/
+COPY scenario_agent/         scenario_agent/
+COPY alt_procurement_agent/  alt_procurement_agent/
+COPY reserve_optim_agent/    reserve_optim_agent/
+COPY visualizer_agent/       visualizer_agent/
+COPY demo_cache/             demo_cache/
 
 ENV PYTHONUNBUFFERED=1
 

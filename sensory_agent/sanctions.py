@@ -16,7 +16,9 @@ Payload contract (fusion reads these exact keys):
 from __future__ import annotations
 
 import asyncio
+import csv
 import hashlib
+import io
 import json
 import logging
 import os
@@ -48,16 +50,24 @@ SANCTIONS_LISTS = [
     {
         "name": "OFAC",
         "url": "https://www.treasury.gov/ofac/downloads/sdn.xml",
+        "format": "xml",
     },
     {
         "name": "UN",
         "url": "https://scsanctions.un.org/resources/xml/en/consolidated.xml",
+        "format": "xml",
     },
-    # EU consolidated list: the old open data.europa.eu download now 404s (the EU
-    # FSF endpoint requires a per-user token). Disabled to avoid recurring fetch
-    # errors — OFAC SDN + UN cover the sanctions signal. Re-enable with a valid
-    # EU FSF token URL when available.
-    # {"name": "EU", "url": "https://webgate.ec.europa.eu/fsd/fsf/public/files/..."},
+    # EU consolidated list: the EU's own open data.europa.eu download 404s and
+    # the EU FSF endpoint requires a per-user access token we don't have. Using
+    # OpenSanctions.org's free, unauthenticated mirror of the same official EU
+    # Financial Sanctions Files (FSF) dataset instead — same underlying source
+    # data (dataset column literally reads "EU Financial Sanctions Files (FSF)"),
+    # just republished as CSV without the token gate. Updated continuously.
+    {
+        "name": "EU",
+        "url": "https://data.opensanctions.org/datasets/latest/eu_fsf/targets.simple.csv",
+        "format": "csv",
+    },
 ]
 
 # Energy / maritime keywords for filtering relevant sanctions
@@ -158,49 +168,62 @@ def _parse_un_xml(xml_text: str) -> list[dict]:
     return entries
 
 
-def _parse_eu_xml(xml_text: str) -> list[dict]:
-    """Parse EU sanctions XML (simplified — covers common formats)."""
+def _parse_eu_csv(csv_text: str) -> list[dict]:
+    """
+    Parse the OpenSanctions.org EU FSF mirror (CSV columns: id, schema, name,
+    aliases, birth_date, countries, addresses, identifiers, sanctions, phones,
+    emails, program_ids, dataset, first_seen, last_seen, last_change).
+    """
     entries = []
     try:
-        root = ET.fromstring(xml_text)
-        # EU uses various schemas; try common element names
-        for entity in (root.findall(".//entity") or root.findall(".//sanctionEntity")
-                       or root.findall(".//{*}entity")):
-            name_el = entity.find(".//nameAlias") or entity.find(".//{*}nameAlias")
-            name = (name_el.get("wholeName", "") if name_el is not None
-                    else entity.findtext("name", ""))
+        reader = csv.DictReader(io.StringIO(csv_text))
+        for row in reader:
+            name = (row.get("name") or "").strip()
             if not name:
                 continue
 
-            sub_type = entity.get("subjectType", "entity")
-            if sub_type == "person":
+            schema = (row.get("schema") or "").strip().lower()
+            if schema == "person":
                 subject_type = "person"
+            elif schema == "vessel":
+                subject_type = "vessel"
             else:
                 subject_type = "entity"
 
-            log_id = entity.get("logicalId", "") or entity.get("euReferenceNumber", "")
+            identifiers = row.get("identifiers") or ""
+            imo_match = re.search(r"IMO\s*(\d{7})", identifiers)
+            imo = imo_match.group(1) if imo_match else None
+            mmsi_match = re.search(r"MMSI\s*(\d{9})", identifiers)
+            mmsi = mmsi_match.group(1) if mmsi_match else None
 
             entries.append({
-                "uid": log_id,
+                "uid": row.get("id", ""),
                 "subject": name,
                 "subject_type": subject_type,
-                "mmsi": None,
-                "imo": None,
+                "mmsi": mmsi,
+                "imo": imo,
+                "program": row.get("program_ids", ""),
+                "remarks": " ".join(filter(None, [
+                    row.get("aliases", ""), row.get("countries", ""),
+                    row.get("addresses", ""), row.get("sanctions", ""),
+                ])),
             })
-    except ET.ParseError as exc:
-        log.error("Failed to parse EU XML: %s", exc)
+    except csv.Error as exc:
+        log.error("Failed to parse EU CSV: %s", exc)
 
     return entries
 
 
-def _parse_xml(list_name: str, xml_text: str) -> list[dict]:
-    """Route to the correct parser based on list name."""
+def _parse_xml(list_name: str, text: str, fmt: str = "xml") -> list[dict]:
+    """Route to the correct parser based on list name + format."""
+    if fmt == "csv":
+        if list_name == "EU":
+            return _parse_eu_csv(text)
+        return []
     if list_name == "OFAC":
-        return _parse_ofac_xml(xml_text)
+        return _parse_ofac_xml(text)
     elif list_name == "UN":
-        return _parse_un_xml(xml_text)
-    elif list_name == "EU":
-        return _parse_eu_xml(xml_text)
+        return _parse_un_xml(text)
     return []
 
 
@@ -285,15 +308,16 @@ async def _diff_one_list(list_info: dict) -> list[NormalizedSignal]:
     """
     list_name = list_info["name"]
     url = list_info["url"]
+    fmt = list_info.get("format", "xml")
     cache_key = f"{_CACHE_KEY_PREFIX}{list_name}"
 
     log.info("Fetching %s sanctions list from %s", list_name, url)
-    xml_text = await _fetch_xml(url)
-    if not xml_text:
+    raw_text = await _fetch_xml(url)
+    if not raw_text:
         return []
 
     # Parse
-    new_entries = _parse_xml(list_name, xml_text)
+    new_entries = _parse_xml(list_name, raw_text, fmt)
     new_entries = _filter_relevant(new_entries)
     log.info("%s: parsed %d relevant entries", list_name, len(new_entries))
 

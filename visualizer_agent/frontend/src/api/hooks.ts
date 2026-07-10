@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { api, type Envelope } from "./client";
+import type { AgentTraceEvent } from "./types";
 
 /** Fetch once on mount; expose data, live-flag, and loading. */
 export function useApi<T>(fetcher: () => Promise<Envelope<T>>, deps: unknown[] = []) {
@@ -76,6 +77,57 @@ export function usePipeline() {
   }, []);
 
   return { active, connected };
+}
+
+const TRACE_BUFFER_CAP = 30;
+
+/**
+ * Live "what is SAGE doing right now" feed. Cold-starts from the bounded
+ * Redis-backed history (`/api/agent-trace/recent`) so the feed isn't empty on
+ * first load, then appends live events pushed over the same `/ws` channel the
+ * pipeline bar already uses (discriminated by `type: "agent_trace"`).
+ */
+export function useAgentTrace() {
+  const [events, setEvents] = useState<AgentTraceEvent[]>([]);
+  const [connected, setConnected] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    api.agentTraceRecent(TRACE_BUFFER_CAP).then((env) => {
+      if (!cancelled && env.data) setEvents(env.data);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let ws: WebSocket | null = null;
+    const base = import.meta.env.VITE_WS_BASE ?? `ws://${location.host}`;
+    try {
+      ws = new WebSocket(`${base}/ws`);
+      ws.onopen = () => setConnected(true);
+      ws.onmessage = (ev) => {
+        try {
+          const msg = JSON.parse(ev.data);
+          if (msg.type === "agent_trace") {
+            setEvents((prev) => [msg as AgentTraceEvent, ...prev].slice(0, TRACE_BUFFER_CAP));
+          }
+        } catch {
+          /* ignore malformed frames */
+        }
+      };
+      ws.onclose = () => setConnected(false);
+      ws.onerror = () => ws?.close();
+    } catch {
+      setConnected(false);
+    }
+    return () => {
+      ws?.close();
+    };
+  }, []);
+
+  return { events, connected };
 }
 
 export { api };

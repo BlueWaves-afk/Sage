@@ -20,9 +20,22 @@ ARIO-analytic path at ~20 ms; PyTorch is a CPU build isolated to the scenario ag
 > Cheaper still: **t3.medium spot** (~70% off), **t4g.medium** (ARM, ~20% off), AWS
 > Lightsail 4 GiB ($24/mo flat), or just run `docker compose up` on the demo laptop.
 
-Storage: 30 GB gp3 root is plenty; FalkorDB persists to `./knowledge/graph_store`
-(bind-mounted). Security group inbound: 22 (SSH), 80 (frontend), 8000 (API),
-3000 (FalkorDB browser, optional).
+Storage: 30 GB gp3 root is plenty; FalkorDB persists to `./knowledge/graph_store`,
+Redis (AOF) to `./knowledge/redis_store`, and the feedback/scenario-outcome
+ledgers to `./demo_cache` — all bind-mounted so `docker compose down`/rebuild
+never silently discards state.
+
+**Security group (production-facing instance):**
+
+| Port | Source | Purpose |
+|---|---|---|
+| 80 (or 443 if fronted by TLS) | `0.0.0.0/0` | Frontend — the only port the public should reach |
+| 22 | your IP only | SSH |
+| 8000, 3000 | **not public** | API gateway and the unauthenticated FalkorDB browser. nginx already proxies `/api` and `/ws` to 8000 internally — there's no reason to expose it directly. If you need to debug them remotely, restrict to your IP or use an SSH tunnel instead of an open SG rule. |
+
+No TLS is configured in `docker/nginx.conf` (plain HTTP on :80). For a bare
+IP demo that's an accepted tradeoff; for a real domain, put an ALB with an ACM
+cert in front (target group → instance:80) or run Caddy/certbot on the box.
 
 ## 2. Prerequisites
 
@@ -110,5 +123,36 @@ volatile-refresh tasks; live feeds work today with the keys above.)*
 
 - **Bedrock region**: `.env` uses `AWS_REGION`. Confirm Nova Pro/Lite are enabled in
   that region for your account (the plan targets `ap-south-1`; `us-east-1` also works).
+- **Bedrock auth**: attach an IAM instance role with `bedrock:InvokeModel*`
+  instead of putting `AWS_ACCESS_KEY_ID`/`SECRET` in `.env` — boto3 picks up
+  instance-metadata credentials automatically when those are left blank. No
+  static keys to leak, rotate, or accidentally commit.
+- **CORS**: set `CORS_ALLOWED_ORIGINS` in `.env` to your actual domain once
+  you have one (defaults to `*`, fine for same-origin nginx setups).
 - **Secrets**: `.env` and `.env.local` are gitignored. Never bake keys into an image.
-- **Persistence**: stop/restart is safe — FalkorDB data and the `/wiki` volume persist.
+- **Persistence**: `docker compose down`/rebuild is safe — FalkorDB
+  (`knowledge/graph_store`), Redis AOF (`knowledge/redis_store`), the `/wiki`
+  volume, and the feedback/scenario-outcome ledgers (`demo_cache/`) are all
+  bind-mounted to the host and survive container recreation.
+- **Log rotation**: all services cap json-file logs at 10MB × 3 files — the
+  instance disk won't fill up from unbounded container logs.
+- **Backups**: nothing is scheduled automatically. Minimum viable backup for a
+  demo instance — an EBS snapshot covers everything at once since all state
+  lives under bind-mounts on the root volume:
+  ```bash
+  aws ec2 create-snapshot --volume-id <root-vol-id> --description "sage-backup-$(date +%F)"
+  ```
+  For finer-grained recovery, `redis-cli -p 6380 BGSAVE` + `tar` of
+  `knowledge/graph_store` and `demo_cache/` to S3 on a cron works too.
+- **Building on the instance vs. ECR**: `docker compose up -d --build` compiles
+  `graphiti-core`, `numpy`, `scikit-learn`, `shap` from scratch on 2 vCPUs —
+  workable but slow (~10+ min cold). For repeat deploys, build locally/in CI and
+  push to ECR instead:
+  ```bash
+  aws ecr create-repository --repository-name sage-api-gateway
+  aws ecr get-login-password | docker login --username AWS --password-stdin <account>.dkr.ecr.<region>.amazonaws.com
+  docker build -f docker/api_gateway.Dockerfile -t <account>.dkr.ecr.<region>.amazonaws.com/sage-api-gateway:latest .
+  docker push <account>.dkr.ecr.<region>.amazonaws.com/sage-api-gateway:latest
+  ```
+  then point `docker-compose.yml`'s `image:` at the ECR URI (drop `build:`) on
+  the instance and use `docker compose pull && docker compose up -d`.

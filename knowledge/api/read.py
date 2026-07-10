@@ -277,6 +277,129 @@ async def get_output(kind: str, scenario_id: Optional[str] = None) -> Optional[d
         return None
 
 
+# ---------------------------------------------------------------------------
+# Scenario Library (Feature A) — durable index of every run (auto/user/preset)
+# ---------------------------------------------------------------------------
+
+async def list_scenarios(limit: int = 20, origin: str = "all") -> list[dict]:
+    """
+    Read the scenario library: newest-first cards from `sage:scenario:index`
+    (a sorted set, score=epoch seconds) + their `sage:scenario:meta:{id}` hash.
+    Cards outlive the 24h full-payload TTL (meta carries a 30-day TTL), so the
+    library survives even after the underlying `sage:scenario:{id}` has expired
+    (`payload_available` reflects that).
+    """
+    import os
+    try:
+        import redis.asyncio as aioredis
+        client = aioredis.from_url(os.environ.get("REDIS_URL", "redis://redis:6379/0"),
+                                   decode_responses=True)
+        try:
+            ids = await client.zrevrange("sage:scenario:index", 0, max(limit * 3, limit) - 1)
+            cards: list[dict] = []
+            for sid in ids:
+                meta = await client.hgetall(f"sage:scenario:meta:{sid}")
+                if not meta:
+                    continue
+                if origin != "all" and meta.get("origin") != origin:
+                    continue
+                payload_exists = bool(await client.exists(f"sage:scenario:{sid}"))
+                cards.append({
+                    "scenario_id": sid,
+                    "label": meta.get("label", sid),
+                    "origin": meta.get("origin", "user"),
+                    "trigger_entity": meta.get("trigger_entity", ""),
+                    "gap_mbpd": float(meta.get("gap_mbpd", 0) or 0),
+                    "price_impact_high": float(meta.get("price_impact_high", 0) or 0),
+                    "gdp_proxy_impact_pct": (
+                        float(meta["gdp_proxy_impact_pct"]) if meta.get("gdp_proxy_impact_pct") not in (None, "", "None") else None
+                    ),
+                    "spr_depletion_days": float(meta.get("spr_depletion_days", 0) or 0),
+                    "created_at": meta.get("created_at", ""),
+                    "payload_available": payload_exists,
+                })
+                if len(cards) >= limit:
+                    break
+            return cards
+        finally:
+            await client.aclose()
+    except Exception as exc:
+        log.warning("list_scenarios failed: %s", exc)
+        return []
+
+
+async def get_custom_presets() -> list[dict]:
+    """Read user-promoted scenario presets (curated, no TTL) from Redis."""
+    import os
+    try:
+        import redis.asyncio as aioredis
+        client = aioredis.from_url(os.environ.get("REDIS_URL", "redis://redis:6379/0"),
+                                   decode_responses=True)
+        try:
+            slugs = await client.smembers("sage:preset:custom:index")
+            presets = []
+            for slug in slugs:
+                h = await client.hgetall(f"sage:preset:custom:{slug}")
+                if not h:
+                    continue
+                presets.append({
+                    "id": f"custom_{slug}",
+                    "label": h.get("label", slug),
+                    "entity": h.get("entity", ""),
+                    "disruption_fraction": float(h.get("disruption_fraction", 0) or 0),
+                    "disruption_days": int(float(h.get("disruption_days", 0) or 0)),
+                    "escalation_profile": h.get("escalation_profile", "constant"),
+                    "bypass_compromised_frac": float(h.get("bypass_compromised_frac", 0) or 0),
+                    "spr_policy": h.get("spr_policy", "moderate"),
+                    "demand_destruction_pct": float(h.get("demand_destruction_pct", 0) or 0),
+                    "blurb": h.get("blurb", ""),
+                    "custom": True,
+                    "source_scenario_id": h.get("source_scenario_id", ""),
+                })
+            return presets
+        finally:
+            await client.aclose()
+    except Exception as exc:
+        log.warning("get_custom_presets failed: %s", exc)
+        return []
+
+
+# ---------------------------------------------------------------------------
+# Scenario accuracy / calibration (Feature B) — reads for the Learning panel
+# ---------------------------------------------------------------------------
+
+def get_scenario_accuracy() -> Optional[dict]:
+    """Aggregate prediction-vs-realized error from the scenario outcome ledger."""
+    from knowledge.feedback import get_scenario_accuracy as _impl
+    return _impl()
+
+
+async def get_calibration_factors() -> dict:
+    """Learned per-corridor gap/price correction factors (bounded, visible)."""
+    import os
+    try:
+        import redis.asyncio as aioredis
+        client = aioredis.from_url(os.environ.get("REDIS_URL", "redis://redis:6379/0"),
+                                   decode_responses=True)
+        try:
+            entities = await client.smembers("sage:calib:index")
+            out = {}
+            for entity in entities:
+                h = await client.hgetall(f"sage:calib:params:{entity}")
+                if h:
+                    out[entity] = {
+                        "gap_x": float(h.get("gap_x", 1.0)),
+                        "price_x": float(h.get("price_x", 1.0)),
+                        "n": int(float(h.get("n", 0))),
+                    }
+            return out
+        finally:
+            await client.aclose()
+    except Exception as exc:
+        log.warning("get_calibration_factors failed: %s", exc)
+        return {}
+
+
 async def get_risk_history(entity: str, hours: int = 72) -> list[RiskHistoryPoint]:
     """
     Anticipatory sandbox (Stage 1 forecast input).
@@ -487,6 +610,18 @@ class IntelSignal(BaseModel):
     recorded_at: str = ""
 
 
+_SOURCE_FALLBACK: dict[str, str] = {
+    "sanctions":  "https://ofac.treasury.gov/sanctions-list-search",
+    "ofac":       "https://ofac.treasury.gov/sanctions-list-search",
+    "ais":        "https://www.marinetraffic.com/",
+    "ais alerts": "https://www.marinetraffic.com/",
+    "price":      "https://www.eia.gov/petroleum/",
+    "price mvt":  "https://www.eia.gov/petroleum/",
+    "synthesis":  "",
+    "sage core":  "",
+}
+
+
 def _extract_url(content: str) -> str:
     """Pull the original source URL embedded in the raw-signal envelope."""
     import re
@@ -509,13 +644,14 @@ def _source_of(source_desc: str, source: str) -> str:
 
 def _headline(content: str) -> str:
     """First substantive prose sentence — skips markdown headings/frontmatter/bullets
-    and the '[RAW] <source> | <ts> |' signal envelope."""
+    and signal envelopes ([RAW] / [EXTRACT] prefixes)."""
     import re
     text = re.sub(r"^---[\s\S]*?---", "", content or "").strip()
     for raw in text.splitlines():
         ln = raw.strip().lstrip("#").lstrip("*").lstrip("-").strip()
-        # Strip the raw-signal envelope: "[RAW] news | 2026-.. | Actual headline"
-        ln = re.sub(r"^\[RAW\][^|]*\|[^|]*\|\s*", "", ln).strip()
+        # Strip signal envelopes: "[RAW] source | ts | headline" or
+        # "[EXTRACT] source | ts | entities: ... | headline"
+        ln = re.sub(r"^\[(RAW|EXTRACT)\](?:[^|]*\|){2,4}\s*", "", ln).strip()
         ln = re.sub(r"\[\[([^\]]+)\]\]", r"\1", ln)  # strip [[wikilink]] markup
         if len(ln) > 15 and not ln.lower().startswith(("current assessment", "historical", "affected")):
             m = re.split(r"(?<=[.!?])\s", ln)
@@ -548,16 +684,22 @@ async def get_recent_intelligence(limit: int = 15) -> list[IntelSignal]:
         if source in ("text", "synthesis") or "risk level is assessed" in content.lower():
             continue
         head = _headline(content)
+        # Drop raw GDELT event records — just actor→actor Goldstein scores, no useful prose.
+        if "goldstein=" in head.lower() or head.lower().startswith("gdelt:"):
+            continue
         key = head.lower().strip()[:80]
         if key in seen:            # collapse duplicates
             continue
         seen.add(key)
+        raw_url = r.get('surl') or _extract_url(content)
+        if not raw_url:
+            raw_url = _SOURCE_FALLBACK.get(source.lower(), "")
         out.append(IntelSignal(
             id=str(r.get("uuid") or ""),
             source=source,
             headline=head,
             detail=content[:280],
-            source_url=(r.get('surl') or _extract_url(content)),
+            source_url=raw_url,
             recorded_at=str(r.get("created_at") or ""),
         ))
         if len(out) >= limit:
@@ -589,12 +731,15 @@ async def get_evidence_for(entity: str, limit: int = 12) -> list[IntelSignal]:
         if key in seen:
             continue
         seen.add(key)
+        raw_url = r.get('surl') or _extract_url(content)
+        if not raw_url:
+            raw_url = _SOURCE_FALLBACK.get(source.lower(), "")
         out.append(IntelSignal(
             id=str(r.get("uuid") or ""),
             source=source,
             headline=head,
             detail=content[:280],
-            source_url=(r.get('surl') or _extract_url(content)),
+            source_url=raw_url,
             entities=[entity],
             recorded_at=str(r.get("created_at") or ""),
         ))

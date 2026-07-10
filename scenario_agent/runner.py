@@ -9,6 +9,7 @@ See .claude/design/system2_design.md.
 """
 from __future__ import annotations
 
+import json
 import uuid
 from typing import Literal, Optional
 
@@ -63,7 +64,29 @@ async def run(
         result.price_impact_low  = round(result.price_impact_low  * (1 + premium), 2)
         result.price_impact_high = round(result.price_impact_high * (1 + premium), 2)
 
+    # Bounded, per-corridor learned correction (Feature B calibration loop) — a
+    # thin, visible scalar on top of the physically-meaningful ARIO output, fit
+    # from realized-vs-predicted outcomes. 1.0 (no-op) until >=20 outcomes exist.
+    gap_x, price_x = 1.0, 1.0
+    try:
+        from knowledge.api.write import get_calibration_factor
+        gap_x, price_x = await get_calibration_factor(trigger_entity)
+    except Exception:
+        pass
+    if gap_x != 1.0:
+        result.gap_mbpd = round(result.gap_mbpd * gap_x, 4)
+        result.feedstock_gap_timeline = [round(v * gap_x, 4) for v in result.feedstock_gap_timeline]
+    if price_x != 1.0:
+        result.price_impact_low  = round(result.price_impact_low  * price_x, 2)
+        result.price_impact_high = round(result.price_impact_high * price_x, 2)
+
     assumptions = dict(result.assumptions)
+    # Store the exact input knobs verbatim so callers (e.g. "promote to preset")
+    # can reconstruct this scenario precisely — never approximate them backward
+    # from the outputs, which loses fidelity across escalation/bypass/demand axes.
+    assumptions["scenario_params"] = {
+        "value": json.dumps(scenario), "unit": "json", "source": "builder input (verbatim)",
+    }
     if bands:
         assumptions["monte_carlo"] = bands   # p10/p50/p90 ranges for the UI uncertainty bands
     if io_block:
@@ -72,6 +95,11 @@ async def run(
         assumptions["abm_emergent"] = abm_block   # agent competition: who rations, who secures bypass
     if premium > 0:
         assumptions["war_risk_premium"] = {"value": round(premium, 3), "unit": "frac", "source": "System 1 live price factor"}
+    if gap_x != 1.0 or price_x != 1.0:
+        assumptions["learned_calibration"] = {
+            "value": f"gap x{gap_x:.3f}, price x{price_x:.3f}",
+            "unit": "", "source": "Feature B outcome ledger (realized vs predicted)",
+        }
 
     node_impacts = [
         {"node": n.node, "node_type": n.node_type, "exposure": n.exposure,

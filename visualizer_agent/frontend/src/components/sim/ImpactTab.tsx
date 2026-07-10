@@ -1,0 +1,159 @@
+import { useMemo, useState } from "react";
+import { Badge } from "../ui/ui";
+import { RichText } from "../RichText";
+import GapFanChart from "./GapFanChart";
+import { api } from "../../api/hooks";
+import type { ScenarioOutput, MonteCarloBands, GraphNode } from "../../api/types";
+
+interface HorizonPoint { day: number; label: string; critical: boolean }
+
+function buildHorizon(s: ScenarioOutput): HorizonPoint[] {
+  const tl = s.feedstock_gap_timeline ?? [];
+  const peakDay = tl.length ? tl.indexOf(Math.max(...tl)) : 0;
+  const pts: HorizonPoint[] = [
+    { day: 0, label: "Disruption Begins", critical: false },
+    { day: peakDay, label: `Peak Supply Gap (${s.gap_mbpd.toFixed(2)} mbpd)`, critical: true },
+  ];
+  if (s.spr_depletion_days < (s.gap_duration_days ?? 0) + 15) {
+    pts.push({ day: Math.round(s.spr_depletion_days), label: "SPR Reaches Floor", critical: true });
+  }
+  pts.push({ day: Math.round(s.gap_duration_days ?? 0), label: "Gap Subsides", critical: false });
+  return pts;
+}
+
+interface Props {
+  scenario: ScenarioOutput;
+  onWikilink: (entity: string) => void;
+  onNodeClick?: (n: GraphNode) => void;
+}
+
+export default function ImpactTab({ scenario, onWikilink }: Props) {
+  const mc = (scenario.assumptions?.monte_carlo as unknown as MonteCarloBands) ?? null;
+  const horizonPoints = useMemo(() => buildHorizon(scenario), [scenario]);
+  const [outcomeOpen, setOutcomeOpen] = useState(false);
+  const [realGap, setRealGap] = useState("");
+  const [realPrice, setRealPrice] = useState("");
+  const [outcomeMsg, setOutcomeMsg] = useState<string | null>(null);
+
+  async function submitOutcome() {
+    const body: Record<string, number> = {};
+    if (realGap.trim()) body.gap_mbpd = parseFloat(realGap);
+    if (realPrice.trim()) body.price_impact_high = parseFloat(realPrice);
+    if (Object.keys(body).length === 0) return;
+    const env = await api.logScenarioOutcome(scenario.scenario_id, body);
+    if (env.data?.ok) {
+      setOutcomeMsg("Logged — thank you. Accuracy panel (Learning tab) updated.");
+      setOutcomeOpen(false);
+      setRealGap(""); setRealPrice("");
+    } else {
+      setOutcomeMsg("Failed to log outcome.");
+    }
+  }
+
+  const bandTone = (band?: string | null): "cyan" | "amber" | "red" | "muted" => {
+    if (!band) return "muted";
+    const b = band.toUpperCase();
+    if (b === "CRITICAL") return "red";
+    if (b === "ACTION" || b === "ELEVATED") return "amber";
+    return "cyan";
+  };
+
+  return (
+    <div className="sim-tab-content">
+      {/* Outcome logging control */}
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, alignItems: "center" }}>
+        {outcomeMsg && <span style={{ fontSize: 10, color: "var(--text-3)" }}>{outcomeMsg}</span>}
+        <button className="sim-reset" onClick={() => setOutcomeOpen((v) => !v)}>
+          Log actual outcome
+        </button>
+      </div>
+      {outcomeOpen && (
+        <div className="sim-callout" style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <div className="label-sm">What actually happened? (analyst-logged, feeds the Learning tab)</div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <input className="sim-input" placeholder="Realized gap (mbpd)" value={realGap} onChange={(e) => setRealGap(e.target.value)} style={{ flex: 1 }} />
+            <input className="sim-input" placeholder="Realized price high ($/bbl)" value={realPrice} onChange={(e) => setRealPrice(e.target.value)} style={{ flex: 1 }} />
+            <button className="sim-toggle on" onClick={submitOutcome}>Submit</button>
+          </div>
+        </div>
+      )}
+
+      {/* KPI strip */}
+      <div className="sim-kpi-strip">
+        <div className="sim-kpi">
+          <div className="sim-kpi-label">Peak Gap</div>
+          <div className="sim-kpi-value c-coral">{scenario.gap_mbpd.toFixed(2)}<span className="sim-kpi-unit"> mbpd</span></div>
+          {mc && <div className="sim-kpi-band">p10 {mc.gap_mbpd.p10.toFixed(2)} · p90 {mc.gap_mbpd.p90.toFixed(2)}</div>}
+        </div>
+        <div className="sim-kpi">
+          <div className="sim-kpi-label">Duration</div>
+          <div className="sim-kpi-value">{scenario.gap_duration_days ?? "—"}<span className="sim-kpi-unit"> d</span></div>
+        </div>
+        <div className="sim-kpi">
+          <div className="sim-kpi-label">Price Impact</div>
+          <div className="sim-kpi-value c-amber">
+            +${scenario.price_impact_low.toFixed(0)}–${scenario.price_impact_high.toFixed(0)}<span className="sim-kpi-unit">/bbl</span>
+          </div>
+          {mc && <div className="sim-kpi-band">MC: ${mc.price_impact_usd.low.toFixed(0)}–${mc.price_impact_usd.high.toFixed(0)}</div>}
+        </div>
+        <div className="sim-kpi">
+          <div className="sim-kpi-label">SPR Depletion</div>
+          <div className="sim-kpi-value c-amber">{scenario.spr_depletion_days.toFixed(0)}<span className="sim-kpi-unit"> d</span></div>
+          {mc && <div className="sim-kpi-band">p10 {mc.spr_depletion_days.p10.toFixed(0)} · p90 {mc.spr_depletion_days.p90.toFixed(0)}</div>}
+        </div>
+        <div className="sim-kpi">
+          <div className="sim-kpi-label">GDP Hit</div>
+          <div className="sim-kpi-value">{scenario.gdp_proxy_impact_pct != null ? `${scenario.gdp_proxy_impact_pct.toFixed(2)}%` : "—"}</div>
+        </div>
+        <div className="sim-kpi">
+          <div className="sim-kpi-label">Inflation</div>
+          <div className="sim-kpi-value">{scenario.inflation_impact_pct != null ? `+${scenario.inflation_impact_pct.toFixed(2)}%` : "—"}</div>
+        </div>
+        <div className="sim-kpi">
+          <div className="sim-kpi-label">Confidence</div>
+          <div className="sim-kpi-value">
+            <Badge tone={bandTone(scenario.status)}>{Math.round(scenario.confidence * 100)}%</Badge>
+          </div>
+        </div>
+      </div>
+
+      {/* Fan chart */}
+      <div className="sim-section">
+        <div className="label-sm">Supply Gap Timeline
+          {mc && <span className="mono" style={{ marginLeft: 8, fontSize: 9, color: "var(--text-3)" }}>Monte Carlo p10–p90 (n={mc.n})</span>}
+        </div>
+        <GapFanChart scenario={scenario} />
+      </div>
+
+      {/* Narrative */}
+      <div className="sim-section">
+        <div className="label-sm">Narrative Assessment</div>
+        <p className="sim-narrative">
+          Gap peaks at <strong>{scenario.gap_mbpd.toFixed(2)} mbpd</strong> over{" "}
+          <strong>{scenario.gap_duration_days ?? "?"} days</strong>; SPR covers{" "}
+          <strong>{scenario.spr_depletion_days.toFixed(0)} days</strong>; Brent +${scenario.price_impact_low.toFixed(0)}–${scenario.price_impact_high.toFixed(0)}/bbl.
+        </p>
+        {(scenario.assumptions as unknown as Record<string, { value: string }>)?.scenario_rationale?.value && (
+          <RichText
+            text={(scenario.assumptions as unknown as Record<string, { value: string }>).scenario_rationale.value}
+            onWikilink={onWikilink}
+          />
+        )}
+      </div>
+
+      {/* Horizon timeline */}
+      <div className="sim-section">
+        <div className="label-sm">Impact Horizon</div>
+        <div className="sim-horizon-track">
+          {horizonPoints.map((t) => (
+            <div key={t.label} className="sim-horizon-item">
+              <span className={`sim-horizon-dot${t.critical ? " crit" : ""}`} />
+              <div className={`sim-horizon-hour${t.critical ? " c-coral" : ""}`}>Day {t.day}</div>
+              <div className="sim-horizon-label">{t.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

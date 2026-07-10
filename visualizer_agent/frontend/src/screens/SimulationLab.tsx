@@ -1,303 +1,217 @@
-import { useEffect, useMemo, useState } from "react";
-import MapView from "../components/MapView";
+import { useEffect, useState } from "react";
 import WikiDrawer from "../components/WikiDrawer";
-import { RichText } from "../components/RichText";
-import { Panel, Badge, Skel, SkeletonBlock } from "../components/ui/ui";
-import { IconPlay, IconCheck, IconExternal, IconShield, IconBrain } from "../components/icons";
+import MapView from "../components/MapView";
+import { Badge } from "../components/ui/ui";
+import { IconShield } from "../components/icons";
 import { api, useApi } from "../api/hooks";
-import type { GraphNode, RiskScore, NodeImpact } from "../api/types";
+import type {
+  GraphNode, RiskScore, NodeImpact,
+  ScenarioOutput, ProcurementRecData, SprSchedule, RunSummary,
+} from "../api/types";
 import { useVoice, voiceStore } from "../voice/useVoiceStore";
+import ScenarioBuilder from "../components/sim/ScenarioBuilder";
+import ImpactTab from "../components/sim/ImpactTab";
+import CascadeTab from "../components/sim/CascadeTab";
+import ProcurementTab from "../components/sim/ProcurementTab";
+import ReserveTab from "../components/sim/ReserveTab";
+import CompareTab from "../components/sim/CompareTab";
+import LearningTab from "../components/sim/LearningTab";
 import "./simulation.css";
 
-const LAYERS = [
-  { name: "Ships", on: true },
-  { name: "Ports", on: true },
-  { name: "Pipelines", on: false },
-  { name: "Shipping Routes", on: true },
-  { name: "Risk Nodes", on: true, tone: "coral" },
-  { name: "Refineries", on: false },
-  { name: "SPR", on: false },
-  { name: "Corridors", on: false },
-];
+type Tab = "impact" | "cascade" | "procurement" | "reserve" | "compare" | "learning";
 
 function toRiskScore(n: GraphNode): RiskScore {
   return {
-    entity: n.name,
-    score: n.score,
-    band: n.band,
+    entity: n.name, score: n.score, band: n.band,
     factors: { ais: 0, gdelt: 0, price: 0, sanctions: 0 },
-    lat: n.lat ?? undefined,
-    lon: n.lon ?? undefined,
+    lat: n.lat ?? undefined, lon: n.lon ?? undefined,
   };
 }
 
-// Project nodes forward using the REAL per-node exposure from System 2's cascade
-// (node_impacts), not a hardcoded name match. A node with no computed exposure is
-// left exactly as-is — the projection only shows where the model actually predicts
-// spread, so the two maps can never silently contradict each other.
 function projectNodes(nodes: RiskScore[], nodeImpacts: NodeImpact[]): RiskScore[] {
   const byName = new Map(nodeImpacts.map((n) => [n.node, n]));
   return nodes.map((n) => {
     const impact = byName.get(n.entity);
     if (!impact) return n;
     const projected = Math.min(1, n.score + impact.exposure * 0.4);
-    const band =
-      projected >= 0.9 ? "CRITICAL" : projected >= 0.7 ? "ACTION" : projected >= 0.45 ? "ELEVATED" : n.band;
+    const band = projected >= 0.9 ? "CRITICAL" : projected >= 0.7 ? "ACTION" : projected >= 0.45 ? "ELEVATED" : n.band;
     return { ...n, score: projected, band };
   });
 }
 
 export default function SimulationLab() {
-  const { data: graph } = useApi(api.graph);
-  const { data: scenario, live: scenLive } = useApi(api.scenario);
-  const { data: dash, live: dashLive } = useApi(api.dashboard);
-  const { data: proc, live: procLive } = useApi(api.procurement);
-  const { data: sched, live: schedLive } = useApi(api.sprSchedule);
-  const [horizon, setHorizon] = useState(48);
+  // Cache-first: load latest cached outputs on mount
+  const { data: cachedScenario } = useApi(api.scenario);
+  const { data: cachedProc }     = useApi(api.procurement);
+  const { data: cachedSpr }      = useApi(api.sprSchedule);
+  const { data: graph }          = useApi(api.graph);
+  const { data: dash }           = useApi(api.dashboard);
+
+  // Active run results (replace cached once a run completes)
+  const [scenario, setScenario]   = useState<ScenarioOutput | null>(null);
+  const [proc, setProc]           = useState<ProcurementRecData | null>(null);
+  const [sprSched, setSprSched]   = useState<SprSchedule | null>(null);
+  const [activeLabel, setActiveLabel] = useState<string | null>(null);
+
+  // Seed from cache when cache arrives and no run yet
+  useEffect(() => { if (cachedScenario && !scenario) setScenario(cachedScenario); }, [cachedScenario]);
+  useEffect(() => { if (cachedProc && !proc) setProc(cachedProc); }, [cachedProc]);
+  useEffect(() => { if (cachedSpr && !sprSched) setSprSched(cachedSpr); }, [cachedSpr]);
+
+  const [tab, setTab]   = useState<Tab>("impact");
+  const [runs, setRuns] = useState<RunSummary[]>([]);
   const [wikiNode, setWikiNode] = useState<GraphNode | null>(null);
+
   const openWikilink = (entity: string) =>
     setWikiNode({ id: entity, name: entity, type: "Entity", lat: null, lon: null, score: 0, band: "CALM", degree: 0 });
 
-  // Voice: `run_scenario` action. The seeded golden-path is already the
-  // scenario /api/scenario returns, so v1 just refreshes / makes visible that
-  // it re-fetched. A future POST /api/scenario/run endpoint would kick off a
-  // fresh cold pipeline; the store slice + status message are already in place.
+  // Called by ScenarioBuilder when a run finishes
+  async function handleRunComplete(scenarioId: string, label: string) {
+    setActiveLabel(label);
+    const [sEnv, pEnv, rEnv] = await Promise.all([
+      api.scenarioById(scenarioId),
+      api.procurementById(scenarioId),
+      api.sprScheduleById(scenarioId),
+    ]);
+    if (sEnv.data) {
+      setScenario(sEnv.data);
+      // Push to compare list (cap 3)
+      const s = sEnv.data;
+      setRuns((prev) => [
+        ...prev.slice(-2),
+        {
+          runId: scenarioId,
+          label,
+          scenarioId,
+          entity: s.trigger_entity,
+          gap_mbpd: s.gap_mbpd,
+          price_impact_low: s.price_impact_low,
+          price_impact_high: s.price_impact_high,
+          gdp_proxy_impact_pct: s.gdp_proxy_impact_pct,
+          spr_depletion_days: s.spr_depletion_days,
+          gap_duration_days: s.gap_duration_days ?? 0,
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+    }
+    if (pEnv.data) setProc(pEnv.data);
+    if (rEnv.data) setSprSched(rEnv.data);
+    setTab("impact");
+  }
+
+  // Voice integration
   const runTrigger = useVoice((s) => s.runScenarioTrigger);
   const drawerByVoice = useVoice((s) => s.drawerEntity);
   useEffect(() => {
     if (!runTrigger) return;
     voiceStore.setStatus(`Latest scenario for ${runTrigger}`);
-    // Re-fetch of scenario/procurement/spr happens naturally when a POST
-    // endpoint is added; for now the freshest cached run is already shown.
     voiceStore.clearScenarioTrigger();
   }, [runTrigger]);
   useEffect(() => {
     if (!drawerByVoice) return;
-    setWikiNode({ id: drawerByVoice, name: drawerByVoice, type: "Entity", lat: null, lon: null, score: 0, band: "CALM", degree: 0 });
+    openWikilink(drawerByVoice);
     voiceStore.openDrawer(null);
   }, [drawerByVoice]);
 
-  const nodes = useMemo(() => (graph?.nodes ?? []).map(toRiskScore), [graph]);
-  const projected = useMemo(
-    () => (scenLive ? projectNodes(nodes, scenario?.node_impacts ?? []) : nodes),
-    [nodes, scenario, scenLive]
-  );
+  const nodes = (graph?.nodes ?? []).map(toRiskScore);
+  const projected = scenario ? projectNodes(nodes, scenario.node_impacts ?? []) : nodes;
 
-  const topOption = proc?.ranked?.[0] ?? null;
-
-  // Timeline built from real System 2 output: onset of disruption, day of peak
-  // feedstock gap, SPR depletion day, and when the disruption subsides — not an
-  // invented "Insurance Surges / Terminal Delays" narrative.
-  const horizonPoints = useMemo(() => {
-    if (!scenLive || !scenario) return [];
-    const gapTimeline = scenario.feedstock_gap_timeline ?? [];
-    const peakDay = gapTimeline.length
-      ? gapTimeline.indexOf(Math.max(...gapTimeline))
-      : 0;
-    const points = [
-      { day: 0, label: "Disruption Begins", critical: false },
-      { day: peakDay, label: `Peak Supply Gap (${scenario.gap_mbpd.toFixed(2)} mbpd)`, critical: true },
-    ];
-    if (scenario.spr_depletion_days < (scenario.gap_duration_days ?? 0) + 15) {
-      points.push({ day: Math.round(scenario.spr_depletion_days), label: "SPR Reaches Floor", critical: true });
-    }
-    points.push({ day: Math.round(scenario.gap_duration_days ?? 0), label: "Gap Subsides", critical: false });
-    return points;
-  }, [scenario, scenLive]);
+  const TABS: { id: Tab; label: string }[] = [
+    { id: "impact",      label: "Impact" },
+    { id: "cascade",     label: "Cascade" },
+    { id: "procurement", label: "Procurement" },
+    { id: "reserve",     label: "Reserve" },
+    { id: "compare",     label: "Compare" },
+    { id: "learning",    label: "Learning" },
+  ];
 
   return (
-    <div className="sim">
-      {/* Control bar */}
-      <div className="sim-controls card">
-        <div className="sim-env">
-          <span className="label-sm c-cyan">Anticipatory Sandbox Environment</span>
-        </div>
-        <div className="sim-scenario">
-          <span className="label-sm">Scenario:</span>
-          <span className="sim-scenario-pill">
-            <IconShield width={14} height={14} /> {scenario?.trigger_entity ?? "No active scenario"}
-          </span>
-        </div>
-        <div className="sim-scrubber">
-          <div className="sim-scrubber-labels">
-            {["Now", "24h", "48h", "72h"].map((t) => (
-              <span key={t}>{t}</span>
-            ))}
-          </div>
-          <input
-            type="range"
-            min={0}
-            max={72}
-            step={12}
-            value={horizon}
-            onChange={(e) => setHorizon(Number(e.target.value))}
-            className="sim-range"
-          />
-        </div>
-        <div className="sim-mode">
-          <span className="label-sm">Mode:</span>
-          <Badge tone={scenLive ? "cyan" : "muted"}>{scenLive ? scenario?.status ?? "Sandbox" : "No live scenario"}</Badge>
-        </div>
-        <button className="btn-run press">
-          <span className="btn-run-sheen" />
-          <IconPlay width={13} height={13} /> Execute Run
+    <div className="sim-lab">
+      {/* Top control bar */}
+      <div className="sim-topbar card">
+        <span className="label-sm c-cyan">Anticipatory Simulation Environment</span>
+        <span className="sim-scenario-pill">
+          <IconShield width={14} height={14} />
+          {activeLabel ?? scenario?.trigger_entity ?? "No active scenario"}
+        </span>
+        <Badge tone={dash ? "cyan" : "muted"}>{dash?.threat_level ?? "—"}</Badge>
+        <span style={{ flex: 1 }} />
+        <button className="sim-reset" onClick={() => { setScenario(cachedScenario); setProc(cachedProc); setSprSched(cachedSpr); setActiveLabel(null); }}>
+          Reset to cached
         </button>
       </div>
 
-      {/* Dual maps */}
-      <div className="sim-maps">
-        <div className="sim-map card">
-          <div className="sim-map-tag">Current State</div>
-          <MapView nodes={nodes} arcs={false} interactive={false} initialView={{ longitude: 56.4, latitude: 25.5, zoom: 5 }} />
-          <div className="sim-telemetry">
-            <div className="label-sm">Live Threat Level</div>
-            <div className="sim-telemetry-row">
-              <span>Status:</span>
-              {dashLive ? (
-                <span className="c-cyan mono">{dash?.threat_level}</span>
-              ) : (
-                <Skel w={70} h={13} />
-              )}
+      {/* Main grid */}
+      <div className="sim-main">
+        {/* Builder rail */}
+        <ScenarioBuilder onRunComplete={handleRunComplete} onLoadScenarioId={handleRunComplete} />
+
+        {/* Results pane */}
+        <div className="sim-results">
+          {/* Map strip */}
+          <div className="sim-maps-strip">
+            <div className="sim-map-mini card">
+              <div className="sim-map-tag">Current State</div>
+              <MapView nodes={nodes} arcs={false} interactive={false} initialView={{ longitude: 56.4, latitude: 25.5, zoom: 4 }} />
             </div>
-            <div className="sim-telemetry-row">
-              <span>Tracked entities:</span>
-              {dashLive ? (
-                <span className="c-cyan mono">{dash?.monitoring_entities}</span>
-              ) : (
-                <Skel w={40} h={13} />
-              )}
+            <div className={`sim-map-mini card${scenario ? " sim-map-predict" : ""}`}>
+              <div className={`sim-map-tag${scenario ? " predict" : ""}`}>Projected ({activeLabel ?? "cached"})</div>
+              {scenario && <div className="sim-map-threat"><span className="sim-blip" /> Gap: {scenario.gap_mbpd.toFixed(2)} mbpd</div>}
+              <MapView nodes={projected} arcs={!!scenario} interactive={false} initialView={{ longitude: 56.4, latitude: 25.5, zoom: 4 }} />
             </div>
+          </div>
+
+          {/* Tab bar */}
+          <div className="sim-tabbar">
+            {TABS.map((t) => (
+              <button
+                key={t.id}
+                className={`sim-tabbar-btn${tab === t.id ? " active" : ""}`}
+                onClick={() => setTab(t.id)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab panels */}
+          <div className="sim-tabpanel">
+            {tab === "impact" && scenario && (
+              <ImpactTab scenario={scenario} onWikilink={openWikilink} />
+            )}
+            {tab === "impact" && !scenario && (
+              <div className="sim-empty">Run a scenario or wait for the cached output to load.</div>
+            )}
+
+            {tab === "cascade" && scenario && (
+              <CascadeTab scenario={scenario} onWikilink={openWikilink} />
+            )}
+            {tab === "cascade" && !scenario && (
+              <div className="sim-empty">No scenario output yet.</div>
+            )}
+
+            {tab === "procurement" && proc && (
+              <ProcurementTab proc={proc} onWikilink={openWikilink} />
+            )}
+            {tab === "procurement" && !proc && (
+              <div className="sim-empty">Procurement data appears after running with "Run Procurement + Reserve" enabled.</div>
+            )}
+
+            {tab === "reserve" && sprSched && (
+              <ReserveTab spr={sprSched} onWikilink={openWikilink} />
+            )}
+            {tab === "reserve" && !sprSched && (
+              <div className="sim-empty">Reserve schedule appears after running with downstream enabled.</div>
+            )}
+
+            {tab === "compare" && (
+              <CompareTab runs={runs} baseline={cachedScenario ?? null} />
+            )}
+
+            {tab === "learning" && <LearningTab />}
           </div>
         </div>
-        <div className={`sim-map card${scenLive ? " sim-map-predict" : ""}`}>
-          <div className={`sim-map-tag${scenLive ? " predict" : ""}`}>
-            AI Sandbox Projection (+{horizon}h)
-          </div>
-          {scenLive ? (
-            <div className="sim-map-threat">
-              <span className="sim-blip" /> Projected Gap: {scenario?.gap_mbpd.toFixed(2)} mbpd
-            </div>
-          ) : (
-            <div className="sim-map-threat" style={{ color: "var(--text-3)", borderColor: "var(--border-2)" }}>
-              No live scenario to project
-            </div>
-          )}
-          <MapView
-            nodes={projected}
-            arcs={scenLive}
-            interactive={false}
-            initialView={{ longitude: 56.4, latitude: 25.5, zoom: 5 }}
-          />
-        </div>
-        <aside className="sim-layers card">
-          <div className="label">Map Layers</div>
-          {LAYERS.map((l) => (
-            <label key={l.name} className="sim-layer">
-              <span className="sim-layer-name">{l.name}</span>
-              <span className={`sim-check${l.on ? " on" : ""}${l.tone === "coral" ? " coral" : ""}`}>
-                {l.on && <IconCheck width={12} height={12} />}
-              </span>
-            </label>
-          ))}
-          <div className="sim-layer-actions">
-            <button className="sim-layer-btn">Zoom In +</button>
-            <button className="sim-layer-btn">Zoom Out −</button>
-            <button className="sim-layer-btn">Reset View ↺</button>
-            <button className="sim-layer-btn">Locate India ⌖</button>
-          </div>
-        </aside>
       </div>
-
-      {/* Summary + action */}
-      <div className="sim-lower">
-        <Panel
-          className="sim-summary"
-          title="AI Simulation Summary"
-          right={scenLive ? <Badge tone="cyan">{Math.round((scenario?.confidence ?? 0) * 100)}% Confidence</Badge> : <Skel w={100} h={22} />}
-        >
-          {scenLive && scenario ? (
-            <div className="sim-summary-grid">
-              <div>
-                <div className="label-sm">Sectoral Impact (shortfall, mbpd)</div>
-                <ul className="sim-chain">
-                  {scenario.sector_impacts.slice(0, 4).map((s) => (
-                    <li key={s.sector}>
-                      <strong style={{ textTransform: "capitalize" }}>{s.sector}</strong>: {s.shortfall_mbpd.toFixed(2)} mbpd
-                      (criticality {s.criticality.toFixed(2)})
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <div className="label-sm">Key Assumptions</div>
-                {Object.entries(scenario.assumptions)
-                  .slice(0, 3)
-                  .map(([key, v]) => (
-                    <p key={key} className="sim-assumption" style={{ margin: "0 0 6px" }}>
-                      <strong>{key.replace(/_/g, " ")}</strong>: {String(v.value)}
-                      {v.unit ? ` ${v.unit}` : ""} <span className="c-dim">({v.source})</span>
-                    </p>
-                  ))}
-                <a className="sim-why" href="#">
-                  Why this prediction? <IconExternal width={13} height={13} />
-                </a>
-              </div>
-            </div>
-          ) : (
-            <SkeletonBlock note="Run a scenario to populate — no cached System 2 output" />
-          )}
-        </Panel>
-
-        <Panel
-          className="sim-action"
-          title="AI Recommended Action"
-          right={scenLive ? <Badge tone="cyan">Priority Action</Badge> : <Skel w={90} h={22} />}
-        >
-          {procLive && topOption ? (
-            <div className="sim-action-item">
-              <div className="sim-action-head">
-                <IconCheck width={16} height={16} className="c-cyan" />
-                <span>{topOption.supplier} via {topOption.route_via}</span>
-              </div>
-              <p><RichText text={topOption.rationale} onWikilink={openWikilink} /></p>
-            </div>
-          ) : (
-            <SkeletonBlock lines={2} note="Recommended actions appear once System 3 runs against a scenario" />
-          )}
-          {schedLive && sched ? (
-            <div className="sim-action-item">
-              <div className="sim-action-head">
-                <IconShield width={16} height={16} className="c-cyan" />
-                <span>Strategic Petroleum Reserve — {sched.constraint_satisfied ? "Constraint OK" : "Constraint at risk"}</span>
-              </div>
-              <p><RichText text={sched.policy_memo} onWikilink={openWikilink} /></p>
-            </div>
-          ) : (
-            <SkeletonBlock lines={2} note="Reserve policy appears once System 4 runs against a scenario" />
-          )}
-        </Panel>
-      </div>
-
-      {/* Impact horizon timeline */}
-      <Panel className="sim-horizon" title={<span><IconBrain width={13} height={13} /> Impact Horizon Timeline</span>}>
-        <div className="sim-horizon-track">
-          {!scenLive
-            ? [0, 1, 2, 3].map((i) => (
-                <div key={i} className="sim-horizon-item">
-                  <span className="sim-horizon-dot" style={{ opacity: 0.3 }} />
-                  <Skel w={60} h={13} />
-                  <Skel w={90} h={11} />
-                </div>
-              ))
-            : horizonPoints.map((t) => (
-                <div key={t.label} className="sim-horizon-item">
-                  <span className={`sim-horizon-dot${t.critical ? " crit" : ""}`} />
-                  <div className={`sim-horizon-hour${t.critical ? " c-coral" : ""}`}>Day {t.day}</div>
-                  <div className="sim-horizon-label">{t.label}</div>
-                </div>
-              ))}
-        </div>
-      </Panel>
 
       <WikiDrawer node={wikiNode} onClose={() => setWikiNode(null)} />
     </div>

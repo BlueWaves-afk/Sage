@@ -27,6 +27,9 @@ def utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+_TRACE_AGENT = {"ais": "ais", "news": "news", "gdelt": "news", "price": "prices", "sanctions": "sanctions"}
+
+
 async def emit(signal: NormalizedSignal) -> None:
     """
     The ONLY way a sub-agent touches the KB.
@@ -43,6 +46,19 @@ async def emit(signal: NormalizedSignal) -> None:
             signal.signal_id,
             signal.entity_refs,
         )
+        try:
+            from knowledge.agent_trace import publish_trace
+            entity = (signal.entity_refs or [None])[0]
+            await publish_trace(
+                system="1",
+                agent=_TRACE_AGENT.get(signal.source, "fusion"),
+                action=f"Detected signal from {signal.source}"
+                       + (f" — {entity}" if entity else ""),
+                status="done",
+                entity=entity,
+            )
+        except Exception:
+            pass
     except Exception as exc:
         log.error("Failed to emit signal %s: %s", signal.signal_id, exc)
         raise

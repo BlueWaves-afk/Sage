@@ -141,7 +141,7 @@
   border-color: var(--border-2);
   background: var(--bg-4);
 }
-.gi-hub-name { font-size: 12px; font-weight: 600; }
+.gi-hub-name { font-size: 12px; font-weight: 600; color: var(--text-0); }
 .gi-hub-deg {
   font-size: 11px;
   color: var(--cyan);

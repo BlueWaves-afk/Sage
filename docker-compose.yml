@@ -24,6 +24,15 @@ x-kb-build: &kb-build
     context: .
     dockerfile: docker/api_gateway.Dockerfile
 
+# Bounded log rotation — without this, `restart: unless-stopped` + long-lived
+# services fill the instance's disk with unbounded json-file logs over time.
+x-logging: &default-logging
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
 services:
 
   # ── Infrastructure ──────────────────────────────────────────────────────────
@@ -31,6 +40,7 @@ services:
   falkordb:
     image: falkordb/falkordb:latest
     restart: unless-stopped
+    <<: *default-logging
     volumes:
       # Graph + vector store persisted under knowledge/ so the system's memory is co-located.
       - ./knowledge/graph_store:/var/lib/falkordb/data
@@ -46,6 +56,13 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
+    <<: *default-logging
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      # Persist the scenario library index, custom presets, calibration factors,
+      # and ingest queue across restarts/rebuilds — without this, everything
+      # written via knowledge/api/write.py's Redis-backed stores is ephemeral.
+      - ./knowledge/redis_store:/data
     ports:
       - "6380:6379"     # exposed as 6380 locally to avoid clash with falkordb
     healthcheck:
@@ -63,15 +80,17 @@ services:
       context: .
       dockerfile: docker/sage_core.Dockerfile
     restart: unless-stopped
-    <<: *common-env
+    <<: [*default-logging, *common-env]
     environment:
       FALKORDB_HOST: falkordb
       REDIS_URL: redis://redis:6379/0
       WIKI_DIR: /app/wiki
       SAGE_BUNDLE_PATH: data/india-energy-2026.context   # bind-mounted to ./knowledge/wiki (single source on host)
     volumes:
+      - ./knowledge:/app/knowledge   # hot-reload: source changes take effect on container restart
       - ./knowledge/wiki:/app/wiki
       - ./data:/app/data:ro          # context bundle
+      - ./demo_cache:/app/demo_cache # feedback + scenario-outcome ledgers (else lost on rebuild)
     depends_on:
       falkordb: { condition: service_healthy }
       redis:    { condition: service_healthy }
@@ -84,15 +103,18 @@ services:
       context: .
       dockerfile: docker/api_gateway.Dockerfile
     restart: unless-stopped
-    <<: *common-env
+    <<: [*default-logging, *common-env]
     environment:
       FALKORDB_HOST: falkordb
       REDIS_URL: redis://redis:6379/0
       WIKI_DIR: /app/wiki
       SAGE_BUNDLE_PATH: data/india-energy-2026.context
     volumes:
+      - ./knowledge:/app/knowledge                         # hot-reload knowledge source
+      - ./visualizer_agent/api_gateway:/app/visualizer_agent/api_gateway  # hot-reload gateway source
       - ./knowledge/wiki:/app/wiki   # shares wiki dir with sage-core
       - ./data:/app/data:ro          # context bundle (host = single source)
+      - ./demo_cache:/app/demo_cache # feedback + scenario-outcome ledgers (else lost on rebuild)
     depends_on:
       falkordb: { condition: service_healthy }
       redis:    { condition: service_healthy }
@@ -109,7 +131,7 @@ services:
       context: .
       dockerfile: docker/sensory_ais.Dockerfile
     restart: unless-stopped
-    <<: *common-env
+    <<: [*default-logging, *common-env]
     environment:
       REDIS_URL: redis://redis:6379/0
     depends_on:
@@ -122,7 +144,7 @@ services:
       context: .
       dockerfile: docker/sensory_news.Dockerfile
     restart: unless-stopped
-    <<: *common-env
+    <<: [*default-logging, *common-env]
     environment:
       REDIS_URL: redis://redis:6379/0
     depends_on:
@@ -135,7 +157,7 @@ services:
       context: .
       dockerfile: docker/sensory_sanctions.Dockerfile
     restart: unless-stopped
-    <<: *common-env
+    <<: [*default-logging, *common-env]
     environment:
       REDIS_URL: redis://redis:6379/0
     depends_on:
@@ -148,7 +170,7 @@ services:
       context: .
       dockerfile: docker/sensory_prices.Dockerfile
     restart: unless-stopped
-    <<: *common-env
+    <<: [*default-logging, *common-env]
     environment:
       REDIS_URL: redis://redis:6379/0
     depends_on:
@@ -163,7 +185,7 @@ services:
       context: .
       dockerfile: docker/scenario_agent.Dockerfile
     restart: unless-stopped
-    <<: *common-env
+    <<: [*default-logging, *common-env]
     environment:
       FALKORDB_HOST: falkordb
       REDIS_URL: redis://redis:6379/0
@@ -178,7 +200,7 @@ services:
       context: .
       dockerfile: docker/alt_procurement_agent.Dockerfile
     restart: unless-stopped
-    <<: *common-env
+    <<: [*default-logging, *common-env]
     environment:
       FALKORDB_HOST: falkordb
       REDIS_URL: redis://redis:6379/0
@@ -191,7 +213,7 @@ services:
       context: .
       dockerfile: docker/reserve_optim_agent.Dockerfile
     restart: unless-stopped
-    <<: *common-env
+    <<: [*default-logging, *common-env]
     environment:
       FALKORDB_HOST: falkordb
       REDIS_URL: redis://redis:6379/0
@@ -206,6 +228,7 @@ services:
       context: .
       dockerfile: docker/frontend.Dockerfile
     restart: unless-stopped
+    <<: *default-logging
     depends_on:
       api-gateway: { condition: service_started }
     ports:

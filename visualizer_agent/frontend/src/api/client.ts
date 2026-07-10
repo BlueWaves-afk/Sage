@@ -5,6 +5,8 @@
 
 import type {
   RiskScore,
+  RiskHistoryPoint,
+  SprCurve,
   Supplier,
   Route,
   SprCavern,
@@ -15,6 +17,13 @@ import type {
   GraphData,
   DashboardSummary,
   IntelSignal,
+  ScenarioRunRequest,
+  ScenarioRunStatus,
+  ScenarioPreset,
+  ScenarioCard,
+  ScenarioAccuracy,
+  CalibrationFactors,
+  AgentTraceEvent,
 } from "./types";
 
 const BASE = import.meta.env.VITE_API_BASE ?? "";
@@ -36,6 +45,23 @@ async function get<T>(path: string, opts?: RequestInit): Promise<Envelope<T>> {
     return { data, live: true };
   } catch {
     // No fallback data — the KB is the single source of truth.
+    return { data: null, live: false };
+  }
+}
+
+async function post<T>(path: string, body: unknown, opts?: RequestInit): Promise<Envelope<T>> {
+  try {
+    const res = await fetch(`${BASE}${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(60000),
+      ...opts,
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = (await res.json()) as T;
+    return { data, live: true };
+  } catch {
     return { data: null, live: false };
   }
 }
@@ -66,10 +92,56 @@ export const api = {
 
   accuracy: () => get<{ detection_lead_hours: number; prestage_accuracy: number }>("/api/accuracy"),
 
+  brief: () => get<{ entity: string | null; assessment: string | null; updated: string | null; wiki_entity: string | null }>("/api/brief"),
+
   intelligence: (limit = 15) => get<IntelSignal[]>(`/api/intelligence?limit=${limit}`),
 
   evidence: (entity: string, limit = 12) =>
     get<IntelSignal[]>(`/api/evidence/${encodeURIComponent(entity)}?limit=${limit}`),
+
+  riskHistory: (entity: string, hours = 24) =>
+    get<RiskHistoryPoint[]>(`/api/risk-history?entity=${encodeURIComponent(entity)}&hours=${hours}`),
+
+  sprCurve: () => get<SprCurve>("/api/spr-curve"),
+
+  runScenario: (body: ScenarioRunRequest) =>
+    post<{ run_id: string; scenario_id: string | null }>("/api/scenario/run", body),
+
+  scenarioStatus: (runId: string) =>
+    get<ScenarioRunStatus>(`/api/scenario/status/${encodeURIComponent(runId)}`),
+
+  scenarioPresets: () => get<ScenarioPreset[]>("/api/scenario/presets"),
+
+  scenarioById: (id: string) =>
+    get<ScenarioOutput>(`/api/scenario?scenario_id=${encodeURIComponent(id)}`),
+
+  procurementById: (id: string) =>
+    get<ProcurementRecData>(`/api/procurement?scenario_id=${encodeURIComponent(id)}`),
+
+  sprScheduleById: (id: string) =>
+    get<SprSchedule>(`/api/spr-schedule?scenario_id=${encodeURIComponent(id)}`),
+
+  scenarioLibrary: (origin: "all" | "auto" | "user" | "preset" = "all", limit = 20) =>
+    get<ScenarioCard[]>(`/api/scenario/library?origin=${origin}&limit=${limit}`),
+
+  promoteScenario: (body: { scenario_id: string; label: string; blurb?: string }) =>
+    post<{ slug: string }>("/api/scenario/promote", body),
+
+  unpromoteScenario: (slug: string) =>
+    get<{ ok: boolean }>(`/api/scenario/promote/${encodeURIComponent(slug)}`, { method: "DELETE" }),
+
+  scenarioAccuracy: () => get<ScenarioAccuracy>("/api/scenario/accuracy"),
+
+  logScenarioOutcome: (
+    scenarioId: string,
+    body: { gap_mbpd?: number; price_impact_high?: number; spr_depletion_days?: number; gdp_proxy_impact_pct?: number; note?: string }
+  ) => post<{ ok: boolean; error: Record<string, number>; calibration: unknown }>(
+    `/api/scenario/${encodeURIComponent(scenarioId)}/outcome`, body
+  ),
+
+  scenarioCalibration: () => get<CalibrationFactors>("/api/scenario/calibration"),
+
+  agentTraceRecent: (limit = 30) => get<AgentTraceEvent[]>(`/api/agent-trace/recent?limit=${limit}`),
 
   copilot: (question: string) =>
     get<CopilotAnswer>("/api/copilot", {

@@ -347,6 +347,61 @@ class _FeatureVector:
 
 ---
 
+## Deployment on Amazon EC2
+
+SAGE runs as a single Docker Compose stack, which made the deployment decision
+mostly about *where* to run containers reliably and cheaply — not about
+picking a specialised platform. EC2 was the natural fit for a few reasons:
+
+- **The stack is already container-native.** Every SAGE component — FalkorDB,
+  Redis, the KB core, the API gateway, the System 1 sensory agents, the React
+  frontend — ships as a Docker image with a single `docker-compose.yml`
+  wiring them together. EC2 is just a Linux box that runs that same Compose
+  file unmodified; there's no re-platforming onto a managed container service
+  (ECS/EKS) required to get a working deployment, which keeps the path from
+  "runs on my laptop" to "runs on the internet" short and low-risk.
+- **CPU-only, modest footprint.** SAGE's "AI" is mostly classical operations
+  research (ARIO cascade, MILP procurement, Bellman SDP reserve optimisation)
+  plus LLM calls that go *out* to Amazon Bedrock rather than running locally.
+  That means the instance itself never needs a GPU — a burstable, low-cost
+  **t3.medium** (2 vCPU / 4 GiB) comfortably runs the full live system,
+  including the AIS/news/price/sanctions sensory agents. Right-sizing this
+  cheaply is one of the clearer wins of EC2 over paying for managed
+  container/serverless compute priced for spikier or GPU-bound workloads.
+- **Bedrock lives one hop away, not a network hop away.** Since SAGE's LLM
+  layer (Nova Pro/Micro synthesis, Titan embeddings) is already Amazon
+  Bedrock, running the app itself on AWS keeps the whole request path inside
+  one cloud — lower latency to Bedrock, and the option to authenticate via an
+  **IAM instance role** instead of long-lived static keys sitting in a config
+  file, when Bedrock and the compute share an account.
+- **Bind-mounted state, EC2's EBS volume as the disk.** FalkorDB's graph,
+  Redis's AOF log, the wiki markdown store, and the feedback/scenario-outcome
+  ledgers all persist to the instance's root EBS volume. A single instance
+  with a persistent disk is the simplest storage model available for a
+  system whose "memory" — literally, the knowledge graph — needs to survive
+  restarts and redeploys; that persistence guarantee is what an EBS-backed
+  EC2 instance gives you by default, without wiring up a separate managed
+  database service.
+- **Security posture stays legible.** One instance behind one security group
+  is easy to reason about: a public-facing app only needs port 80/443 open,
+  everything else (the API port, the graph browser, SSH) stays firewalled to
+  the operator. That's a much smaller, easier-to-audit surface than a
+  multi-service managed architecture would require for an equivalent
+  single-tenant deployment.
+- **Headroom to grow without a rewrite.** Nothing about this deployment is a
+  dead end — the same images can be pushed to ECR and run on ECS/Fargate
+  later if SAGE needs to scale beyond one box (e.g. separating the always-on
+  System 2/3/4 agents onto their own containers), without changing a line of
+  application code. EC2 is the pragmatic starting point, not a ceiling.
+
+In short: SAGE's own architecture — Dockerized, CPU-only, Bedrock-backed,
+stateful via a persistent graph — maps cleanly onto what a single EC2
+instance is good at, so that's what it runs on. See
+[`docs/DEPLOY_EC2.md`](docs/DEPLOY_EC2.md) for the concrete instance sizing,
+security group, and bring-up steps.
+
+---
+
 ## Getting Started
 
 ### Prerequisites

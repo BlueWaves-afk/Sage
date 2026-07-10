@@ -117,38 +117,104 @@ async def scenario_node(state: PipelineState) -> PipelineState:
     """Run System 2 with LLM-decided scenario params (confirmed threshold crossing)."""
     from orchestration.scenario_params import decide_scenario_params
     from scenario_agent.runner import run as run_scenario
+    from knowledge.agent_trace import publish_trace
 
     entity = state["entity"]
+    await publish_trace(system="2", agent="scenario",
+                         action=f"Deciding scenario parameters for {entity}",
+                         status="started", entity=entity, origin="auto")
     scenario_params = await decide_scenario_params(entity)
     state["scenario_params"] = scenario_params
-    state["scenario_id"] = await run_scenario(
+    await publish_trace(system="2", agent="scenario",
+                         action=f"Running ARIO disruption cascade for {entity}",
+                         status="started", entity=entity, origin="auto")
+    scenario_id = await run_scenario(
         trigger_entity=entity, status="confirmed", scenario=scenario_params
     )
+    state["scenario_id"] = scenario_id
     _log_stage(state, "SCENARIO")
+    await publish_trace(system="2", agent="scenario",
+                         action=f"Scenario cascade complete for {entity} ({scenario_id})",
+                         status="done", entity=entity, origin="auto")
+
+    # Feature A: this is an autonomously-triggered scenario — register it in the
+    # durable library index so it appears in the Simulation Lab without any user
+    # action, and (Feature B) record the prediction half of the outcome ledger.
+    try:
+        await _register_scenario_run(scenario_id, entity, origin="auto")
+    except Exception as exc:
+        log.warning("[graph] scenario library registration failed (non-fatal): %s", exc)
+
     return state
+
+
+async def _register_scenario_run(scenario_id: str, entity: str, origin: str) -> None:
+    """Shared library-index + outcome-ledger registration for a completed scenario."""
+    from datetime import datetime, timezone
+    from knowledge.api.read import get_output
+    from knowledge.api.write import write_scenario_index
+    from knowledge.feedback import record_scenario_prediction
+
+    out = await get_output("scenario", scenario_id)
+    if not out:
+        return
+
+    await write_scenario_index(scenario_id, {
+        "trigger_entity": entity,
+        "origin": origin,
+        "label": entity,
+        "gap_mbpd": out.get("gap_mbpd"),
+        "price_impact_high": out.get("price_impact_high"),
+        "gdp_proxy_impact_pct": out.get("gdp_proxy_impact_pct"),
+        "spr_depletion_days": out.get("spr_depletion_days"),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+    record_scenario_prediction(
+        scenario_id=scenario_id, entity=entity,
+        params=out.get("assumptions", {}),
+        predicted={
+            "gap_mbpd": out.get("gap_mbpd"),
+            "price_impact_high": out.get("price_impact_high"),
+            "spr_depletion_days": out.get("spr_depletion_days"),
+            "gdp_proxy_impact_pct": out.get("gdp_proxy_impact_pct"),
+        },
+    )
 
 
 async def procure_node(state: PipelineState) -> PipelineState:
     from alt_procurement_agent.runner import run as run_procurement
     from knowledge.api.read import get_most_exposed_refinery
+    from knowledge.agent_trace import publish_trace
 
     scenario = state.get("scenario_params", {}) or {}
     gap_mbpd = float(scenario.get("disruption_fraction", 1.0)) * _hormuz_mbpd()
     # state["entity"] is usually the disrupted Corridor, not a Refinery — resolve
     # the actual exposed refinery via the KB's EXPOSES edges before dispatching.
     refinery = await get_most_exposed_refinery(state["entity"])
+    origin = state.get("origin", "auto")
+    await publish_trace(system="3", agent="procurement",
+                         action=f"Ranking alternative suppliers for {refinery or state['entity']}",
+                         status="started", entity=refinery, origin=origin)
     await run_procurement(
         scenario_id=state["scenario_id"], trigger_refinery=refinery,
         status="confirmed", gap_mbpd=gap_mbpd,
     )
     state["procurement_done"] = True
     _log_stage(state, "PROCURE")
+    await publish_trace(system="3", agent="procurement",
+                         action=f"TOPSIS ranking complete for {refinery or state['entity']}",
+                         status="done", entity=refinery, origin=origin)
     return state
 
 
 async def reserve_node(state: PipelineState) -> PipelineState:
     from reserve_optim_agent.runner import run as run_spr
+    from knowledge.agent_trace import publish_trace
     scenario = state.get("scenario_params", {}) or {}
+    origin = state.get("origin", "auto")
+    await publish_trace(system="4", agent="reserve",
+                         action=f"Optimising SPR drawdown schedule for {state['entity']}",
+                         status="started", entity=state["entity"], origin=origin)
     await run_spr(
         scenario_id=state["scenario_id"],
         gap_mbpd=float(scenario.get("disruption_fraction", 1.0)) * _hormuz_mbpd(),
@@ -158,6 +224,9 @@ async def reserve_node(state: PipelineState) -> PipelineState:
     )
     state["reserve_done"] = True
     _log_stage(state, "RESERVE")
+    await publish_trace(system="4", agent="reserve",
+                         action=f"SPR schedule complete for {state['entity']}",
+                         status="done", entity=state["entity"], origin=origin)
     return state
 
 

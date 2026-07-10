@@ -249,6 +249,8 @@ async def _handle_raw(raw: str, redis_client: Optional[object] = None) -> None:
             # weights bitemporally if this signal implies a supply-chain shift.
             # Background + best-effort so it never delays ingest.
             asyncio.create_task(_maybe_learn_edges(signal))
+            # Refresh India supply chain brief (cooldown-gated, best-effort).
+            asyncio.create_task(_refresh_india_brief())
 
     except Exception as exc:
         log.error("ingest_signal failed for %s: %s", signal.signal_id, exc)
@@ -263,6 +265,15 @@ async def _maybe_learn_edges(signal: NormalizedSignal) -> None:
             log.info("[learn] refined %d edge weight(s) from signal %s", n, signal.signal_id)
     except Exception as exc:
         log.debug("[learn] edge learning non-fatal error: %s", exc)
+
+
+async def _refresh_india_brief() -> None:
+    """Background: re-synthesize the India supply chain situation brief (cooldown-gated)."""
+    try:
+        from knowledge.context.india_brief import refresh_india_brief
+        await refresh_india_brief(force=False)
+    except Exception as exc:
+        log.debug("[india_brief] refresh non-fatal error: %s", exc)
 
 
 async def _flush_risk_states() -> None:
@@ -364,7 +375,10 @@ async def _run_fusion_for_entity(entity: str, signals: list[NormalizedSignal]) -
 
     result      = _predict(fv)
     # Coerce to tz-aware UTC — live agents may emit naive datetimes, and mixing
-    # naive/aware in max() raises. Normalise before comparing.
+    # naive/aware in max() raises. Normalise before comparing. (No local
+    # `from datetime import timezone` anywhere else in this function — that
+    # would make `timezone` local to the whole function body and break this
+    # module-level reference with an UnboundLocalError.)
     def _aware(dt):
         return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt
     observed_at = max(_aware(s.observed_at) for s in signals)
@@ -386,7 +400,6 @@ async def _run_fusion_for_entity(entity: str, signals: list[NormalizedSignal]) -
             prior_score, prior_epoch = _last_risk[entity]
             elapsed_h = max(0.0, (time.time() - prior_epoch) / 3600.0)
         else:
-            from datetime import datetime, timezone
             prior_score, prior_recorded = await _prior_risk_state(entity)
             elapsed_h = (
                 max(0.0, (datetime.now(timezone.utc) - prior_recorded).total_seconds() / 3600.0)
@@ -413,6 +426,16 @@ async def _run_fusion_for_entity(entity: str, signals: list[NormalizedSignal]) -
     )
 
     try:
+        from knowledge.agent_trace import publish_trace
+        await publish_trace(
+            system="1", agent="fusion",
+            action=f"Computing risk fusion for {entity} ({len(signals)} signals)",
+            status="started", entity=entity,
+        )
+    except Exception:
+        pass
+
+    try:
         await write_risk_state(
             entity=entity,
             score=effective_score,
@@ -424,6 +447,15 @@ async def _run_fusion_for_entity(entity: str, signals: list[NormalizedSignal]) -
             model_version=result.model_version,
             observed_at=observed_at,
         )
+        try:
+            from knowledge.agent_trace import publish_trace
+            await publish_trace(
+                system="1", agent="fusion",
+                action=f"Risk score computed: {entity} → {effective_score:.2f} ({_band_from_score(effective_score)})",
+                status="done", entity=entity,
+            )
+        except Exception:
+            pass
         # Cascade this primary score to dependents across the supply-chain graph
         # (a risky corridor raises its refineries/ports; a sanctioned supplier
         # raises the refineries it feeds). Only ever raises risk, never lowers.
@@ -438,7 +470,6 @@ async def _run_fusion_for_entity(entity: str, signals: list[NormalizedSignal]) -
 
 async def _prior_risk_state(entity: str):
     """Return (score, recorded_at_datetime) for the entity's current RISK_STATE, else (None, None)."""
-    from datetime import datetime, timezone
     from knowledge.api.read import get_risk_scores
     for r in await get_risk_scores():
         if r.entity == entity:

@@ -23,10 +23,6 @@ export default function TopBar({ title, live = true }: Props) {
           Secure <b>•</b> Trusted <b>•</b> Sovereign
         </span>
         <div className="operator">
-          <div className="operator-meta">
-            <span className="operator-name">C.J.Rao</span>
-            <span className="operator-role">OPERATOR 07</span>
-          </div>
           <div className="operator-avatar">
             <IconUser width={16} height={16} />
           </div>
