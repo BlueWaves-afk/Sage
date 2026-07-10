@@ -13,8 +13,8 @@ factors:
   gdelt: 0.0
   price: 0.0
   sanctions: 0.0
-last_updated: '2026-07-10T09:51:45.306858+00:00'
-valid_at: '2026-07-10T09:51:34.654769+00:00'
+last_updated: '2026-07-10T10:07:44.997476+00:00'
+valid_at: '2026-07-10T10:07:31.340086+00:00'
 source_episodes: []
 links_out:
 - authority_ofac
@@ -39,12 +39,12 @@ The current event shows similarity to the [[2019 Tanker Attacks]] with a feature
 - [[NIOC]]: High exposure due to a significant portion of exports passing through the [[Strait of Hormuz]] and now facing increased geopolitical risks and sanctions.
 - [[Saudi Aramco]]: Medium exposure as a major supplier in the region with diversified but still vulnerable routes.
 - [[ADNOC]]: Medium exposure due to reliance on the [[Strait of Hormuz]] for a portion of its exports.
-- [[Jamnagar Refinery]]: High exposure with a peak gap of 0.21 mbpd from day 0.
+- [[Jamnagar Refinery]]: High exposure with a peak gap of 0.64 mbpd from day 0.
 
 ## Signal Basis
 - News report of direct military strikes between Iran and Israel near the Persian Gulf.
 - OFAC adds NIOC-linked tanker operators to the SDN list.
-- System 2 scenario modelling (confirmed) for Strait of Hormuz: projected supply gap 0.21 mbpd over 10 days (timeline: day1:0.0, day2:0.1, day3:0.1, day4:0.1, day5:0.2, day6:0.2, day7:0.2).
+- System 2 scenario modelling (confirmed) for Strait of Hormuz: projected supply gap 0.64 mbpd over 10 days (timeline: day1:0.1, day2:0.2, day3:0.3, day4:0.4, day5:0.5, day6:0.6, day7:0.6). Projected price impact $71-$122/bbl, SPR cover would last 45.0 days at the projected draw rate, GDP impact -1.36%, inflation impact 5.58%. Most-exposed nodes: Jamnagar Refinery peak gap 0.64 mbpd from day 0.0; Mangaluru peak gap 0.00 mbpd from day 45.0; Mina Al-Ahmadi peak gap 0.00 mbpd from day 45.0. Key assumptions: import_dependence_pct=88.6%; hormuz_share_pct=42.5%; spr_total_mmt=5.33MMT; spr_fill_frac=0.572frac. Model confidence 100%.
 - OFAC designates a second sanctioned tanker.
 
 ## Relations
