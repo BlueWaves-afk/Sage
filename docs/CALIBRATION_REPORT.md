@@ -1,14 +1,15 @@
 # SAGE Fusion Model — Calibration Report
 
-> Generated: 2026-07-11T11:37:23Z  |  Model: GBM + Platt scaling  |  Validation: LOCO-5
+> Deployed model: trained 2026-07-11T12:04:31Z  |  Model: GBM + Platt scaling  |  Validation: LOCO-5
+> `model_version = gbm-v1`  ·  verify live at `GET /api/accuracy` and in the pkl `meta` block.
 
 ## Summary
 
 | Metric | Value |
 |---|---|
 | Full-data AUC-ROC | **1.0000** |
-| Mean LOCO AUC | **0.8379** |
-| Youden-J threshold (action band) | 0.2636 |
+| Mean LOCO AUC | **0.8409** |
+| Youden-J threshold (action band) | 0.2634 |
 | Sensitivity at threshold | 1.000 |
 | Specificity at threshold | 1.000 |
 | Training crises | 5 |
@@ -23,11 +24,11 @@
 |---|---|
 | 2019 Gulf of Oman tanker attacks | 0.7500 |
 | 2021 Suez Ever Given blockage | 0.6667 |
-| 2022 Ukraine war energy shock | 0.9394 |
+| 2022 Ukraine war energy shock | 0.9545 |
 | 2025 US-Iran Hormuz standoff | 1.0000 |
 | 2026 Hormuz closure (golden path) | 0.8333 |
 
-**Mean LOCO AUC: 0.8379**
+**Mean LOCO AUC: 0.8409**
 
 ## Feature Importances
 
