@@ -1,5 +1,13 @@
 # SAGE Knowledge Base — Deployment Guide
 
+> **⚠️ PRE-BUILD SPEC — superseded by [`docs/DEPLOY_EC2.md`](../../docs/DEPLOY_EC2.md)**
+> This document was written before implementation. Key divergences vs reality:
+> - Instance: `t3.medium` (2 vCPU, 4 GiB) — **no GPU needed** (analytic ARIO replaced GNN surrogate)
+> - Region: `us-east-1` (deployed there; ap-south-1 works too)
+> - Bootstrap: `scripts/sage_instantiate.py` (not `seed_kb.py`, which was deleted)
+> - Env vars: `NEWSDATA_API_KEY` (not `NEWSAPI_KEY`), `AWS_REGION` (not `BEDROCK_REGION`)
+> - No OR-Tools, no PyTorch GPU — see [`docs/METHODOLOGY.md`](../../docs/METHODOLOGY.md) for actual design decisions
+
 **Project:** SAGE · Problem Statement 2 (AI-Driven Energy Supply Chain Resilience)
 **Scope:** Everything needed to go from zero to a running knowledge base on AWS EC2 — infrastructure, containers, environment, cost, and the daily operational picture.
 **Companion specs:**
@@ -180,7 +188,7 @@ Store in `.env`, never commit to git. Docker Compose reads at boot.
 
 ```bash
 # ── Bedrock (LLM) ─────────────────────────────────────────────────────────────
-BEDROCK_REGION=ap-south-1
+AWS_REGION=us-east-1  # was BEDROCK_REGION in spec; actual env var is AWS_REGION
 BEDROCK_MODEL_SYNTHESIS=amazon.nova-pro-v1:0      # narrative synthesis — quality critical
 BEDROCK_MODEL_EXTRACTION=amazon.nova-micro-v1:0   # triage + entity extraction — volume critical
 BEDROCK_MODEL_MEMO=amazon.nova-pro-v1:0           # System 3 rationale + System 4 policy memo
@@ -197,7 +205,7 @@ REDIS_URL=redis://redis:6379                      # LangGraph checkpointing + si
 # ── Sensing sub-agents ─────────────────────────────────────────────────────────
 AISSTREAM_API_KEY=<from aisstream.io>
 EIA_API_KEY=<from eia.gov>
-NEWSAPI_KEY=<from newsapi.org>
+NEWSDATA_API_KEY=<from newsdata.io>  # was NEWSAPI_KEY in spec; actual env var is NEWSDATA_API_KEY
 # GDELT, OFAC, Sentinel-1, OSM — no key required (free)
 
 # ── Demo mode ──────────────────────────────────────────────────────────────────

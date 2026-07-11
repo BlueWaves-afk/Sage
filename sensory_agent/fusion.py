@@ -4,23 +4,31 @@ Risk score fusion model for System 1.
 Combines four signal streams into a single 0–1 risk score with factor attribution.
 The score is then stored as a RISK_STATE edge by SAGE.
 
-DESIGN CHOICE — Calibrated Gradient Boosting Ensemble
-------------------------------------------------------
+DESIGN CHOICE — Calibrated Gradient Boosting Ensemble (with weighted-sum fallback)
+----------------------------------------------------------------------------------
 We evaluated three candidates:
 
   1. Weighted sum          — fast, interpretable, but weights are hand-tuned and
                              don't capture nonlinear interactions (e.g. AIS dark
                              vessels matter more when price is already elevated).
+                             **Active fallback** when no trained model exists.
 
   2. Bayesian Dynamic      — theoretically ideal for sequential updating with
      Network (BDN)           uncertainty, but requires a hand-specified DAG and
                              is expensive to fit with limited crisis data.
 
-  3. Gradient Boosting     — chosen. Handles nonlinear feature interactions,
+  3. Gradient Boosting     — target. Handles nonlinear feature interactions,
      + Platt scaling          calibrates probabilities (Platt scaling), is fast
                              at inference (<5ms), and produces SHAP attributions
-                             for explainability. Fitted on 5 labeled crisis
-                             timelines (see contracts/bands.py).
+                             for explainability. Train on 5 labeled crisis
+                             timelines (see contracts/bands.py) via
+                             `python -m sensory_agent.fusion --calibrate`.
+
+**Current state:** GBM is used when `sensory_agent/fusion_model.pkl` exists; the
+weighted-sum fallback is active otherwise. SHAP attributions are only available
+when the GBM is loaded — the fallback returns equal-weight factor scores instead.
+`FusionResult.model_version` is "weighted-sum-fallback" vs "gbm-v{n}" so callers
+and the UI can distinguish them.
 
 Output
 ------

@@ -1,0 +1,572 @@
+[
+  {
+    "date": "2021-03-20",
+    "features": {
+      "ais_gap_count_24h": 0.0,
+      "ais_dark_vessel_count": 0.0,
+      "ais_anomaly_score_max": 0.06811959751561801,
+      "ais_gap_duration_max_h": 0.0,
+      "ais_monitored_cell_pct": 0.92,
+      "ais_velocity_std": 0.25,
+      "gdelt_tone_24h_mean": -1.2169,
+      "gdelt_tone_delta": -0.0146,
+      "news_severity_max": 0.1322,
+      "news_event_count_24h": 2.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2021 Suez Ever Given blockage",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Suez Canal Ever Given blockage shipping'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2021-03-21",
+    "features": {
+      "ais_gap_count_24h": 0.0,
+      "ais_dark_vessel_count": 0.0,
+      "ais_anomaly_score_max": 0.005142488891476136,
+      "ais_gap_duration_max_h": 0.0,
+      "ais_monitored_cell_pct": 0.92,
+      "ais_velocity_std": 0.25,
+      "gdelt_tone_24h_mean": -1.3223,
+      "gdelt_tone_delta": -0.1054,
+      "news_severity_max": 0.092,
+      "news_event_count_24h": 2.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2021 Suez Ever Given blockage",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Suez Canal Ever Given blockage shipping'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2021-03-22",
+    "features": {
+      "ais_gap_count_24h": 0.0,
+      "ais_dark_vessel_count": 0.0,
+      "ais_anomaly_score_max": 0.03588998287502962,
+      "ais_gap_duration_max_h": 0.0,
+      "ais_monitored_cell_pct": 0.92,
+      "ais_velocity_std": 0.25,
+      "gdelt_tone_24h_mean": -1.9727,
+      "gdelt_tone_delta": -0.6504,
+      "news_severity_max": 0.1584,
+      "news_event_count_24h": 4.0,
+      "price_brent_pct_change_24h": 0.001395,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2021 Suez Ever Given blockage",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Suez Canal Ever Given blockage shipping'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2021-03-23",
+    "features": {
+      "ais_gap_count_24h": 12.0,
+      "ais_dark_vessel_count": 0.0,
+      "ais_anomaly_score_max": 0.9337,
+      "ais_gap_duration_max_h": 24.0,
+      "ais_monitored_cell_pct": 0.768,
+      "ais_velocity_std": 0.673,
+      "gdelt_tone_24h_mean": -3.954,
+      "gdelt_tone_delta": -1.9813,
+      "news_severity_max": 0.9639,
+      "news_event_count_24h": 12.0,
+      "price_brent_pct_change_24h": -0.05927,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 1.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 1,
+    "crisis_name": "2021 Suez Ever Given blockage",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Suez Canal Ever Given blockage shipping'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2021-03-24",
+    "features": {
+      "ais_gap_count_24h": 11.0,
+      "ais_dark_vessel_count": 0.0,
+      "ais_anomaly_score_max": 0.8499,
+      "ais_gap_duration_max_h": 24.0,
+      "ais_monitored_cell_pct": 0.778,
+      "ais_velocity_std": 0.64,
+      "gdelt_tone_24h_mean": -5.4174,
+      "gdelt_tone_delta": -1.4634,
+      "news_severity_max": 0.9986,
+      "news_event_count_24h": 15.0,
+      "price_brent_pct_change_24h": 0.059549,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 1.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 1,
+    "crisis_name": "2021 Suez Ever Given blockage",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Suez Canal Ever Given blockage shipping'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2021-03-25",
+    "features": {
+      "ais_gap_count_24h": 10.0,
+      "ais_dark_vessel_count": 0.0,
+      "ais_anomaly_score_max": 0.8364,
+      "ais_gap_duration_max_h": 24.0,
+      "ais_monitored_cell_pct": 0.78,
+      "ais_velocity_std": 0.635,
+      "gdelt_tone_24h_mean": -5.1876,
+      "gdelt_tone_delta": 0.2298,
+      "news_severity_max": 0.9731,
+      "news_event_count_24h": 14.0,
+      "price_brent_pct_change_24h": -0.038193,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 1.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 1,
+    "crisis_name": "2021 Suez Ever Given blockage",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Suez Canal Ever Given blockage shipping'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2021-03-26",
+    "features": {
+      "ais_gap_count_24h": 9.0,
+      "ais_dark_vessel_count": 0.0,
+      "ais_anomaly_score_max": 0.7341,
+      "ais_gap_duration_max_h": 20.0,
+      "ais_monitored_cell_pct": 0.792,
+      "ais_velocity_std": 0.594,
+      "gdelt_tone_24h_mean": -4.6568,
+      "gdelt_tone_delta": 0.5308,
+      "news_severity_max": 0.861,
+      "news_event_count_24h": 12.0,
+      "price_brent_pct_change_24h": 0.042292,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 1.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2021 Suez Ever Given blockage",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Suez Canal Ever Given blockage shipping'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2021-03-27",
+    "features": {
+      "ais_gap_count_24h": 8.0,
+      "ais_dark_vessel_count": 0.0,
+      "ais_anomaly_score_max": 0.6574,
+      "ais_gap_duration_max_h": 16.0,
+      "ais_monitored_cell_pct": 0.801,
+      "ais_velocity_std": 0.563,
+      "gdelt_tone_24h_mean": -4.1966,
+      "gdelt_tone_delta": 0.4602,
+      "news_severity_max": 0.7728,
+      "news_event_count_24h": 11.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2021 Suez Ever Given blockage",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Suez Canal Ever Given blockage shipping'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2021-03-28",
+    "features": {
+      "ais_gap_count_24h": 7.0,
+      "ais_dark_vessel_count": 0.0,
+      "ais_anomaly_score_max": 0.6158,
+      "ais_gap_duration_max_h": 12.0,
+      "ais_monitored_cell_pct": 0.806,
+      "ais_velocity_std": 0.546,
+      "gdelt_tone_24h_mean": -3.7977,
+      "gdelt_tone_delta": 0.3989,
+      "news_severity_max": 0.715,
+      "news_event_count_24h": 10.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2021 Suez Ever Given blockage",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Suez Canal Ever Given blockage shipping'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2021-03-29",
+    "features": {
+      "ais_gap_count_24h": 2.0,
+      "ais_dark_vessel_count": 0.0,
+      "ais_anomaly_score_max": 0.3134,
+      "ais_gap_duration_max_h": 4.0,
+      "ais_monitored_cell_pct": 0.842,
+      "ais_velocity_std": 0.425,
+      "gdelt_tone_24h_mean": -3.4519,
+      "gdelt_tone_delta": 0.3458,
+      "news_severity_max": 0.4652,
+      "news_event_count_24h": 8.0,
+      "price_brent_pct_change_24h": 0.00635,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2021 Suez Ever Given blockage",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Suez Canal Ever Given blockage shipping'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2021-03-30",
+    "features": {
+      "ais_gap_count_24h": 3.73,
+      "ais_dark_vessel_count": 0.0,
+      "ais_anomaly_score_max": 0.2876,
+      "ais_gap_duration_max_h": 3.47,
+      "ais_monitored_cell_pct": 0.845,
+      "ais_velocity_std": 0.415,
+      "gdelt_tone_24h_mean": -3.1521,
+      "gdelt_tone_delta": 0.2998,
+      "news_severity_max": 0.4258,
+      "news_event_count_24h": 7.0,
+      "price_brent_pct_change_24h": -0.012927,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2021 Suez Ever Given blockage",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Suez Canal Ever Given blockage shipping'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2021-03-31",
+    "features": {
+      "ais_gap_count_24h": 2.5,
+      "ais_dark_vessel_count": 0.0,
+      "ais_anomaly_score_max": 0.2293,
+      "ais_gap_duration_max_h": 3.01,
+      "ais_monitored_cell_pct": 0.852,
+      "ais_velocity_std": 0.392,
+      "gdelt_tone_24h_mean": -2.8922,
+      "gdelt_tone_delta": 0.2599,
+      "news_severity_max": 0.3648,
+      "news_event_count_24h": 6.0,
+      "price_brent_pct_change_24h": -0.009355,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2021 Suez Ever Given blockage",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Suez Canal Ever Given blockage shipping'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2021-04-01",
+    "features": {
+      "ais_gap_count_24h": 1.3,
+      "ais_dark_vessel_count": 0.0,
+      "ais_anomaly_score_max": 0.2054,
+      "ais_gap_duration_max_h": 2.61,
+      "ais_monitored_cell_pct": 0.855,
+      "ais_velocity_std": 0.382,
+      "gdelt_tone_24h_mean": -2.667,
+      "gdelt_tone_delta": 0.2252,
+      "news_severity_max": 0.3318,
+      "news_event_count_24h": 6.0,
+      "price_brent_pct_change_24h": 0.020774,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 1.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2021 Suez Ever Given blockage",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Suez Canal Ever Given blockage shipping'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2021-04-02",
+    "features": {
+      "ais_gap_count_24h": 1.13,
+      "ais_dark_vessel_count": 0.0,
+      "ais_anomaly_score_max": 0.2036,
+      "ais_gap_duration_max_h": 2.26,
+      "ais_monitored_cell_pct": 0.856,
+      "ais_velocity_std": 0.381,
+      "gdelt_tone_24h_mean": -2.4717,
+      "gdelt_tone_delta": 0.1953,
+      "news_severity_max": 0.3175,
+      "news_event_count_24h": 5.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2021 Suez Ever Given blockage",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Suez Canal Ever Given blockage shipping'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2021-04-03",
+    "features": {
+      "ais_gap_count_24h": 0.98,
+      "ais_dark_vessel_count": 0.0,
+      "ais_anomaly_score_max": 0.1794,
+      "ais_gap_duration_max_h": 1.96,
+      "ais_monitored_cell_pct": 0.858,
+      "ais_velocity_std": 0.372,
+      "gdelt_tone_24h_mean": -2.3024,
+      "gdelt_tone_delta": 0.1693,
+      "news_severity_max": 0.288,
+      "news_event_count_24h": 5.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2021 Suez Ever Given blockage",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Suez Canal Ever Given blockage shipping'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2021-04-04",
+    "features": {
+      "ais_gap_count_24h": 0.85,
+      "ais_dark_vessel_count": 0.0,
+      "ais_anomaly_score_max": 0.1661,
+      "ais_gap_duration_max_h": 1.7,
+      "ais_monitored_cell_pct": 0.86,
+      "ais_velocity_std": 0.366,
+      "gdelt_tone_24h_mean": -2.1556,
+      "gdelt_tone_delta": 0.1468,
+      "news_severity_max": 0.2683,
+      "news_event_count_24h": 5.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2021 Suez Ever Given blockage",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Suez Canal Ever Given blockage shipping'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2021-04-05",
+    "features": {
+      "ais_gap_count_24h": 1.74,
+      "ais_dark_vessel_count": 0.0,
+      "ais_anomaly_score_max": 0.14,
+      "ais_gap_duration_max_h": 1.47,
+      "ais_monitored_cell_pct": 0.863,
+      "ais_velocity_std": 0.356,
+      "gdelt_tone_24h_mean": -2.0284,
+      "gdelt_tone_delta": 0.1272,
+      "news_severity_max": 0.2402,
+      "news_event_count_24h": 4.0,
+      "price_brent_pct_change_24h": -0.041782,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 1.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2021 Suez Ever Given blockage",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Suez Canal Ever Given blockage shipping'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2021-04-06",
+    "features": {
+      "ais_gap_count_24h": 0.64,
+      "ais_dark_vessel_count": 0.0,
+      "ais_anomaly_score_max": 0.1251,
+      "ais_gap_duration_max_h": 1.28,
+      "ais_monitored_cell_pct": 0.865,
+      "ais_velocity_std": 0.35,
+      "gdelt_tone_24h_mean": -1.9181,
+      "gdelt_tone_delta": 0.1103,
+      "news_severity_max": 0.2217,
+      "news_event_count_24h": 4.0,
+      "price_brent_pct_change_24h": 0.009493,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2021 Suez Ever Given blockage",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Suez Canal Ever Given blockage shipping'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2021-04-07",
+    "features": {
+      "ais_gap_count_24h": 0.55,
+      "ais_dark_vessel_count": 1.0,
+      "ais_anomaly_score_max": 0.1227,
+      "ais_gap_duration_max_h": 1.11,
+      "ais_monitored_cell_pct": 0.865,
+      "ais_velocity_std": 0.349,
+      "gdelt_tone_24h_mean": -1.8225,
+      "gdelt_tone_delta": 0.0956,
+      "news_severity_max": 0.2135,
+      "news_event_count_24h": 4.0,
+      "price_brent_pct_change_24h": 0.006694,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2021 Suez Ever Given blockage",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Suez Canal Ever Given blockage shipping'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  }
+]

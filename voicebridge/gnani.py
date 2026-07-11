@@ -68,17 +68,41 @@ class STTSession:
     async def start(self) -> None:
         if GNANI_STT_WS_URL and GNANI_API_KEY:
             try:
-                # NOTE: Real client goes here. Keeping the shape simple:
-                #   self._ws = await websockets.connect(GNANI_STT_WS_URL,
-                #                                        extra_headers={"x-api-key": GNANI_API_KEY})
-                #   asyncio.create_task(self._consume_gnani())
-                # For v1 we honestly report we're in mock mode rather than
-                # print a fake connection message.
-                log.info("[stt] Gnani credentials set, but real STT client "
-                          "not enabled in v1 — see voicebridge/gnani.py notes")
+                import websockets  # type: ignore[import]
+                self._ws = await websockets.connect(
+                    GNANI_STT_WS_URL,
+                    extra_headers={"x-api-key": GNANI_API_KEY},
+                    ping_interval=20,
+                    close_timeout=5,
+                )
+                self._mode = "gnani"
+                asyncio.create_task(self._consume_gnani(), name="gnani-stt-reader")
+                log.info("[stt] Gnani WebSocket connected: %s", GNANI_STT_WS_URL)
+                return
+            except ImportError:
+                log.warning("[stt] websockets package not installed — falling back to mock STT")
             except Exception as exc:
-                log.warning("[stt] Gnani connect failed (%s) — falling back to mock", exc)
+                log.warning("[stt] Gnani connect failed (%s) — falling back to mock STT", exc)
         self._mode = "mock"
+
+    async def _consume_gnani(self) -> None:
+        """Read final/partial transcripts from the Gnani WebSocket."""
+        try:
+            assert self._ws is not None
+            async for raw in self._ws:
+                try:
+                    import json as _json
+                    msg = _json.loads(raw) if isinstance(raw, str) else {}
+                    text = msg.get("transcript") or msg.get("text") or ""
+                    is_final = bool(msg.get("is_final") or msg.get("final"))
+                    if text:
+                        await self._results.put((is_final, text))
+                except Exception:
+                    pass
+        except Exception as exc:
+            if not self._closed:
+                log.warning("[stt] Gnani stream ended: %s", exc)
+            await self._results.put((True, ""))
 
     async def send_pcm(self, pcm16: bytes) -> None:
         self._pcm_bytes += len(pcm16)
@@ -130,20 +154,36 @@ class STTSession:
 
 # ── TTS ─────────────────────────────────────────────────────────────────────
 
+def gnani_mode() -> str:
+    """Return 'gnani' if real credentials are present, else 'mock'."""
+    return "gnani" if gnani_available() else "mock"
+
+
 async def synthesize(text: str, sample_rate: int = 16000) -> Optional[bytes]:
     """
     Synthesise ``text`` to a WAV blob. Returns None if the input is empty.
-    Real Gnani TTS is a streaming HTTP endpoint returning PCM chunks; mock
-    mode returns a short silent WAV so the client audio pipeline behaves.
+    Real Gnani TTS: POST to GNANI_TTS_HTTP_URL with JSON body, returns PCM/WAV.
+    Mock mode: returns a short silent WAV so the client audio pipeline behaves.
     """
     if not text or not text.strip():
         return None
     if GNANI_TTS_HTTP_URL and GNANI_API_KEY:
-        # Real Gnani call would go here. Same reasoning as STT — we don't
-        # attempt it in v1 without the confirmed URL/auth, but the seam is
-        # in the right place for a one-file swap when it's confirmed.
-        log.info("[tts] Gnani credentials set, but real TTS client not "
-                  "enabled in v1 — see voicebridge/gnani.py notes")
+        try:
+            import httpx
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                resp = await client.post(
+                    GNANI_TTS_HTTP_URL,
+                    json={"text": text, "language": "en-IN", "sample_rate": sample_rate},
+                    headers={"x-api-key": GNANI_API_KEY, "Accept": "audio/wav"},
+                )
+                resp.raise_for_status()
+                audio = resp.content
+                if audio and len(audio) > 44:  # at least a WAV header
+                    log.debug("[tts] Gnani TTS returned %d bytes", len(audio))
+                    return audio
+                log.warning("[tts] Gnani TTS returned short response (%d bytes), using mock", len(audio))
+        except Exception as exc:
+            log.warning("[tts] Gnani TTS failed (%s) — falling back to mock", exc)
 
     # Mock: silent PCM sized to the message length (roughly natural cadence).
     seconds = max(1.2, min(6.0, len(text) / 18.0))

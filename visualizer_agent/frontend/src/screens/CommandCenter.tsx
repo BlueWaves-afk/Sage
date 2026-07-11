@@ -5,6 +5,7 @@ import WikiDrawer from "../components/WikiDrawer";
 import { RichText } from "../components/RichText";
 import PipelineBar from "../components/PipelineBar";
 import AgentTraceFeed from "../components/AgentTraceFeed";
+import ResponseTimeStrip from "../components/ResponseTimeStrip";
 import AmbientBackground from "../components/AmbientBackground";
 import AnimatedNumber from "../components/AnimatedNumber";
 import { Panel, Badge, Meter, OfflineHint, Skel, Kb } from "../components/ui/ui";
@@ -37,6 +38,7 @@ export default function CommandCenter() {
   const nav = useNavigate();
   const { data: graph, live: graphLive } = useApi(api.graph);
   const { data: dash, live, loading } = useApi(api.dashboard);
+  const [demoState, setDemoState] = useState<"idle" | "running" | "done">("idle");
   const { data: proc, live: procLive } = useApi(api.procurement);
   const { data: sched, live: schedLive } = useApi(api.sprSchedule);
   const { data: scen, live: scenLive } = useApi(api.scenario);
@@ -128,6 +130,18 @@ export default function CommandCenter() {
 
   const bottlenecks = dash?.bottlenecks?.slice(0, 3) ?? [];
 
+  async function handleDemoIgnite() {
+    if (demoState === "running") return;
+    setDemoState("running");
+    try {
+      await api.demoIgnite();
+      setDemoState("done");
+      setTimeout(() => setDemoState("idle"), 90_000);
+    } catch {
+      setDemoState("idle");
+    }
+  }
+
   // Recommendation cards read from System 3/4/2 outputs. These are only present
   // once a scenario has run; until then the endpoints 404 (live=false) and the
   // card renders a skeleton rather than a fabricated recommendation.
@@ -172,6 +186,30 @@ export default function CommandCenter() {
   return (
     <div className="cc">
       <AmbientBackground />
+      {/* Response time strip — shows after first pipeline run */}
+      <ResponseTimeStrip />
+
+      {/* G9: Demo Mode ignition button */}
+      <div className="cc-demo-bar">
+        <button
+          className={`cc-demo-btn${demoState === "running" ? " running" : demoState === "done" ? " done" : ""}`}
+          disabled={demoState === "running"}
+          onClick={handleDemoIgnite}
+          title="Replay 2026 Hormuz standoff pre-crisis window — watch all 4 agents activate autonomously"
+        >
+          {demoState === "running" ? "⚡ Demo Running — watch agents activate…" :
+           demoState === "done"    ? "✓ Demo Active — pipeline triggered" :
+                                     "⚡ Demo Mode"}
+        </button>
+        {demoState !== "idle" && (
+          <span className="cc-demo-hint">
+            {demoState === "running"
+              ? "Injecting 2026 Hormuz crisis signals → ELEVATED → ACTION → pipeline fires"
+              : "Autonomous pipeline fired · check Agent Trace Feed + Simulation Lab"}
+          </span>
+        )}
+      </div>
+
       {/* KPI row */}
       <div className="cc-kpis stagger">
         {kpis.map((k) => (

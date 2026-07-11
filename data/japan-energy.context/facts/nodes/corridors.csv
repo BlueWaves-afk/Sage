@@ -1,0 +1,4 @@
+entity_id,canonical_name,throughput_mbpd,choke_severity,location_lat,location_lon,tier,source,as_of,notes
+corridor_hormuz,Strait of Hormuz,20.0,0.95,26.5,56.4,real,EIA-chokepoints,2024,Japan routes ~85% of Middle East imports through Hormuz
+corridor_malacca,Strait of Malacca,23.0,0.70,2.5,102.0,real,EIA-chokepoints,2024,Japan's primary eastbound route from Middle East
+corridor_lombok,Lombok Strait,2.1,0.25,-8.7,115.8,real,MLIT-Japan,2025,alternative to Malacca when congested

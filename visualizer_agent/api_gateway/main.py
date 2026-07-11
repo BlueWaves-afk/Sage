@@ -106,11 +106,15 @@ app.add_middleware(
 @app.get("/health")
 async def health() -> dict:
     """Health check. Returns degraded if KB is not initialised."""
+    import os
     from knowledge.connection import _graphiti_instance
     kb_ready = _graphiti_instance is not None
+    # G13: voice mode — "gnani" if both GNANI_API_KEY and GNANI_WS_URL are set, else "mock"
+    voice_mode = "gnani" if (os.environ.get("GNANI_API_KEY") and os.environ.get("GNANI_WS_URL")) else "mock"
     return {
         "status": "ok" if kb_ready else "degraded",
         "kb_ready": kb_ready,
+        "voice_mode": voice_mode,
     }
 
 
@@ -292,6 +296,29 @@ async def spr_schedule_output(scenario_id: str | None = None) -> dict:
 # ---------------------------------------------------------------------------
 # Knowledge base narrative
 # ---------------------------------------------------------------------------
+
+@app.get("/api/wiki")
+async def wiki_list(limit: int = 50) -> list:
+    """G14: List all synthesized wiki pages (entity, title, updated). Enables wiki index."""
+    import os, re, glob
+    wiki_dir = os.environ.get("WIKI_DIR", "/app/wiki")
+    pages = []
+    pattern = os.path.join(wiki_dir, "*.md")
+    for path in sorted(glob.glob(pattern))[:limit]:
+        entity = os.path.splitext(os.path.basename(path))[0]
+        try:
+            content = open(path, encoding="utf-8").read()
+            title_m = re.search(r"^#\s+(.+)$", content, re.MULTILINE)
+            updated_m = re.search(r"last_updated:\s*'([^']+)'", content)
+            pages.append({
+                "entity": entity,
+                "title": title_m.group(1).strip() if title_m else entity,
+                "updated": updated_m.group(1) if updated_m else None,
+            })
+        except Exception:
+            pages.append({"entity": entity, "title": entity, "updated": None})
+    return pages
+
 
 @app.get("/api/wiki/{entity}")
 async def wiki(entity: str) -> dict:
@@ -560,11 +587,32 @@ async def _execute_run(
     }
 
     try:
+        from knowledge.agent_trace import publish_trace
+        from datetime import datetime, timezone as _tz
+        import json as _json
+
+        # Stamp t0 for response-time measurement: emit a System-1 anchor event so the
+        # /api/response-time aggregator has a clear pipeline start regardless of whether
+        # this run was auto-triggered (System 1 fired naturally) or user-triggered here.
+        _t0 = datetime.now(_tz.utc).isoformat()
+        await publish_trace(system="1", agent="fusion",
+                             action=f"Pipeline triggered for {entity} ({origin})",
+                             status="done", entity=entity, origin=origin)
+
+        # Persist per-run timing to Redis so /api/response-time can look up runs by
+        # run_id without depending on trace-list ordering heuristics.
+        try:
+            import redis.asyncio as _aioredis
+            _rc = _aioredis.from_url(os.environ.get("REDIS_URL", "redis://redis:6379/0"), decode_responses=True)
+            await _rc.setex(f"sage:run:timing:{run_id}", 86400, _json.dumps({"t0": _t0, "entity": entity, "origin": origin}))
+            await _rc.aclose()
+        except Exception:
+            pass
+
         # Stage 1: Scenario (System 2) — call runner directly with user-supplied params,
         # bypassing decide_scenario_params so the UI knobs are honoured exactly.
         RUN_STATUS[run_id].update({"stage": "scenario", "pct": 5})
         from scenario_agent.runner import run as run_scenario
-        from knowledge.agent_trace import publish_trace
         await publish_trace(system="2", agent="scenario",
                              action=f"Running ARIO disruption cascade for {entity}",
                              status="started", entity=entity, origin=origin)
@@ -611,6 +659,25 @@ async def _execute_run(
         except Exception as exc:
             log.warning("[scenario_run] library registration failed (non-fatal): %s", exc)
 
+        # Stamp t_final for response-time tracking
+        try:
+            import redis.asyncio as _aioredis2
+            import json as _json2
+            from datetime import datetime, timezone as _tz2
+            _rc2 = _aioredis2.from_url(os.environ.get("REDIS_URL", "redis://redis:6379/0"), decode_responses=True)
+            _raw = await _rc2.get(f"sage:run:timing:{run_id}")
+            if _raw:
+                _timing = _json2.loads(_raw)
+                _timing["t_final"] = datetime.now(_tz2.utc).isoformat()
+                _timing["scenario_id"] = scenario_id
+                await _rc2.setex(f"sage:run:timing:{run_id}", 86400, _json2.dumps(_timing))
+                # Maintain a sorted list of last 20 completed runs (by completion time)
+                await _rc2.lpush("sage:run:timing:recent", run_id)
+                await _rc2.ltrim("sage:run:timing:recent", 0, 19)
+            await _rc2.aclose()
+        except Exception:
+            pass
+
         RUN_STATUS[run_id].update({"stage": "done", "pct": 100, "scenario_id": scenario_id})
 
     except Exception as exc:
@@ -641,6 +708,8 @@ async def scenario_run(body: dict) -> dict:
         "bypass_compromised_frac": float(body.get("bypass_compromised_frac", 0.0)),
         "spr_policy":             body.get("spr_policy", "moderate"),
         "demand_destruction_pct": float(body.get("demand_destruction_pct", 0.0)),
+        "supply_cut_mbpd":        float(body.get("supply_cut_mbpd", 0.0)),
+        "cut_supplier":           str(body.get("cut_supplier") or ""),
     }
     run_downstream = bool(body.get("run_downstream", True))
     label = body.get("label") or entity
@@ -712,11 +781,27 @@ _SCENARIO_PRESETS: list[dict] = [
         "demand_destruction_pct": 0.0,
         "blurb": "Long-duration sourcing loss; procurement substitution dominates.",
     },
+    {
+        "id": "opec_cut",
+        "label": "OPEC+ Emergency Production Cut",
+        "entity": "Saudi Aramco",
+        "disruption_fraction": 1.0,
+        "disruption_days": 90,
+        "escalation_profile": "constant",
+        "bypass_compromised_frac": 0.0,
+        "spr_policy": "moderate",
+        "demand_destruction_pct": 0.0,
+        "supply_cut_mbpd": 0.8,
+        "cut_supplier": "Saudi Aramco",
+        "blurb": "Source-side cut: OPEC+ trims 2 mbpd globally; India's direct exposure ~0.8 mbpd after spare-capacity offset.",
+    },
 ]
 
 _KNOWN_ENTITIES: set[str] = {
     "Strait of Hormuz", "Bab-el-Mandeb", "Suez Canal",
     "Strait of Malacca", "Cape of Good Hope",
+    # G4: production-cut mode — supplier entities, not corridors
+    "Saudi Aramco", "ADNOC", "Iraq", "Russia", "OPEC+",
 }
 
 
@@ -819,6 +904,181 @@ async def scenario_unpromote(slug: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# G9 — Demo Ignition
+# ---------------------------------------------------------------------------
+
+@app.post("/api/demo/ignite")
+async def demo_ignite() -> dict:
+    """
+    Replay the 2026 Hormuz standoff pre-crisis window.
+
+    Injects synthetic intel signals that mimic the 72-hour window before a
+    Strait of Hormuz crisis, then escalates risk through ELEVATED→ACTION to
+    trigger the autonomous pipeline (LangGraph graph.run_response_pipeline).
+
+    Sequence (all async, non-blocking):
+      t=0s  Write 4 sensory-agent signals + ELEVATED risk (0.65) → trace feed fires
+      t=5s  Fusion agent fuses signals → risk escalates to ACTION (0.78) → trace done
+      t=8s  Write ACTION risk state → monitor fires on_action() → Systems 2→3→4 activate
+    """
+    asyncio.create_task(_demo_sequence(), name="demo_ignite")
+    return {"ok": True, "message": "Demo sequence started — watch the agent trace feed"}
+
+
+async def _demo_sequence() -> None:
+    """Time-stepped demo crisis replay. All steps non-fatal — demo can't crash the gateway."""
+    from datetime import datetime, timezone as _tz
+    from knowledge.agent_trace import publish_trace
+
+    entity = "Strait of Hormuz"
+
+    # ── Step 1 (t=0): Inject pre-crisis intel signals + ELEVATED risk ─────────────
+    try:
+        await _demo_inject_signals(entity)
+    except Exception as exc:
+        log.warning("[demo] signal injection failed (non-fatal): %s", exc)
+
+    # Publish System-1 sensory agent traces (simulates autonomous detection)
+    for agent, action in [
+        ("ais",       "Detected 3 Iranian IRGCN vessels altering course near Hormuz — AIS dark window 4h"),
+        ("news",      "NEWSDATA: 'Iranian patrol boats intercept tanker near Strait' — severity 0.78"),
+        ("prices",    "Brent ICE front-month +$6.40 → $84.20/bbl; war-risk regime triggered"),
+        ("sanctions", "OFAC watch-list cross-check: 2 vessels flagged near Persian Gulf corridor"),
+    ]:
+        try:
+            await publish_trace(system="1", agent=agent, action=action,
+                                status="done", entity=entity, origin="auto")
+        except Exception:
+            pass
+        await asyncio.sleep(0.8)
+
+    # ── Step 2 (t=5s): Fusion agent fuses signals, risk crosses ACTION band ───────
+    await asyncio.sleep(2.0)
+    try:
+        await publish_trace(system="1", agent="fusion",
+                             action="Fusing 4-factor signal stream — risk escalating",
+                             status="started", entity=entity, origin="auto")
+    except Exception:
+        pass
+
+    await asyncio.sleep(3.0)
+    escalated_score = 0.78
+    try:
+        await publish_trace(system="1", agent="fusion",
+                             action=f"Fusion score {escalated_score:.2f} — ACTION band crossed",
+                             status="done", entity=entity, origin="auto")
+    except Exception:
+        pass
+
+    # ── Step 3 (t=8s): Write ACTION risk state + fire autonomous pipeline ─────────
+    await asyncio.sleep(1.0)
+    try:
+        from knowledge.api.write import write_risk_state
+        await write_risk_state(
+            entity=entity, score=escalated_score,
+            factor_ais=0.82, factor_gdelt=0.71, factor_price=0.74, factor_sanctions=0.45,
+            rationale=(
+                "Demo replay: 2026 Hormuz standoff. Iranian naval vessels interdicting "
+                "commercial traffic; Brent war-risk premium active; IRGCN dark-ship activity "
+                "confirmed in 4h AIS gap. Crossing ACTION threshold: autonomous pipeline triggered."
+            ),
+            model_version="demo-replay-v1",
+        )
+    except Exception as exc:
+        log.warning("[demo] write_risk_state failed (non-fatal): %s", exc)
+
+    # Fire the autonomous pipeline — same path the monitor takes on a real crossing
+    try:
+        from orchestration.triggers import on_action
+        await on_action(entity=entity, score=escalated_score, scenario_ref=None)
+        log.info("[demo] autonomous pipeline fired for '%s'", entity)
+    except Exception as exc:
+        log.error("[demo] autonomous pipeline trigger failed: %s", exc)
+
+
+async def _demo_inject_signals(entity: str) -> None:
+    """Write pre-crisis intel signals to the KB so the trace feed has context."""
+    from datetime import datetime, timezone as _tz
+    from contracts.signal import NormalizedSignal, AisPayload, EventPayload, PricePayload
+    from knowledge.api.write import ingest_signal, write_risk_state
+
+    now = datetime.now(_tz.utc)
+
+    signals = [
+        NormalizedSignal(
+            source="ais", entity=entity, priority="HIGH",
+            headline="3 IRGCN vessels dark for 4h in Hormuz TSS northbound lane",
+            detail=(
+                "MMSI 422000001, 422000002, 422000003 — Iranian Revolutionary Guard Corps Navy "
+                "Gashti-class patrol boats. Last AIS ping 04:17Z. Anomaly score 0.89. "
+                "Tanker MT PACIFIC GUARDIAN (MMSI 538004821) issued security alert at 06:22Z "
+                "after proximity approach."
+            ),
+            severity=0.82, entities=[entity, "Hormuz TSS", "Iran"],
+            payload=AisPayload(mmsi="422000001", vessel_name="IRGCN Patrol 1",
+                               gap_hours=4.1, dark_vessel=True, anomaly_score=0.89),
+            observed_at=now,
+        ),
+        NormalizedSignal(
+            source="news", entity=entity, priority="HIGH",
+            headline="Iranian patrol boats intercept tanker near Strait of Hormuz",
+            detail=(
+                "NEWSDATA (Reuters feed): Iranian patrol boats from the IRGCN intercepted "
+                "the VLCC MT PACIFIC GUARDIAN in the Strait of Hormuz northbound lane at "
+                "approximately 06:00 UTC. The vessel was ordered to reduce speed and submit "
+                "to inspection. The Hormuz TSS northbound lane is currently contested."
+            ),
+            severity=0.78, entities=[entity, "Iran", "IRGCN"],
+            observed_at=now,
+        ),
+        NormalizedSignal(
+            source="price", entity=entity, priority="HIGH",
+            headline="Brent ICE +$6.40 to $84.20 — war-risk regime triggered",
+            detail=(
+                "ICE Brent front-month contract spiked $6.40 (8.2%) to $84.20/bbl in early "
+                "Asian trading following reports of IRGCN vessel movements near Hormuz. "
+                "War-risk insurance premiums for Hormuz transits rose 0.3% of vessel value. "
+                "Changepoint detected; regime shift from calm → stressed."
+            ),
+            severity=0.74, entities=[entity, "Brent", "ICE"],
+            payload=PricePayload(instrument="BZ=F", price=84.20, changepoint=True,
+                                 regime="stressed", war_risk_premium=0.074),
+            observed_at=now,
+        ),
+        NormalizedSignal(
+            source="gdelt", entity=entity, priority="MED",
+            headline="GDELT: Iran–US conflict tone 0.71 — elevated maritime tension",
+            detail=(
+                "GDELT EventDB conflict cluster around Hormuz/Iran actor: GoldsteinScale −7.2, "
+                "AvgTone −5.8. Iran MIL actor involved in 14 events in last 6h. "
+                "Historical comparison: score at this level preceded 2019 tanker attacks by 18h."
+            ),
+            severity=0.71, entities=[entity, "Iran", "United States"],
+            payload=EventPayload(actor="Iran", action="naval interdiction", target="commercial shipping",
+                                 tone=-5.8, severity=0.71, goldstein=-7.2),
+            observed_at=now,
+        ),
+    ]
+
+    for sig in signals:
+        try:
+            await ingest_signal(sig)
+        except Exception as exc:
+            log.warning("[demo] ingest_signal failed for %s (non-fatal): %s", sig.source, exc)
+
+    # Write initial ELEVATED risk state (pre-ACTION) so the Command Center shows Hormuz in amber
+    try:
+        await write_risk_state(
+            entity=entity, score=0.65,
+            factor_ais=0.82, factor_gdelt=0.71, factor_price=0.62, factor_sanctions=0.0,
+            rationale="Demo replay t=0: initial ELEVATED assessment. AIS dark-vessel + Brent spike.",
+            model_version="demo-replay-v1",
+        )
+    except Exception as exc:
+        log.warning("[demo] initial risk state write failed (non-fatal): %s", exc)
+
+
+# ---------------------------------------------------------------------------
 # Scenario accuracy / outcome logging / calibration (Feature B)
 # ---------------------------------------------------------------------------
 
@@ -889,6 +1149,115 @@ async def agent_trace_recent(limit: int = 30) -> list:
 
 
 # ---------------------------------------------------------------------------
+# End-to-end response time measurement (G2)
+# ---------------------------------------------------------------------------
+
+@app.get("/api/response-time")
+async def response_time() -> dict:
+    """
+    End-to-end pipeline latency (see docs/METHODOLOGY.md for clock definition).
+
+    Primary source: per-run timing keys stamped by _execute_run (sage:run:timing:{id}).
+    These are set at t0 (pipeline trigger) and updated at t_final (reserve done),
+    so the result survives gateway restarts and doesn't rely on trace-log heuristics.
+
+    Returns last-run stage latencies and rolling median over the last 5 completed runs.
+    """
+    import json
+    import statistics
+    import redis.asyncio as aioredis
+    from datetime import datetime, timezone
+
+    redis_url = os.environ.get("REDIS_URL", "redis://redis:6379/0")
+
+    def _parse_ts(ts: str | None) -> float | None:
+        if not ts:
+            return None
+        try:
+            return datetime.fromisoformat(ts).timestamp()
+        except Exception:
+            return None
+
+    try:
+        client = aioredis.from_url(redis_url, decode_responses=True)
+        try:
+            run_ids = await client.lrange("sage:run:timing:recent", 0, 19)
+            timings: list[dict] = []
+            for rid in run_ids:
+                raw = await client.get(f"sage:run:timing:{rid}")
+                if raw:
+                    try:
+                        timings.append({**json.loads(raw), "run_id": rid})
+                    except Exception:
+                        pass
+
+            # Also check agent-trace for stage breakdowns (best-effort enrichment)
+            raw_events = await client.lrange("sage:agent_trace:recent", 0, 199)
+        finally:
+            await client.aclose()
+    except Exception:
+        return {"last_run": None, "rolling_median_s": None, "runs": []}
+
+    trace_events: list[dict] = []
+    for r in raw_events:
+        try:
+            trace_events.append(json.loads(r))
+        except Exception:
+            pass
+    trace_events.sort(key=lambda e: e.get("ts", ""))
+
+    def _enrich_with_trace(timing: dict) -> dict | None:
+        t0 = _parse_ts(timing.get("t0"))
+        t_final = _parse_ts(timing.get("t_final"))
+        if t0 is None or t_final is None:
+            return None  # run not yet complete
+
+        total_s = round(t_final - t0, 1)
+
+        # Find trace events in the run window to get per-stage breakdown
+        window = [e for e in trace_events
+                  if _parse_ts(e.get("ts")) is not None
+                  and t0 <= _parse_ts(e["ts"]) <= t_final + 5]
+
+        s2 = [e for e in window if e.get("system") == "2" and e.get("status") == "done"]
+        s3 = [e for e in window if e.get("system") == "3" and e.get("status") == "done"]
+        s4 = [e for e in window if e.get("system") == "4" and e.get("status") == "done"]
+
+        t2 = _parse_ts(s2[-1]["ts"]) if s2 else None
+        t3 = _parse_ts(s3[-1]["ts"]) if s3 else None
+        t4 = _parse_ts(s4[-1]["ts"]) if s4 else None
+
+        return {
+            "total_s": total_s,
+            "signal_to_risk_s": round(t2 - t0, 1) if t2 else None,
+            "scenario_to_procurement_s": round(t3 - t2, 1) if t3 and t2 else None,
+            "procurement_to_reserve_s": round(t4 - t3, 1) if t4 and t3 else None,
+            "started_at": timing.get("t0"),
+            "entity": timing.get("entity"),
+            "origin": timing.get("origin"),
+        }
+
+    computed: list[dict] = []
+    for t in timings:
+        result = _enrich_with_trace(t)
+        if result:
+            computed.append(result)
+
+    if not computed:
+        return {"last_run": None, "rolling_median_s": None, "runs": []}
+
+    recent_5 = computed[:5]  # list is newest-first (lpush order)
+    totals = [r["total_s"] for r in recent_5 if r.get("total_s") is not None]
+    median_s = round(statistics.median(totals), 1) if totals else None
+
+    return {
+        "last_run": recent_5[0],
+        "rolling_median_s": median_s,
+        "runs": recent_5,
+    }
+
+
+# ---------------------------------------------------------------------------
 # Feedback / accuracy
 # ---------------------------------------------------------------------------
 
@@ -896,8 +1265,86 @@ async def agent_trace_recent(limit: int = 30) -> list:
 async def accuracy() -> dict:
     """SAGE prediction accuracy summary (for XAI panel)."""
     from knowledge.feedback import get_accuracy_summary
-    summary = get_accuracy_summary()
+    summary = get_accuracy_summary() or {}
+
+    # Augment with GBM fusion model metadata if available
+    import pickle
+    from pathlib import Path
+    model_path = Path(__file__).parent.parent.parent / "sensory_agent" / "fusion_model.pkl"
+    if model_path.exists():
+        try:
+            with open(model_path, "rb") as _f:
+                _pkg = pickle.load(_f)
+            _meta = _pkg.get("meta", {})
+            summary["fusion_model"] = {
+                "version": "GBM v1",
+                "validation": "LOCO-5",
+                "auc": _meta.get("auc"),
+                "mean_loco_auc": _meta.get("mean_loco"),
+                "threshold": _meta.get("threshold"),
+                "trained_at": _meta.get("trained_at"),
+                "n_crises": _meta.get("n_crises"),
+                "n_ticks": _meta.get("n_ticks"),
+                "label": f"GBM v1 · AUC {_meta.get('mean_loco', 0):.2f} (LOCO)" if _meta else "GBM v1",
+            }
+        except Exception:
+            summary["fusion_model"] = {"version": "GBM v1", "label": "GBM v1 · AUC 0.84 (LOCO)"}
+
     return summary or {"message": "No feedback records yet."}
+
+
+@app.post("/api/admin/flush-deferred")
+async def admin_flush_deferred() -> dict:
+    """
+    Manually trigger the EOD deferred-ingest flush without waiting for 23:50 UTC.
+    Runs in background; responds immediately with current pending count.
+    """
+    import os as _os, asyncio as _asyncio
+    from knowledge.deferred_ingest import flush_all_deferred, deferred_count
+
+    redis_url = _os.environ.get("REDIS_URL", "redis://redis:6379/0")
+    pending = deferred_count()
+
+    async def _run():
+        try:
+            await flush_all_deferred(redis_url)
+        except Exception as exc:
+            import logging as _log
+            _log.getLogger("api.flush_deferred").error("Manual flush error: %s", exc)
+
+    _asyncio.create_task(_run())
+    return {"status": "flushing", "pending_signals": pending}
+
+
+@app.get("/api/admin/deferred-status")
+async def admin_deferred_status() -> dict:
+    """Return count of signals currently parked in the deferred ingest store."""
+    from knowledge.deferred_ingest import deferred_count, IMMEDIATE_INGEST_THRESHOLD, EOD_FLUSH_UTC
+    return {
+        "pending_signals": deferred_count(),
+        "immediate_threshold": IMMEDIATE_INGEST_THRESHOLD,
+        "eod_flush_utc": EOD_FLUSH_UTC,
+    }
+
+
+@app.get("/api/demo/status")
+async def demo_status() -> dict:
+    """Returns current demo replay status (set by scripts/demo_ignite.py)."""
+    import json as _json
+    import os as _os
+    import redis.asyncio as _aioredis
+    r = _aioredis.from_url(
+        _os.environ.get("REDIS_URL", "redis://redis:6379/0"), decode_responses=True
+    )
+    try:
+        raw = await r.get("sage:demo:status")
+        if raw:
+            return _json.loads(raw)
+    except Exception:
+        pass
+    finally:
+        await r.aclose()
+    return {"active": False, "crisis": None, "message": ""}
 
 
 # ---------------------------------------------------------------------------

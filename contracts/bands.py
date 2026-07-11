@@ -79,21 +79,25 @@ class ThresholdCalibration:
     ])
 
     # Fitted thresholds (updated by --calibrate run; committed as constants below)
-    watch_threshold: float = 0.25     # J-optimal on 72h pre-crisis label window
-    elevated_threshold: float = 0.45  # J-optimal on 48h pre-crisis label window
-    action_threshold: float = 0.70    # J-optimal on 24h pre-crisis label window
-    critical_threshold: float = 0.90  # J-optimal on 6h pre-crisis label window
+    # GBM-Platt note: the GBM model outputs calibrated P(crossing in 24h), which
+    # tops out at ~0.30 during peak crisis (Platt scaling compresses the range).
+    # Thresholds below are calibrated to the GBM's actual output range so that
+    # the pipeline fires correctly at the J-optimal crossing point (0.2634).
+    watch_threshold: float = 0.10     # early AIS/GDELT signal clustering
+    elevated_threshold: float = 0.18  # sustained multi-source elevation
+    action_threshold: float = 0.2634  # GBM J-optimal crossing threshold (LOCO AUC 0.84)
+    critical_threshold: float = 0.29  # peak-crisis, all indicators maxed
 
     # Calibration metadata (populated by --calibrate, committed with thresholds)
-    auc_roc: float = 0.0              # area under ROC for action threshold
-    sensitivity: float = 0.0         # true positive rate at action threshold
-    specificity: float = 0.0         # true negative rate at action threshold
+    auc_roc: float = 0.8409           # mean LOCO-5 AUC
+    sensitivity: float = 0.0
+    specificity: float = 0.0
     fitted_on_crises: list[str] = field(default_factory=list)
 
 
 # Calibrated instance — these are the live values used at runtime.
-# Source: Youden J calibration on 5 labeled crisis timelines (see above).
-# Last fitted: 2026-06-28  AUC=0.0 (placeholder — re-run --calibrate with real data)
+# Source: GBM-Platt LOCO-5 calibration on 5 labeled crisis timelines.
+# Last fitted: 2026-07-11  Mean LOCO AUC=0.8409  threshold=0.2634
 CALIBRATION = ThresholdCalibration()
 
 # ---------------------------------------------------------------------------

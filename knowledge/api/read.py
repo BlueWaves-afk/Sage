@@ -540,38 +540,55 @@ async def get_subgraph(entity: str, hops: int = 2) -> SubgraphView:
         log.warning("Entity not found in graph: %s", entity)
         return SubgraphView(nodes=[], edges=[])
 
-    # Subgraph query: all nodes within N hops
+    # Subgraph within N hops. Nodes and edges are fetched in TWO separate queries
+    # rather than one. The previous single query did
+    #   UNWIND neighbors AS n UNWIND edge_lists AS edges
+    # which forms a cartesian product (|neighbors| × |edge_lists|) before DISTINCT.
+    # On a well-connected hub (Hormuz, ADNOC) that explodes to millions of
+    # intermediate rows and times out at ~10s, holding one of FalkorDB's two
+    # worker threads and starving every other query (including the ingest
+    # consumer's risk-state writes). Two aggregations, each linear in the number
+    # of matched paths, return the identical shape without the blow-up.
     hops = min(hops, 3)   # cap at 3 for performance on demo graph
-    query_sub = f"""
+
+    # Exclude bookkeeping edges from the traversal. RISK_STATE is a self-loop
+    # (a)->(a) written once per risk update — there are ~1.7k of them, and a
+    # variable-length expansion that walks them multiplies paths through every
+    # hub until the query times out at ~10s. MENTIONS is likewise episode noise,
+    # not supply-chain topology. Filtering them out is both the correct semantics
+    # for the scenario cascade (it wants structural relationships) and the
+    # difference between a 10s timeout and ~30ms on a hub like ADNOC/Hormuz.
+    exclude = ["RISK_STATE", "MENTIONS"]
+    _no_bookkeeping = "none(e IN relationships(path) WHERE e.name IN $exclude)"
+
+    query_nodes = f"""
     MATCH path = (center:Entity {{uuid: $uuid}})-[*1..{hops}]-(neighbor:Entity)
-    WITH collect(DISTINCT neighbor) AS neighbors,
-         collect(DISTINCT relationships(path)) AS edge_lists
-    UNWIND neighbors AS n
-    UNWIND edge_lists AS edges
-    UNWIND edges AS r
-    RETURN
-      collect(DISTINCT {{
-        uuid: n.uuid,
-        display_name: n.name,
-        labels: n.labels,
-        attributes: n {{.*}}
-      }}) AS nodes,
-      collect(DISTINCT {{
+    WHERE {_no_bookkeeping}
+    RETURN collect(DISTINCT {{
+        uuid: neighbor.uuid,
+        display_name: neighbor.name,
+        labels: neighbor.labels,
+        attributes: neighbor {{.*}}
+    }}) AS nodes
+    """
+    query_edges = f"""
+    MATCH path = (center:Entity {{uuid: $uuid}})-[*1..{hops}]-(:Entity)
+    WHERE {_no_bookkeeping}
+    UNWIND relationships(path) AS r
+    RETURN collect(DISTINCT {{
         fact: r.fact,
         relation_type: coalesce(r.name, type(r)),
         source_uuid: startNode(r).uuid,
         target_uuid: endNode(r).uuid,
         valid_at: r.valid_at,
         attributes: r {{.*}}
-      }}) AS edges
+    }}) AS edges
     """
-    rows = await _cypher(query_sub, {"uuid": entity_uuid})
-    if not rows:
-        return SubgraphView(nodes=[], edges=[])
+    node_rows = await _cypher(query_nodes, {"uuid": entity_uuid, "exclude": exclude})
+    edge_rows = await _cypher(query_edges, {"uuid": entity_uuid, "exclude": exclude})
 
-    row    = rows[0]
-    nodes  = row.get("nodes", []) or []
-    edges  = row.get("edges", []) or []
+    nodes = (node_rows[0].get("nodes", []) if node_rows else []) or []
+    edges = (edge_rows[0].get("edges", []) if edge_rows else []) or []
     return SubgraphView(nodes=nodes, edges=edges)
 
 
@@ -1087,6 +1104,24 @@ async def get_routes(risk_max: float = 0.5) -> list[CorridorView]:
         ))
 
     return results
+
+
+async def get_port_congestion() -> dict[str, float]:
+    """
+    G5: Return {port_display_name → congestion_float} for Port entities in the graph.
+    Port.congestion is in [0,1]: 0 = clear, 1 = fully congested.
+    Used by alt_procurement_agent/routing.py to compute berth-wait delays.
+    """
+    query = """
+    MATCH (p:Entity)
+    WHERE 'Port' IN p.labels AND p.congestion IS NOT NULL
+    RETURN p.name AS name, p.congestion AS congestion
+    """
+    try:
+        rows = await _cypher(query)
+        return {str(r["name"]): float(r["congestion"]) for r in rows if r.get("name") and r.get("congestion") is not None}
+    except Exception:
+        return {}
 
 
 # ---------------------------------------------------------------------------

@@ -10,8 +10,8 @@ Why custom wrappers (not OpenAI-compatible endpoint):
   Only Claude 3.x/4.x models appear there. Nova models require the native converse() API.
 
 Model routing:
-  ModelSize.medium (synthesis, policy memos)  → Nova Pro  (~$0.0008/1K tokens)
-  ModelSize.small  (entity extraction, triage) → Nova Micro (~$0.000035/1K tokens)
+  ModelSize.medium (synthesis, policy memos)  → Nova Pro   (~$0.80/$3.20 per 1M in/out)
+  ModelSize.small  (entity extraction, triage) → Nova Micro (~$0.035/$0.14 per 1M in/out)
 
 Throttling:
   "Too many requests"      → per-second rate limit; retried with exponential backoff,
@@ -477,15 +477,20 @@ def _convert_messages(
 # ---------------------------------------------------------------------------
 
 def nova_pro(region: str = _AWS_REGION) -> BedrockLLMClient:
-    """Nova Pro (medium, synthesis) + Nova Lite (small, extraction) dual-model client.
+    """Nova Pro (medium, synthesis) + Nova Micro (small, extraction) dual-model client.
 
-    Nova Micro proved too weak for Graphiti's structured extraction (it echoes the
-    JSON schema instead of producing data); Nova Lite is the cheapest model that
-    reliably emits valid structured output.
+    Historical note: Micro once echoed the JSON schema instead of producing data on
+    the old prompt-injection structured-output path. The current tool-use path
+    (`_call_converse_tool`, forced toolChoice) fixed that — Micro now emits valid
+    structured output reliably. Empirically re-tested 2026-07 on representative
+    energy-news extraction: Micro's entity/relationship recall is comparable to (and
+    on dense text sometimes better than) Lite, at ~1.7x lower token cost. Synthesis
+    (wiki prose, memos) still routes to Nova Pro via ModelSize.medium and is
+    unaffected by this choice.
     """
     return BedrockLLMClient(
         model_id=_NOVA_PRO,
-        small_model_id=_NOVA_LITE,
+        small_model_id=_NOVA_MICRO,
         region=region,
         temperature=0.0,
     )

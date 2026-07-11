@@ -1,0 +1,5 @@
+entity_id,canonical_name,country,daily_export_mbpd,sanctioned,tier,source,as_of,notes
+supplier_aramco,Saudi Aramco,Saudi Arabia,6.0,false,real,METI-Japan,2025,Saudi Arabia ~40% of Japan crude imports
+supplier_adnoc,ADNOC,UAE,3.6,false,real,METI-Japan,2025,UAE ~24% of Japan crude imports
+supplier_kpc,Kuwait Petroleum Corporation,Kuwait,2.5,false,real,METI-Japan,2025,Kuwait ~8% of Japan crude imports
+supplier_qatarenergy,QatarEnergy,Qatar,1.8,false,real,METI-Japan,2025,Qatar primarily LNG but also crude

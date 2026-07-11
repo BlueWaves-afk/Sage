@@ -67,7 +67,7 @@ async function post<T>(path: string, body: unknown, opts?: RequestInit): Promise
 }
 
 export const api = {
-  health: () => get<{ status: string; kb_ready: boolean }>("/health"),
+  health: () => get<{ status: string; kb_ready: boolean; live?: boolean; voice_mode?: string }>("/health"),
 
   riskScores: () => get<RiskScore[]>("/api/risk-scores"),
 
@@ -90,7 +90,10 @@ export const api = {
   wiki: (entity: string) =>
     get<{ entity: string; content: string }>(`/api/wiki/${encodeURIComponent(entity)}`),
 
-  accuracy: () => get<{ detection_lead_hours: number; prestage_accuracy: number }>("/api/accuracy"),
+  wikiList: (limit = 50) =>
+    get<{ entity: string; title: string; updated: string | null }[]>(`/api/wiki?limit=${limit}`),
+
+  accuracy: () => get<{ detection_lead_hours?: number; prestage_accuracy?: number; fusion_model?: { version: string; validation: string; auc?: number; mean_loco_auc?: number; threshold?: number; trained_at?: string; n_crises?: number; n_ticks?: number; label?: string } }>("/api/accuracy"),
 
   brief: () => get<{ entity: string | null; assessment: string | null; updated: string | null; wiki_entity: string | null }>("/api/brief"),
 
@@ -142,6 +145,10 @@ export const api = {
   scenarioCalibration: () => get<CalibrationFactors>("/api/scenario/calibration"),
 
   agentTraceRecent: (limit = 30) => get<AgentTraceEvent[]>(`/api/agent-trace/recent?limit=${limit}`),
+
+  responseTime: () => get<import("./types").ResponseTimeSummary>("/api/response-time"),
+
+  demoIgnite: () => get<{ ok: boolean; message: string }>("/api/demo/ignite", { method: "POST" }),
 
   copilot: (question: string) =>
     get<CopilotAnswer>("/api/copilot", {

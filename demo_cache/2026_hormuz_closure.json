@@ -1,0 +1,692 @@
+[
+  {
+    "date": "2026-02-20",
+    "features": {
+      "ais_gap_count_24h": 4.0,
+      "ais_dark_vessel_count": 3.0,
+      "ais_anomaly_score_max": 0.6208,
+      "ais_gap_duration_max_h": 6.0,
+      "ais_monitored_cell_pct": 0.806,
+      "ais_velocity_std": 0.548,
+      "gdelt_tone_24h_mean": -2.3243,
+      "gdelt_tone_delta": -0.0153,
+      "news_severity_max": 0.6206,
+      "news_event_count_24h": 7.0,
+      "price_brent_pct_change_24h": 0.001395,
+      "price_war_risk_premium": 0.059481,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2026 Hormuz closure (golden path)",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Strait Hormuz closure tanker 2026'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2026-02-21",
+    "features": {
+      "ais_gap_count_24h": 5.0,
+      "ais_dark_vessel_count": 3.67,
+      "ais_anomaly_score_max": 0.6763,
+      "ais_gap_duration_max_h": 8.0,
+      "ais_monitored_cell_pct": 0.799,
+      "ais_velocity_std": 0.571,
+      "gdelt_tone_24h_mean": -2.3657,
+      "gdelt_tone_delta": -0.0414,
+      "news_severity_max": 0.6649,
+      "news_event_count_24h": 8.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2026 Hormuz closure (golden path)",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Strait Hormuz closure tanker 2026'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2026-02-22",
+    "features": {
+      "ais_gap_count_24h": 6.0,
+      "ais_dark_vessel_count": 4.33,
+      "ais_anomaly_score_max": 0.6936,
+      "ais_gap_duration_max_h": 10.0,
+      "ais_monitored_cell_pct": 0.797,
+      "ais_velocity_std": 0.577,
+      "gdelt_tone_24h_mean": -2.4755,
+      "gdelt_tone_delta": -0.1098,
+      "news_severity_max": 0.6852,
+      "news_event_count_24h": 8.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2026 Hormuz closure (golden path)",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Strait Hormuz closure tanker 2026'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2026-02-23",
+    "features": {
+      "ais_gap_count_24h": 7.0,
+      "ais_dark_vessel_count": 5.0,
+      "ais_anomaly_score_max": 0.7156,
+      "ais_gap_duration_max_h": 12.0,
+      "ais_monitored_cell_pct": 0.794,
+      "ais_velocity_std": 0.586,
+      "gdelt_tone_24h_mean": -2.7563,
+      "gdelt_tone_delta": -0.2808,
+      "news_severity_max": 0.7205,
+      "news_event_count_24h": 9.0,
+      "price_brent_pct_change_24h": -0.003763,
+      "price_war_risk_premium": 0.052885,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 4.0,
+      "sanctions_vessel_count": 3.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2026 Hormuz closure (golden path)",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Strait Hormuz closure tanker 2026'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2026-02-24",
+    "features": {
+      "ais_gap_count_24h": 9.5,
+      "ais_dark_vessel_count": 6.5,
+      "ais_anomaly_score_max": 0.8342,
+      "ais_gap_duration_max_h": 15.0,
+      "ais_monitored_cell_pct": 0.78,
+      "ais_velocity_std": 0.634,
+      "gdelt_tone_24h_mean": -3.4087,
+      "gdelt_tone_delta": -0.6524,
+      "news_severity_max": 0.8529,
+      "news_event_count_24h": 10.0,
+      "price_brent_pct_change_24h": -0.010071,
+      "price_war_risk_premium": 0.040081,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 3.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2026 Hormuz closure (golden path)",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Strait Hormuz closure tanker 2026'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2026-02-25",
+    "features": {
+      "ais_gap_count_24h": 10.0,
+      "ais_dark_vessel_count": 8.0,
+      "ais_anomaly_score_max": 0.8785,
+      "ais_gap_duration_max_h": 18.0,
+      "ais_monitored_cell_pct": 0.775,
+      "ais_velocity_std": 0.651,
+      "gdelt_tone_24h_mean": -4.6387,
+      "gdelt_tone_delta": -1.23,
+      "news_severity_max": 0.9681,
+      "news_event_count_24h": 13.0,
+      "price_brent_pct_change_24h": 0.00113,
+      "price_war_risk_premium": 0.039654,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 3.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2026 Hormuz closure (golden path)",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Strait Hormuz closure tanker 2026'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2026-02-26",
+    "features": {
+      "ais_gap_count_24h": 12.33,
+      "ais_dark_vessel_count": 9.0,
+      "ais_anomaly_score_max": 0.906,
+      "ais_gap_duration_max_h": 20.0,
+      "ais_monitored_cell_pct": 0.771,
+      "ais_velocity_std": 0.662,
+      "gdelt_tone_24h_mean": -6.2513,
+      "gdelt_tone_delta": -1.6126,
+      "news_severity_max": 1.0,
+      "news_event_count_24h": 17.0,
+      "price_brent_pct_change_24h": -0.001411,
+      "price_war_risk_premium": 0.036664,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 3.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2026 Hormuz closure (golden path)",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Strait Hormuz closure tanker 2026'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2026-02-27",
+    "features": {
+      "ais_gap_count_24h": 12.67,
+      "ais_dark_vessel_count": 10.0,
+      "ais_anomaly_score_max": 0.939,
+      "ais_gap_duration_max_h": 22.0,
+      "ais_monitored_cell_pct": 0.767,
+      "ais_velocity_std": 0.676,
+      "gdelt_tone_24h_mean": -7.5944,
+      "gdelt_tone_delta": -1.3431,
+      "news_severity_max": 1.0,
+      "news_event_count_24h": 19.0,
+      "price_brent_pct_change_24h": 0.024452,
+      "price_war_risk_premium": 0.060624,
+      "price_bocd_flag": 1.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 3.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 1,
+    "crisis_name": "2026 Hormuz closure (golden path)",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Strait Hormuz closure tanker 2026'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2026-02-28",
+    "features": {
+      "ais_gap_count_24h": 14.0,
+      "ais_dark_vessel_count": 11.0,
+      "ais_anomaly_score_max": 0.9695,
+      "ais_gap_duration_max_h": 24.0,
+      "ais_monitored_cell_pct": 0.764,
+      "ais_velocity_std": 0.688,
+      "gdelt_tone_24h_mean": -8.3511,
+      "gdelt_tone_delta": -0.7567,
+      "news_severity_max": 1.0,
+      "news_event_count_24h": 21.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 7.0,
+      "sanctions_vessel_count": 8.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 1,
+    "crisis_name": "2026 Hormuz closure (golden path)",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Strait Hormuz closure tanker 2026'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2026-03-01",
+    "features": {
+      "ais_gap_count_24h": 13.33,
+      "ais_dark_vessel_count": 10.33,
+      "ais_anomaly_score_max": 0.9404,
+      "ais_gap_duration_max_h": 22.67,
+      "ais_monitored_cell_pct": 0.767,
+      "ais_velocity_std": 0.676,
+      "gdelt_tone_24h_mean": -8.0214,
+      "gdelt_tone_delta": 0.3297,
+      "news_severity_max": 1.0,
+      "news_event_count_24h": 20.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 8.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 1,
+    "crisis_name": "2026 Hormuz closure (golden path)",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Strait Hormuz closure tanker 2026'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2026-03-02",
+    "features": {
+      "ais_gap_count_24h": 12.67,
+      "ais_dark_vessel_count": 9.67,
+      "ais_anomaly_score_max": 0.9603,
+      "ais_gap_duration_max_h": 21.33,
+      "ais_monitored_cell_pct": 0.765,
+      "ais_velocity_std": 0.684,
+      "gdelt_tone_24h_mean": -7.2598,
+      "gdelt_tone_delta": 0.7616,
+      "news_severity_max": 1.0,
+      "news_event_count_24h": 19.0,
+      "price_brent_pct_change_24h": 0.072572,
+      "price_war_risk_premium": 0.135222,
+      "price_bocd_flag": 1.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 8.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2026 Hormuz closure (golden path)",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Strait Hormuz closure tanker 2026'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2026-03-03",
+    "features": {
+      "ais_gap_count_24h": 12.0,
+      "ais_dark_vessel_count": 9.0,
+      "ais_anomaly_score_max": 0.8939,
+      "ais_gap_duration_max_h": 20.0,
+      "ais_monitored_cell_pct": 0.773,
+      "ais_velocity_std": 0.658,
+      "gdelt_tone_24h_mean": -6.5995,
+      "gdelt_tone_delta": 0.6603,
+      "news_severity_max": 1.0,
+      "news_event_count_24h": 17.0,
+      "price_brent_pct_change_24h": 0.04708,
+      "price_war_risk_premium": 0.183334,
+      "price_bocd_flag": 1.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 8.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2026 Hormuz closure (golden path)",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Strait Hormuz closure tanker 2026'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2026-03-04",
+    "features": {
+      "ais_gap_count_24h": 11.0,
+      "ais_dark_vessel_count": 8.25,
+      "ais_anomaly_score_max": 0.8923,
+      "ais_gap_duration_max_h": 18.5,
+      "ais_monitored_cell_pct": 0.773,
+      "ais_velocity_std": 0.657,
+      "gdelt_tone_24h_mean": -6.0271,
+      "gdelt_tone_delta": 0.5724,
+      "news_severity_max": 1.0,
+      "news_event_count_24h": 16.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.173514,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 5.0,
+      "sanctions_vessel_count": 12.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2026 Hormuz closure (golden path)",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Strait Hormuz closure tanker 2026'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2026-03-05",
+    "features": {
+      "ais_gap_count_24h": 10.0,
+      "ais_dark_vessel_count": 7.5,
+      "ais_anomaly_score_max": 0.863,
+      "ais_gap_duration_max_h": 17.0,
+      "ais_monitored_cell_pct": 0.776,
+      "ais_velocity_std": 0.645,
+      "gdelt_tone_24h_mean": -5.531,
+      "gdelt_tone_delta": 0.4961,
+      "news_severity_max": 1.0,
+      "news_event_count_24h": 15.0,
+      "price_brent_pct_change_24h": 0.049263,
+      "price_war_risk_premium": 0.22165,
+      "price_bocd_flag": 1.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 12.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2026 Hormuz closure (golden path)",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Strait Hormuz closure tanker 2026'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2026-03-06",
+    "features": {
+      "ais_gap_count_24h": 9.0,
+      "ais_dark_vessel_count": 6.75,
+      "ais_anomaly_score_max": 0.7911,
+      "ais_gap_duration_max_h": 15.5,
+      "ais_monitored_cell_pct": 0.785,
+      "ais_velocity_std": 0.616,
+      "gdelt_tone_24h_mean": -5.1009,
+      "gdelt_tone_delta": 0.4301,
+      "news_severity_max": 0.9334,
+      "news_event_count_24h": 14.0,
+      "price_brent_pct_change_24h": 0.085236,
+      "price_war_risk_premium": 0.31315,
+      "price_bocd_flag": 1.0,
+      "price_regime": 1.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 12.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2026 Hormuz closure (golden path)",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Strait Hormuz closure tanker 2026'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2026-03-07",
+    "features": {
+      "ais_gap_count_24h": 8.0,
+      "ais_dark_vessel_count": 6.0,
+      "ais_anomaly_score_max": 0.7712,
+      "ais_gap_duration_max_h": 14.0,
+      "ais_monitored_cell_pct": 0.787,
+      "ais_velocity_std": 0.608,
+      "gdelt_tone_24h_mean": -4.728,
+      "gdelt_tone_delta": 0.3729,
+      "news_severity_max": 0.8936,
+      "news_event_count_24h": 13.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 12.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2026 Hormuz closure (golden path)",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Strait Hormuz closure tanker 2026'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2026-03-08",
+    "features": {
+      "ais_gap_count_24h": 6.94,
+      "ais_dark_vessel_count": 5.2,
+      "ais_anomaly_score_max": 0.6633,
+      "ais_gap_duration_max_h": 12.14,
+      "ais_monitored_cell_pct": 0.8,
+      "ais_velocity_std": 0.565,
+      "gdelt_tone_24h_mean": -4.4048,
+      "gdelt_tone_delta": 0.3232,
+      "news_severity_max": 0.7911,
+      "news_event_count_24h": 12.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 12.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2026 Hormuz closure (golden path)",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Strait Hormuz closure tanker 2026'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2026-03-09",
+    "features": {
+      "ais_gap_count_24h": 6.01,
+      "ais_dark_vessel_count": 4.51,
+      "ais_anomaly_score_max": 0.576,
+      "ais_gap_duration_max_h": 10.52,
+      "ais_monitored_cell_pct": 0.811,
+      "ais_velocity_std": 0.53,
+      "gdelt_tone_24h_mean": -4.1246,
+      "gdelt_tone_delta": 0.2802,
+      "news_severity_max": 0.707,
+      "news_event_count_24h": 11.0,
+      "price_brent_pct_change_24h": 0.067645,
+      "price_war_risk_premium": 0.383276,
+      "price_bocd_flag": 1.0,
+      "price_regime": 1.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 12.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2026 Hormuz closure (golden path)",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Strait Hormuz closure tanker 2026'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2026-03-10",
+    "features": {
+      "ais_gap_count_24h": 6.21,
+      "ais_dark_vessel_count": 3.91,
+      "ais_anomaly_score_max": 0.5081,
+      "ais_gap_duration_max_h": 9.12,
+      "ais_monitored_cell_pct": 0.819,
+      "ais_velocity_std": 0.503,
+      "gdelt_tone_24h_mean": -3.8817,
+      "gdelt_tone_delta": 0.2429,
+      "news_severity_max": 0.6399,
+      "news_event_count_24h": 10.0,
+      "price_brent_pct_change_24h": -0.112773,
+      "price_war_risk_premium": 0.208651,
+      "price_bocd_flag": 1.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 12.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2026 Hormuz closure (golden path)",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Strait Hormuz closure tanker 2026'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2026-03-11",
+    "features": {
+      "ais_gap_count_24h": 5.52,
+      "ais_dark_vessel_count": 3.39,
+      "ais_anomaly_score_max": 0.4611,
+      "ais_gap_duration_max_h": 7.91,
+      "ais_monitored_cell_pct": 0.825,
+      "ais_velocity_std": 0.484,
+      "gdelt_tone_24h_mean": -3.6711,
+      "gdelt_tone_delta": 0.2106,
+      "news_severity_max": 0.5906,
+      "news_event_count_24h": 9.0,
+      "price_brent_pct_change_24h": 0.047608,
+      "price_war_risk_premium": 0.253418,
+      "price_bocd_flag": 1.0,
+      "price_regime": 1.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 12.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2026 Hormuz closure (golden path)",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Strait Hormuz closure tanker 2026'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2026-03-12",
+    "features": {
+      "ais_gap_count_24h": 5.92,
+      "ais_dark_vessel_count": 2.94,
+      "ais_anomaly_score_max": 0.3742,
+      "ais_gap_duration_max_h": 6.85,
+      "ais_monitored_cell_pct": 0.835,
+      "ais_velocity_std": 0.45,
+      "gdelt_tone_24h_mean": -3.4886,
+      "gdelt_tone_delta": 0.1825,
+      "news_severity_max": 0.5132,
+      "news_event_count_24h": 8.0,
+      "price_brent_pct_change_24h": 0.092194,
+      "price_war_risk_premium": 0.353963,
+      "price_bocd_flag": 1.0,
+      "price_regime": 1.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 12.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2026 Hormuz closure (golden path)",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Strait Hormuz closure tanker 2026'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2026-03-13",
+    "features": {
+      "ais_gap_count_24h": 5.39,
+      "ais_dark_vessel_count": 2.55,
+      "ais_anomaly_score_max": 0.3525,
+      "ais_gap_duration_max_h": 5.94,
+      "ais_monitored_cell_pct": 0.838,
+      "ais_velocity_std": 0.441,
+      "gdelt_tone_24h_mean": -3.3304,
+      "gdelt_tone_delta": 0.1582,
+      "news_severity_max": 0.4864,
+      "news_event_count_24h": 8.0,
+      "price_brent_pct_change_24h": 0.026677,
+      "price_war_risk_premium": 0.370346,
+      "price_bocd_flag": 1.0,
+      "price_regime": 1.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 12.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2026 Hormuz closure (golden path)",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Strait Hormuz closure tanker 2026'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2026-03-14",
+    "features": {
+      "ais_gap_count_24h": 3.94,
+      "ais_dark_vessel_count": 2.21,
+      "ais_anomaly_score_max": 0.2884,
+      "ais_gap_duration_max_h": 5.15,
+      "ais_monitored_cell_pct": 0.845,
+      "ais_velocity_std": 0.415,
+      "gdelt_tone_24h_mean": -3.1932,
+      "gdelt_tone_delta": 0.1372,
+      "news_severity_max": 0.4292,
+      "news_event_count_24h": 7.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 12.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2026 Hormuz closure (golden path)",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Strait Hormuz closure tanker 2026'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  }
+]

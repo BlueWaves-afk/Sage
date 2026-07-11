@@ -1,0 +1,140 @@
+# SAGE — Production stack (ECR images, no local build contexts)
+#
+# Usage:
+#   export ECR_REGISTRY=203800220566.dkr.ecr.us-east-1.amazonaws.com
+#   export IMAGE_TAG=latest   # or a semver tag e.g. v1.2.0
+#   aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR_REGISTRY
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# To swap context bundle (bundle-swap demo):
+#   SAGE_CONTEXT_BUNDLE=data/japan-energy.context docker compose -f docker-compose.prod.yml up -d
+
+version: "3.9"
+
+x-common-env: &common-env
+  env_file:
+    - .env
+    - path: .env.local
+      required: false
+
+x-logging: &default-logging
+  logging:
+    driver: "json-file"
+    options:
+      max-size: "20m"
+      max-file: "5"
+
+services:
+  falkordb:
+    image: falkordb/falkordb:latest
+    restart: unless-stopped
+    volumes:
+      - falkordb_data:/data
+    <<: *default-logging
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru"]
+    volumes:
+      - redis_data:/data
+    <<: *default-logging
+
+  sage-core:
+    image: ${ECR_REGISTRY:-203800220566.dkr.ecr.us-east-1.amazonaws.com}/sage/sage-core:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      SAGE_BUNDLE_PATH: ${SAGE_CONTEXT_BUNDLE:-data/india-energy-2026.context}
+    volumes:
+      - ./knowledge/wiki:/app/wiki
+      - ./demo_cache:/app/demo_cache
+    depends_on:
+      falkordb: { condition: service_started }
+      redis:    { condition: service_started }
+    <<: *default-logging
+
+  api-gateway:
+    image: ${ECR_REGISTRY:-203800220566.dkr.ecr.us-east-1.amazonaws.com}/sage/api-gateway:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      <<: *common-env
+    volumes:
+      - ./knowledge/wiki:/app/wiki
+      - ./demo_cache:/app/demo_cache
+    depends_on:
+      sage-core: { condition: service_started }
+    <<: *default-logging
+
+  sensory-ais:
+    image: ${ECR_REGISTRY:-203800220566.dkr.ecr.us-east-1.amazonaws.com}/sage/sensory-ais:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+    depends_on:
+      sage-core: { condition: service_started }
+    profiles: ["sensory"]
+    <<: *default-logging
+
+  sensory-news:
+    image: ${ECR_REGISTRY:-203800220566.dkr.ecr.us-east-1.amazonaws.com}/sage/sensory-news:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+    depends_on:
+      sage-core: { condition: service_started }
+    profiles: ["sensory"]
+    <<: *default-logging
+
+  sensory-sanctions:
+    image: ${ECR_REGISTRY:-203800220566.dkr.ecr.us-east-1.amazonaws.com}/sage/sensory-sanctions:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+    depends_on:
+      sage-core: { condition: service_started }
+    profiles: ["sensory"]
+    <<: *default-logging
+
+  sensory-prices:
+    image: ${ECR_REGISTRY:-203800220566.dkr.ecr.us-east-1.amazonaws.com}/sage/sensory-prices:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+    depends_on:
+      sage-core: { condition: service_started }
+    profiles: ["sensory"]
+    <<: *default-logging
+
+  scenario-agent:
+    image: ${ECR_REGISTRY:-203800220566.dkr.ecr.us-east-1.amazonaws.com}/sage/scenario-agent:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+    depends_on:
+      sage-core: { condition: service_started }
+    <<: *default-logging
+
+  reserve-optim-agent:
+    image: ${ECR_REGISTRY:-203800220566.dkr.ecr.us-east-1.amazonaws.com}/sage/reserve-optim-agent:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+    depends_on:
+      sage-core: { condition: service_started }
+    <<: *default-logging
+
+  frontend:
+    image: ${ECR_REGISTRY:-203800220566.dkr.ecr.us-east-1.amazonaws.com}/sage/frontend:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      api-gateway: { condition: service_started }
+    <<: *default-logging
+
+volumes:
+  falkordb_data:
+  redis_data:

@@ -1,0 +1,782 @@
+[
+  {
+    "date": "2025-01-10",
+    "features": {
+      "ais_gap_count_24h": 5.0,
+      "ais_dark_vessel_count": 4.0,
+      "ais_anomaly_score_max": 0.6887,
+      "ais_gap_duration_max_h": 8.0,
+      "ais_monitored_cell_pct": 0.797,
+      "ais_velocity_std": 0.575,
+      "gdelt_tone_24h_mean": -2.0188,
+      "gdelt_tone_delta": -0.0097,
+      "news_severity_max": 0.6511,
+      "news_event_count_24h": 7.0,
+      "price_brent_pct_change_24h": 0.036922,
+      "price_war_risk_premium": 0.076118,
+      "price_bocd_flag": 1.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 3.0,
+      "sanctions_vessel_count": 2.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2025 US-Iran Hormuz standoff",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Hormuz US maximum pressure sanctions 2025'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2025-01-11",
+    "features": {
+      "ais_gap_count_24h": 5.25,
+      "ais_dark_vessel_count": 5.25,
+      "ais_anomaly_score_max": 0.6714,
+      "ais_gap_duration_max_h": 8.5,
+      "ais_monitored_cell_pct": 0.799,
+      "ais_velocity_std": 0.569,
+      "gdelt_tone_24h_mean": -2.0387,
+      "gdelt_tone_delta": -0.0199,
+      "news_severity_max": 0.6395,
+      "news_event_count_24h": 7.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 2.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2025 US-Iran Hormuz standoff",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Hormuz US maximum pressure sanctions 2025'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2025-01-12",
+    "features": {
+      "ais_gap_count_24h": 5.5,
+      "ais_dark_vessel_count": 4.5,
+      "ais_anomaly_score_max": 0.6617,
+      "ais_gap_duration_max_h": 9.0,
+      "ais_monitored_cell_pct": 0.801,
+      "ais_velocity_std": 0.565,
+      "gdelt_tone_24h_mean": -2.0795,
+      "gdelt_tone_delta": -0.0408,
+      "news_severity_max": 0.6349,
+      "news_event_count_24h": 7.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 2.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2025 US-Iran Hormuz standoff",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Hormuz US maximum pressure sanctions 2025'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2025-01-13",
+    "features": {
+      "ais_gap_count_24h": 5.75,
+      "ais_dark_vessel_count": 4.75,
+      "ais_anomaly_score_max": 0.7061,
+      "ais_gap_duration_max_h": 9.5,
+      "ais_monitored_cell_pct": 0.795,
+      "ais_velocity_std": 0.582,
+      "gdelt_tone_24h_mean": -2.1618,
+      "gdelt_tone_delta": -0.0823,
+      "news_severity_max": 0.6737,
+      "news_event_count_24h": 7.0,
+      "price_brent_pct_change_24h": 0.015672,
+      "price_war_risk_premium": 0.089527,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 2.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2025 US-Iran Hormuz standoff",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Hormuz US maximum pressure sanctions 2025'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2025-01-14",
+    "features": {
+      "ais_gap_count_24h": 6.0,
+      "ais_dark_vessel_count": 5.0,
+      "ais_anomaly_score_max": 0.7269,
+      "ais_gap_duration_max_h": 10.0,
+      "ais_monitored_cell_pct": 0.793,
+      "ais_velocity_std": 0.591,
+      "gdelt_tone_24h_mean": -2.3239,
+      "gdelt_tone_delta": -0.1621,
+      "news_severity_max": 0.7001,
+      "news_event_count_24h": 8.0,
+      "price_brent_pct_change_24h": -0.013455,
+      "price_war_risk_premium": 0.071032,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 2.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2025 US-Iran Hormuz standoff",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Hormuz US maximum pressure sanctions 2025'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2025-01-15",
+    "features": {
+      "ais_gap_count_24h": 6.43,
+      "ais_dark_vessel_count": 5.29,
+      "ais_anomaly_score_max": 0.7771,
+      "ais_gap_duration_max_h": 10.86,
+      "ais_monitored_cell_pct": 0.787,
+      "ais_velocity_std": 0.611,
+      "gdelt_tone_24h_mean": -2.6277,
+      "gdelt_tone_delta": -0.3038,
+      "news_severity_max": 0.758,
+      "news_event_count_24h": 9.0,
+      "price_brent_pct_change_24h": 0.026401,
+      "price_war_risk_premium": 0.096314,
+      "price_bocd_flag": 1.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 2.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2025 US-Iran Hormuz standoff",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Hormuz US maximum pressure sanctions 2025'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2025-01-16",
+    "features": {
+      "ais_gap_count_24h": 6.86,
+      "ais_dark_vessel_count": 5.57,
+      "ais_anomaly_score_max": 0.7784,
+      "ais_gap_duration_max_h": 11.71,
+      "ais_monitored_cell_pct": 0.787,
+      "ais_velocity_std": 0.611,
+      "gdelt_tone_24h_mean": -3.1479,
+      "gdelt_tone_delta": -0.5202,
+      "news_severity_max": 0.7937,
+      "news_event_count_24h": 10.0,
+      "price_brent_pct_change_24h": -0.009021,
+      "price_war_risk_premium": 0.082562,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 2.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2025 US-Iran Hormuz standoff",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Hormuz US maximum pressure sanctions 2025'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2025-01-17",
+    "features": {
+      "ais_gap_count_24h": 7.29,
+      "ais_dark_vessel_count": 5.86,
+      "ais_anomaly_score_max": 0.8515,
+      "ais_gap_duration_max_h": 12.57,
+      "ais_monitored_cell_pct": 0.778,
+      "ais_velocity_std": 0.641,
+      "gdelt_tone_24h_mean": -3.9146,
+      "gdelt_tone_delta": -0.7667,
+      "news_severity_max": 0.8996,
+      "news_event_count_24h": 12.0,
+      "price_brent_pct_change_24h": -0.006151,
+      "price_war_risk_premium": 0.07274,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 2.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2025 US-Iran Hormuz standoff",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Hormuz US maximum pressure sanctions 2025'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2025-01-18",
+    "features": {
+      "ais_gap_count_24h": 8.71,
+      "ais_dark_vessel_count": 6.14,
+      "ais_anomaly_score_max": 0.8452,
+      "ais_gap_duration_max_h": 13.43,
+      "ais_monitored_cell_pct": 0.779,
+      "ais_velocity_std": 0.638,
+      "gdelt_tone_24h_mean": -4.8271,
+      "gdelt_tone_delta": -0.9125,
+      "news_severity_max": 0.9557,
+      "news_event_count_24h": 13.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 2.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2025 US-Iran Hormuz standoff",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Hormuz US maximum pressure sanctions 2025'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2025-01-19",
+    "features": {
+      "ais_gap_count_24h": 8.14,
+      "ais_dark_vessel_count": 6.43,
+      "ais_anomaly_score_max": 0.8573,
+      "ais_gap_duration_max_h": 14.29,
+      "ais_monitored_cell_pct": 0.777,
+      "ais_velocity_std": 0.643,
+      "gdelt_tone_24h_mean": -5.673,
+      "gdelt_tone_delta": -0.8459,
+      "news_severity_max": 1.0,
+      "news_event_count_24h": 15.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 2.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2025 US-Iran Hormuz standoff",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Hormuz US maximum pressure sanctions 2025'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2025-01-20",
+    "features": {
+      "ais_gap_count_24h": 8.57,
+      "ais_dark_vessel_count": 6.71,
+      "ais_anomaly_score_max": 0.8657,
+      "ais_gap_duration_max_h": 15.14,
+      "ais_monitored_cell_pct": 0.776,
+      "ais_velocity_std": 0.646,
+      "gdelt_tone_24h_mean": -6.2939,
+      "gdelt_tone_delta": -0.6209,
+      "news_severity_max": 1.0,
+      "news_event_count_24h": 16.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 2.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 1,
+    "crisis_name": "2025 US-Iran Hormuz standoff",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Hormuz US maximum pressure sanctions 2025'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2025-01-21",
+    "features": {
+      "ais_gap_count_24h": 10.0,
+      "ais_dark_vessel_count": 7.0,
+      "ais_anomaly_score_max": 0.8943,
+      "ais_gap_duration_max_h": 16.0,
+      "ais_monitored_cell_pct": 0.773,
+      "ais_velocity_std": 0.658,
+      "gdelt_tone_24h_mean": -6.6758,
+      "gdelt_tone_delta": -0.3819,
+      "news_severity_max": 1.0,
+      "news_event_count_24h": 17.0,
+      "price_brent_pct_change_24h": -0.018567,
+      "price_war_risk_premium": 0.050189,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 4.0,
+      "sanctions_vessel_count": 5.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 1,
+    "crisis_name": "2025 US-Iran Hormuz standoff",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Hormuz US maximum pressure sanctions 2025'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2025-01-22",
+    "features": {
+      "ais_gap_count_24h": 8.29,
+      "ais_dark_vessel_count": 6.43,
+      "ais_anomaly_score_max": 0.7678,
+      "ais_gap_duration_max_h": 14.57,
+      "ais_monitored_cell_pct": 0.788,
+      "ais_velocity_std": 0.607,
+      "gdelt_tone_24h_mean": -6.4211,
+      "gdelt_tone_delta": 0.2547,
+      "news_severity_max": 1.0,
+      "news_event_count_24h": 16.0,
+      "price_brent_pct_change_24h": -0.003657,
+      "price_war_risk_premium": 0.0446,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 5.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 1,
+    "crisis_name": "2025 US-Iran Hormuz standoff",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Hormuz US maximum pressure sanctions 2025'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2025-01-23",
+    "features": {
+      "ais_gap_count_24h": 7.57,
+      "ais_dark_vessel_count": 5.86,
+      "ais_anomaly_score_max": 0.6929,
+      "ais_gap_duration_max_h": 13.14,
+      "ais_monitored_cell_pct": 0.797,
+      "ais_velocity_std": 0.577,
+      "gdelt_tone_24h_mean": -5.8325,
+      "gdelt_tone_delta": 0.5886,
+      "news_severity_max": 0.9085,
+      "news_event_count_24h": 15.0,
+      "price_brent_pct_change_24h": -0.008987,
+      "price_war_risk_premium": 0.031629,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 5.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2025 US-Iran Hormuz standoff",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Hormuz US maximum pressure sanctions 2025'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2025-01-24",
+    "features": {
+      "ais_gap_count_24h": 6.86,
+      "ais_dark_vessel_count": 5.29,
+      "ais_anomaly_score_max": 0.7203,
+      "ais_gap_duration_max_h": 11.71,
+      "ais_monitored_cell_pct": 0.794,
+      "ais_velocity_std": 0.588,
+      "gdelt_tone_24h_mean": -5.3223,
+      "gdelt_tone_delta": 0.5102,
+      "news_severity_max": 0.895,
+      "news_event_count_24h": 14.0,
+      "price_brent_pct_change_24h": 0.002682,
+      "price_war_risk_premium": 0.03161,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 5.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2025 US-Iran Hormuz standoff",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Hormuz US maximum pressure sanctions 2025'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2025-01-25",
+    "features": {
+      "ais_gap_count_24h": 7.14,
+      "ais_dark_vessel_count": 4.71,
+      "ais_anomaly_score_max": 0.7102,
+      "ais_gap_duration_max_h": 10.29,
+      "ais_monitored_cell_pct": 0.795,
+      "ais_velocity_std": 0.584,
+      "gdelt_tone_24h_mean": -4.8801,
+      "gdelt_tone_delta": 0.4422,
+      "news_severity_max": 0.858,
+      "news_event_count_24h": 13.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 5.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2025 US-Iran Hormuz standoff",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Hormuz US maximum pressure sanctions 2025'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2025-01-26",
+    "features": {
+      "ais_gap_count_24h": 5.43,
+      "ais_dark_vessel_count": 4.14,
+      "ais_anomaly_score_max": 0.6259,
+      "ais_gap_duration_max_h": 8.86,
+      "ais_monitored_cell_pct": 0.805,
+      "ais_velocity_std": 0.55,
+      "gdelt_tone_24h_mean": -4.4967,
+      "gdelt_tone_delta": 0.3834,
+      "news_severity_max": 0.7692,
+      "news_event_count_24h": 12.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 5.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2025 US-Iran Hormuz standoff",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Hormuz US maximum pressure sanctions 2025'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2025-01-27",
+    "features": {
+      "ais_gap_count_24h": 4.71,
+      "ais_dark_vessel_count": 3.57,
+      "ais_anomaly_score_max": 0.6478,
+      "ais_gap_duration_max_h": 7.43,
+      "ais_monitored_cell_pct": 0.802,
+      "ais_velocity_std": 0.559,
+      "gdelt_tone_24h_mean": -4.1643,
+      "gdelt_tone_delta": 0.3324,
+      "news_severity_max": 0.7635,
+      "news_event_count_24h": 11.0,
+      "price_brent_pct_change_24h": -0.018089,
+      "price_war_risk_premium": 0.010157,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 5.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2025 US-Iran Hormuz standoff",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Hormuz US maximum pressure sanctions 2025'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2025-01-28",
+    "features": {
+      "ais_gap_count_24h": 4.0,
+      "ais_dark_vessel_count": 3.0,
+      "ais_anomaly_score_max": 0.5828,
+      "ais_gap_duration_max_h": 6.0,
+      "ais_monitored_cell_pct": 0.81,
+      "ais_velocity_std": 0.533,
+      "gdelt_tone_24h_mean": -3.8762,
+      "gdelt_tone_delta": 0.2881,
+      "news_severity_max": 0.6955,
+      "news_event_count_24h": 10.0,
+      "price_brent_pct_change_24h": 0.005319,
+      "price_war_risk_premium": 0.013953,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 5.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2025 US-Iran Hormuz standoff",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Hormuz US maximum pressure sanctions 2025'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2025-01-29",
+    "features": {
+      "ais_gap_count_24h": 3.47,
+      "ais_dark_vessel_count": 2.6,
+      "ais_anomaly_score_max": 0.4815,
+      "ais_gap_duration_max_h": 5.2,
+      "ais_monitored_cell_pct": 0.822,
+      "ais_velocity_std": 0.493,
+      "gdelt_tone_24h_mean": -3.6264,
+      "gdelt_tone_delta": 0.2498,
+      "news_severity_max": 0.6029,
+      "news_event_count_24h": 9.0,
+      "price_brent_pct_change_24h": -0.011743,
+      "price_war_risk_premium": 0.000266,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 5.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2025 US-Iran Hormuz standoff",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Hormuz US maximum pressure sanctions 2025'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2025-01-30",
+    "features": {
+      "ais_gap_count_24h": 3.01,
+      "ais_dark_vessel_count": 2.25,
+      "ais_anomaly_score_max": 0.4408,
+      "ais_gap_duration_max_h": 4.51,
+      "ais_monitored_cell_pct": 0.827,
+      "ais_velocity_std": 0.476,
+      "gdelt_tone_24h_mean": -3.4099,
+      "gdelt_tone_delta": 0.2165,
+      "news_severity_max": 0.5579,
+      "news_event_count_24h": 9.0,
+      "price_brent_pct_change_24h": 0.003787,
+      "price_war_risk_premium": 0.003141,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 5.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2025 US-Iran Hormuz standoff",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Hormuz US maximum pressure sanctions 2025'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2025-01-31",
+    "features": {
+      "ais_gap_count_24h": 2.61,
+      "ais_dark_vessel_count": 1.95,
+      "ais_anomaly_score_max": 0.391,
+      "ais_gap_duration_max_h": 3.91,
+      "ais_monitored_cell_pct": 0.833,
+      "ais_velocity_std": 0.456,
+      "gdelt_tone_24h_mean": -3.2222,
+      "gdelt_tone_delta": 0.1877,
+      "news_severity_max": 0.5081,
+      "news_event_count_24h": 8.0,
+      "price_brent_pct_change_24h": -0.001431,
+      "price_war_risk_premium": 0.000417,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 5.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2025 US-Iran Hormuz standoff",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Hormuz US maximum pressure sanctions 2025'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2025-02-01",
+    "features": {
+      "ais_gap_count_24h": 3.26,
+      "ais_dark_vessel_count": 1.69,
+      "ais_anomaly_score_max": 0.3388,
+      "ais_gap_duration_max_h": 3.39,
+      "ais_monitored_cell_pct": 0.839,
+      "ais_velocity_std": 0.436,
+      "gdelt_tone_24h_mean": -3.0595,
+      "gdelt_tone_delta": 0.1627,
+      "news_severity_max": 0.4581,
+      "news_event_count_24h": 7.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 5.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2025 US-Iran Hormuz standoff",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Hormuz US maximum pressure sanctions 2025'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2025-02-02",
+    "features": {
+      "ais_gap_count_24h": 1.96,
+      "ais_dark_vessel_count": 1.47,
+      "ais_anomaly_score_max": 0.2791,
+      "ais_gap_duration_max_h": 2.94,
+      "ais_monitored_cell_pct": 0.847,
+      "ais_velocity_std": 0.412,
+      "gdelt_tone_24h_mean": -2.9185,
+      "gdelt_tone_delta": 0.141,
+      "news_severity_max": 0.4039,
+      "news_event_count_24h": 7.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 5.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2025 US-Iran Hormuz standoff",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Hormuz US maximum pressure sanctions 2025'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2025-02-03",
+    "features": {
+      "ais_gap_count_24h": 1.7,
+      "ais_dark_vessel_count": 1.27,
+      "ais_anomaly_score_max": 0.243,
+      "ais_gap_duration_max_h": 2.55,
+      "ais_monitored_cell_pct": 0.851,
+      "ais_velocity_std": 0.397,
+      "gdelt_tone_24h_mean": -2.7962,
+      "gdelt_tone_delta": 0.1223,
+      "news_severity_max": 0.3687,
+      "news_event_count_24h": 6.0,
+      "price_brent_pct_change_24h": -0.010422,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 5.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2025 US-Iran Hormuz standoff",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Hormuz US maximum pressure sanctions 2025'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2025-02-04",
+    "features": {
+      "ais_gap_count_24h": 1.47,
+      "ais_dark_vessel_count": 1.1,
+      "ais_anomaly_score_max": 0.2365,
+      "ais_gap_duration_max_h": 2.21,
+      "ais_monitored_cell_pct": 0.852,
+      "ais_velocity_std": 0.395,
+      "gdelt_tone_24h_mean": -2.6902,
+      "gdelt_tone_delta": 0.106,
+      "news_severity_max": 0.3567,
+      "news_event_count_24h": 6.0,
+      "price_brent_pct_change_24h": 0.00316,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 5.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2025 US-Iran Hormuz standoff",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Iran Hormuz US maximum pressure sanctions 2025'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  }
+]

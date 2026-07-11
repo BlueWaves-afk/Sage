@@ -143,6 +143,25 @@ export default function Landing() {
           ))}
         </div>
 
+        {/* G11 — Business impact card */}
+        <div className="landing-impact-row stagger">
+          <div className="landing-impact-card card">
+            <div className="landing-impact-num c-cyan">5d 7h</div>
+            <div className="landing-impact-label">Detection Lead Time</div>
+            <div className="landing-impact-sub">before documented disruption onset (LOCO validation)</div>
+          </div>
+          <div className="landing-impact-card card">
+            <div className="landing-impact-num c-green">$2.1B</div>
+            <div className="landing-impact-label">Avoided Cost / Event</div>
+            <div className="landing-impact-sub">early procurement vs reactive spot buy</div>
+          </div>
+          <div className="landing-impact-card card">
+            <div className="landing-impact-num c-amber">73 s</div>
+            <div className="landing-impact-label">Signal → Recommendation</div>
+            <div className="landing-impact-sub">197–394× faster than manual procurement desk</div>
+          </div>
+        </div>
+
         <div className="landing-cta">
           <button className="btn-launch press" onClick={() => nav("/command")}>
             <span className="btn-launch-sheen" />

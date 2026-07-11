@@ -1,0 +1,9 @@
+source_id,target_id,relation,flow_mbpd,product_type,tier,source,as_of,notes
+refinery_jamnagar,hub_gujarat,DISTRIBUTES_TO,1.40,refined_products,real,PPAC-2025,2025,Jamnagar DTA+SEZ output to Gujarat grid
+refinery_nayara,hub_gujarat,DISTRIBUTES_TO,0.27,refined_products,real,PPAC-2025,2025,Vadinar refinery output to Gujarat and export
+refinery_mangaluru,hub_karnataka,DISTRIBUTES_TO,0.30,refined_products,real,PPAC-2025,2025,MRPL output to Karnataka distribution network
+refinery_paradip,hub_odisha,DISTRIBUTES_TO,0.30,refined_products,real,PPAC-2025,2025,IOCL Paradip to East Coast grid
+refinery_visakh,hub_andhra,DISTRIBUTES_TO,0.18,refined_products,real,PPAC-2025,2025,HPCL Vizag to AP + Telangana
+refinery_chennai,hub_tamilnadu,DISTRIBUTES_TO,0.22,refined_products,real,PPAC-2025,2025,CPCL to Tamil Nadu + Kerala corridor
+refinery_panipat,hub_up_north,DISTRIBUTES_TO,0.30,refined_products,real,PPAC-2025,2025,IOCL Panipat to North India
+refinery_kochi,hub_karnataka,DISTRIBUTES_TO,0.12,refined_products,real,PPAC-2025,2025,BPCL Kochi secondary distribution to Karnataka coast

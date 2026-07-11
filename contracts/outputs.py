@@ -42,6 +42,7 @@ class ScenarioOutputData(BaseModel):
     price_impact_high: float = Field(..., description="USD/bbl, high uncertainty band")
     spr_depletion_days: float = Field(..., description="Days of SPR cover remaining at projected draw rate")
     gdp_proxy_impact_pct: Optional[float] = Field(None, description="GDP-growth hit %, price-driven (NIPFP)")
+    gdp_trajectory_pct: list[float] = Field(default_factory=list, description="Per-day GDP-growth hit %, same length as feedstock_gap_timeline (Area 2: trajectory not just a point estimate)")
     inflation_impact_pct: Optional[float] = Field(None, description="CPI inflation rise %, price-driven (NIPFP)")
     sector_impacts: list[dict] = Field(default_factory=list, description=(
         "Reduced-form IO sectoral cascade. Each: {sector, petroleum_share, shortfall_mbpd, "
@@ -116,6 +117,10 @@ class ProcurementOption(BaseModel):
     lead_time_days: float
     grade_compatibility: float = Field(..., ge=0, le=1)
     corridor_risk: float = Field(..., ge=0, le=1)
+    # G5: port congestion + tanker availability (Area 3 word-for-word)
+    congestion_delay_days: float = Field(0.0, description="Destination-port berth wait, days (from Port.congestion in graph)")
+    tanker_availability: float = Field(1.0, ge=0, le=1, description="AIS-derived VLCC availability proxy (1=normal)")
+    tanker_availability_note: str = Field("", description="Human-readable note on tanker availability for rationale")
     estimated_carbon_intensity: Optional[float] = Field(None,
         description="kg CO₂e per tonne of crude transported — from voyage distance × vessel emissions factor")
     insurance_premium_usd_bbl: Optional[float] = Field(None,

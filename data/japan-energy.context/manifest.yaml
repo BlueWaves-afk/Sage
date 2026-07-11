@@ -1,0 +1,40 @@
+# Japan Energy Context Bundle — minimal scaffold for bundle-swap demo (G12)
+# Demonstrates that SAGE's worldview is swappable without code changes.
+# Full bundle would mirror india-energy-2026.context with Japan METI/JEPX data.
+#
+# To activate: SAGE_CONTEXT_BUNDLE=data/japan-energy.context docker compose -f docker-compose.prod.yml up -d
+
+bundle_id:      japan-energy
+name:           Japan Energy Supply Chain — 2026 (Scaffold)
+schema_version: 1.0.0
+bundle_version: 0.1.0
+previous_version: null
+domain:         oil-supply-chain
+region:         Japan
+vintage:        2026
+created:        2026-07-11
+
+upgrade_policy:
+  replace:  [facts, params, io]
+  preserve: [risk_state_edges, geo_events, vessel_nodes, episodes, wiki_dynamic]
+  resynthesise_on_change: true
+
+description: >
+  Scaffold context bundle for Japan crude oil supply chain. Japan imports ~3.2 mbpd,
+  90%+ from Middle East via Strait of Hormuz and Strait of Malacca. Key suppliers:
+  Saudi Aramco, ADNOC, Kuwait Petroleum. Key refineries: Eneos Negishi, Idemitsu
+  Chiba, Cosmo Sakai. Primary strategic reserve: JOGMEC (national + private combined
+  ~150 days consumption). This scaffold contains 10 key entities to demonstrate
+  the bundle-swap capability; a full bundle would have 100+ nodes.
+
+nodes:
+  - {type: Corridor,  file: facts/nodes/corridors.csv}
+  - {type: Supplier,  file: facts/nodes/suppliers.csv}
+  - {type: Refinery,  file: facts/nodes/refineries.csv}
+  - {type: SPRCavern, file: facts/nodes/spr.csv}
+
+edges:
+  - {type: EXPORTS_VIA, file: facts/edges/exports_via.csv}
+  - {type: SUPPLIES,    file: facts/edges/supplies.csv}
+
+params_file: params/ario_params.csv

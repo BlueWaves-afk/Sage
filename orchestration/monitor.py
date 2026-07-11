@@ -41,12 +41,24 @@ _registered_scenarios: dict[str, str] = {}
 async def run_monitor() -> None:
     """Continuous async loop. Entry point called from sage_core."""
     log.info("Threshold monitor started. Poll interval: %ds", POLL_INTERVAL_S)
+    from knowledge.demo_control import is_demo_active, DEMO_POLL_INTERVAL_S
+    demo_prev = False
+    client = aioredis.from_url(REDIS_URL, decode_responses=True)
     while True:
+        # Demo sandbox: clear the fire-dedup so the replay can re-fire the full
+        # cascade from a clean baseline, and poll faster so a ~3-min replay
+        # produces a visibly live crossing. No-op when no demo runs.
+        demo_active = await is_demo_active(client)
+        if demo_active and not demo_prev:
+            _fired_bands.clear()
+            log.info("Demo sandbox ENTERED — cleared trigger dedup")
+        demo_prev = demo_active
+
         try:
             await _poll()
         except Exception as exc:
             log.error("Monitor poll error: %s", exc)
-        await asyncio.sleep(POLL_INTERVAL_S)
+        await asyncio.sleep(DEMO_POLL_INTERVAL_S if demo_active else POLL_INTERVAL_S)
 
 
 async def _poll() -> None:

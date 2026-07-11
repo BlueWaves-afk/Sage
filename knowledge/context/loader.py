@@ -403,15 +403,38 @@ def _fmt_bypass(r: dict) -> str:
             f"(Port) with cost_premium {r['cost_premium']} and added_days {r['added_days']}.")
 
 
+def _fmt_production_field(r: dict) -> str:
+    return (f"{r['canonical_name']} (ProductionField) in {r['country']} produces "
+            f"{r['output_mbpd']} mbpd with {r['spare_mbpd']} mbpd spare capacity. "
+            f"Crude grade context from connected Supplier nodes via PRODUCES_AT edges.")
+
+
+def _fmt_distribution_hub(r: dict) -> str:
+    return (f"{r['canonical_name']} (DistributionHub) in {r['region']} has demand "
+            f"{r['demand_mbpd']} mbpd with primary product mix: {r['primary_product_mix']}.")
+
+
+def _fmt_produces_at(r: dict) -> str:
+    return (f"{_cname(r['source_id'])} (Supplier) PRODUCES_AT {_cname(r['target_id'])} "
+            f"(ProductionField) with output {r['output_mbpd']} mbpd, grade {r['crude_grade']}.")
+
+
+def _fmt_distributes_to(r: dict) -> str:
+    return (f"{_cname(r['source_id'])} (Refinery) DISTRIBUTES_TO {_cname(r['target_id'])} "
+            f"(DistributionHub) flow {r['flow_mbpd']} mbpd of {r['product_type']}.")
+
+
 _NODE_FORMATTERS = {
-    "Corridor":   _fmt_corridor,
-    "Supplier":   _fmt_supplier,
-    "Refinery":   _fmt_refinery,
-    "CrudeGrade": _fmt_crude_grade,
-    "Port":       _fmt_port,
-    "SPRCavern":  _fmt_spr,
-    "Authority":  _fmt_authority,
-    "GeoEvent":   _fmt_geoevent,
+    "Corridor":        _fmt_corridor,
+    "Supplier":        _fmt_supplier,
+    "Refinery":        _fmt_refinery,
+    "CrudeGrade":      _fmt_crude_grade,
+    "Port":            _fmt_port,
+    "SPRCavern":       _fmt_spr,
+    "Authority":       _fmt_authority,
+    "GeoEvent":        _fmt_geoevent,
+    "ProductionField": _fmt_production_field,
+    "DistributionHub": _fmt_distribution_hub,
 }
 
 _EDGE_FORMATTERS = {
@@ -420,6 +443,8 @@ _EDGE_FORMATTERS = {
     "SUPPLIES":       _fmt_supplies,
     "CONFIGURED_FOR": _fmt_configured_for,
     "BYPASS_ROUTE":   _fmt_bypass,
+    "PRODUCES_AT":    _fmt_produces_at,
+    "DISTRIBUTES_TO": _fmt_distributes_to,
 }
 
 

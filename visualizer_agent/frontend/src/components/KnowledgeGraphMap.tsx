@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import DeckGL from "@deck.gl/react";
 import { WebMercatorViewport, FlyToInterpolator } from "@deck.gl/core";
-import { ScatterplotLayer, LineLayer, TextLayer, ArcLayer } from "@deck.gl/layers";
+import { ScatterplotLayer, LineLayer, TextLayer, ArcLayer, PathLayer } from "@deck.gl/layers";
 import { HeatmapLayer } from "@deck.gl/aggregation-layers";
 import { CollisionFilterExtension } from "@deck.gl/extensions";
 import { Map as BaseMap } from "react-map-gl/maplibre";
@@ -17,14 +17,16 @@ const BAND_RGB: Record<string, [number, number, number]> = {
 };
 
 const TYPE_RGB: Record<string, [number, number, number]> = {
-  Corridor:    [230,  84,  74],
-  Supplier:    [ 90, 160, 220],
-  Refinery:    [ 45, 190, 165],
-  CrudeGrade:  [168, 120, 230],
-  Port:        [ 70, 195, 225],
-  SPRCavern:   [233, 196, 106],
-  Authority:   [150, 165, 190],
-  GeoEvent:    [244, 162,  97],
+  Corridor:        [230,  84,  74],
+  Supplier:        [ 90, 160, 220],
+  Refinery:        [ 45, 190, 165],
+  CrudeGrade:      [168, 120, 230],
+  Port:            [ 70, 195, 225],
+  SPRCavern:       [233, 196, 106],
+  Authority:       [150, 165, 190],
+  GeoEvent:        [244, 162,  97],
+  ProductionField: [255, 140,  50],   // G7 — amber/orange for wellheads
+  DistributionHub: [120, 210, 100],   // G7 — green for demand hubs
 };
 
 const RELATION_STYLE: Record<string, { color: [number, number, number]; width: number }> = {
@@ -48,6 +50,41 @@ const NODE_R = 5;
 const FIT_PAD = 80;
 
 const GREY: [number, number, number] = [110, 114, 122];
+
+// G8 — Static shipping lane polylines (public data, EIA chokepoints + Admiralty lanes)
+// Each route has [lon, lat] waypoints and a corridor_id that maps to risk_score
+const SHIPPING_LANES: { id: string; name: string; path: [number, number][] }[] = [
+  {
+    id: "corridor_hormuz",
+    name: "Strait of Hormuz",
+    path: [[50.0,26.5],[56.4,26.2],[57.8,24.5],[60.0,22.5],[63.5,20.5],[67.0,21.0],[70.0,22.5]],
+  },
+  {
+    id: "corridor_bab_el_mandeb",
+    name: "Bab-el-Mandeb",
+    path: [[32.5,30.2],[33.5,27.0],[37.0,22.0],[43.3,12.5],[47.0,11.5],[51.5,12.0],[56.0,14.5],[60.0,20.0],[63.5,20.5],[67.0,21.0],[70.0,22.5]],
+  },
+  {
+    id: "corridor_suez",
+    name: "Suez Canal",
+    path: [[30.0,31.8],[32.5,30.2]],
+  },
+  {
+    id: "corridor_malacca",
+    name: "Strait of Malacca",
+    path: [[102.0,2.5],[98.0,4.0],[94.5,6.5],[88.0,9.0],[80.0,12.0],[74.0,18.0],[70.0,22.5]],
+  },
+  {
+    id: "bypass_cape",
+    name: "Cape of Good Hope (Bypass)",
+    path: [[30.0,31.8],[15.0,10.0],[5.0,-10.0],[18.4,-34.0],[30.0,-28.0],[40.0,-15.0],[48.0,-5.0],[58.0,0.0],[65.0,10.0],[70.0,22.5]],
+  },
+  {
+    id: "bypass_petroline",
+    name: "Petroline (East–West Pipeline)",
+    path: [[50.0,26.5],[46.5,24.8],[43.5,22.5],[39.5,20.0],[37.0,17.5]],
+  },
+];
 
 function desaturate(rgb: [number, number, number], amount: number): [number, number, number] {
   const a = Math.min(1, Math.max(0, amount));
@@ -85,7 +122,10 @@ export interface KnowledgeGraphMapProps {
   colorBy?: "risk" | "type";
   showFlows?: boolean;
   showHeatmap?: boolean;
+  showRoutes?: boolean;
   blastRadiusId?: string | null;
+  // corridor id → risk score (0–1), used to color route polylines
+  corridorRisk?: Record<string, number>;
 }
 
 export default function KnowledgeGraphMap({
@@ -96,7 +136,9 @@ export default function KnowledgeGraphMap({
   colorBy = "risk",
   showFlows = false,
   showHeatmap = false,
+  showRoutes = true,
   blastRadiusId = null,
+  corridorRisk = {},
 }: KnowledgeGraphMapProps) {
   const [hoverId, setHoverId] = useState<string | null>(null);
   // Animation tick for flow pulses (0–1 looping).
@@ -491,7 +533,36 @@ export default function KnowledgeGraphMap({
         })
       : null;
 
+    // ── G8 Route polylines — shipping lane geometries as PathLayer ───────────
+    function riskToLaneColor(risk: number): [number, number, number, number] {
+      if (risk >= 0.70) return [230, 57, 70, 200];   // ACTION/CRITICAL — red
+      if (risk >= 0.45) return [244, 162, 97, 190];   // ELEVATED — orange
+      if (risk >= 0.25) return [233, 196, 106, 160];  // WATCH — amber
+      return [70, 195, 225, 120];                      // CALM — cyan
+    }
+    const routeLaneData = SHIPPING_LANES.map((lane) => ({
+      ...lane,
+      risk: corridorRisk[lane.id] ?? 0,
+      isBypass: lane.id.startsWith("bypass"),
+    }));
+    type RouteLane = { id: string; name: string; path: [number, number][]; risk: number; isBypass: boolean };
+    const routePaths = showRoutes ? new PathLayer<RouteLane>({
+      id: "kg-route-paths",
+      data: routeLaneData,
+      getPath: (d) => d.path,
+      getColor: (d) => riskToLaneColor(d.risk),
+      getWidth: (d) => d.isBypass ? 1.5 : 2.5,
+      widthUnits: "pixels",
+      widthMinPixels: 1,
+      widthMaxPixels: 5,
+      pickable: true,
+      jointRounded: true,
+      capRounded: true,
+      miterLimit: 2,
+    }) : null;
+
     return [
+      routePaths,
       heatmap,
       flows,
       flowPulses,
@@ -503,7 +574,7 @@ export default function KnowledgeGraphMap({
       labels,
     ].filter(Boolean);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [graph, onNodeClick, selectedId, colorBy, hoverId, theme, adjacency, hubThreshold, light, labelText, labelOutline, showHeatmap, showFlows, tick, blastRadiusId, blastSet]);
+  }, [graph, onNodeClick, selectedId, colorBy, hoverId, theme, adjacency, hubThreshold, light, labelText, labelOutline, showHeatmap, showFlows, showRoutes, corridorRisk, tick, blastRadiusId, blastSet]);
 
   return (
     <div ref={containerRef} style={{ position: "absolute", inset: 0 }}>

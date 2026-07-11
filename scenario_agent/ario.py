@@ -60,6 +60,12 @@ class ARIOParams:
     bypass_compromised_frac: float = 0.0      # 0=bypass available, 1=bypass also blocked (e.g. Red Sea too)
     spr_policy:             str   = "moderate"   # aggressive | moderate | none — govt drawdown stance
     demand_destruction_pct: float = 0.0       # demand reduction from high prices (0..1 of consumption)
+    # ── G4: OPEC+ production-cut physics (source-side, distinct from transit loss) ──
+    # Non-zero activates production-cut mode: India's direct supply loss from the cut,
+    # in mbpd, AFTER global spare capacity absorbs the first tranche.
+    # Transit (Hormuz) disruptions use disruption_fraction; production cuts use supply_cut_mbpd.
+    supply_cut_mbpd:        float = 0.0       # India's direct supply loss from OPEC+ cut, mbpd
+    cut_supplier:           str   = ""        # Supplier name (e.g. "Saudi Aramco")
 
     def sources(self) -> dict:
         """Labelled, sourced assumptions for ScenarioOutputData.assumptions."""
@@ -79,6 +85,8 @@ class ARIOParams:
             "inflation_pct_per_usd_bbl": {"value": self.inflation_pct_per_usd_bbl, "unit": "%/$bbl", "source": "NIPFP WP2012-99"},
             "disruption_fraction":   {"value": self.disruption_fraction, "unit": "frac", "source": "scenario input"},
             "disruption_days":       {"value": self.disruption_days, "unit": "days", "source": "scenario input"},
+            "supply_cut_mbpd":       {"value": self.supply_cut_mbpd, "unit": "mbpd", "source": "scenario input (OPEC+ cut, India direct exposure)"},
+            "cut_supplier":          {"value": self.cut_supplier or "—", "unit": "", "source": "scenario input"},
         }
 
 
@@ -114,6 +122,7 @@ class ARIOResult:
     price_impact_high:      float = 0.0
     gdp_proxy_impact_pct:   float = 0.0      # GDP-growth hit % (price-driven, sourced)
     inflation_impact_pct:   float = 0.0      # CPI rise % (price-driven, sourced)
+    gdp_trajectory_pct:     list[float] = field(default_factory=list)  # per-day GDP hit (Area 2 "trajectory")
     node_impacts:           list[NodeImpact] = field(default_factory=list)   # per-node propagation
     sector_impacts:         list[SectorImpact] = field(default_factory=list) # downstream sectoral cascade
     assumptions:            dict = field(default_factory=dict)
@@ -151,20 +160,34 @@ def run(params: ARIOParams, refineries: list[dict] | None = None,
     product_shortfall_day = float(p.horizon_days)
     spr_hit = prod_hit = False
 
+    _prod_cut_mode = p.supply_cut_mbpd > 0.0
+
     for t in range(p.horizon_days):
         # Escalation profile shapes how the disruption evolves over its window.
         if t >= p.disruption_days:
             sev = 0.0
         elif p.escalation_profile == "escalating":
-            sev = p.disruption_fraction * min(1.0, (t + 1) / max(p.disruption_days * 0.5, 1))
+            sev = min(1.0, (t + 1) / max(p.disruption_days * 0.5, 1))
         elif p.escalation_profile == "resolving":
-            sev = p.disruption_fraction * max(0.0, 1.0 - t / max(p.disruption_days, 1))
+            sev = max(0.0, 1.0 - t / max(p.disruption_days, 1))
         else:  # constant
-            sev = p.disruption_fraction
-        lost   = hormuz_dep_mbpd * sev
-        ramp   = max(0.0, min(1.0, (t - p.bypass_ramp_days) / max(p.bypass_ramp_days, 1)))
-        relief = min(eff_bypass_cap, lost) * ramp
-        net    = max(0.0, lost - relief)                       # unmet by bypass
+            sev = 1.0
+
+        if _prod_cut_mode:
+            # G4: OPEC+ production-cut — source-side, no pipeline bypass available.
+            # Global spare capacity absorbs the first tranche; India bears the residual.
+            # sev modulates severity over the disruption window; disruption_fraction
+            # is repurposed as the implementation fraction (0=paper cut, 1=full delivery stop).
+            raw_cut = p.supply_cut_mbpd * sev * p.disruption_fraction
+            net = max(0.0, raw_cut)                        # spare already subtracted by user's mbpd input
+            relief = 0.0                                   # no bypass route for source-side shortfall
+        else:
+            # Transit disruption (Hormuz / chokepoint) — original physics.
+            lost   = hormuz_dep_mbpd * sev * p.disruption_fraction
+            ramp   = max(0.0, min(1.0, (t - p.bypass_ramp_days) / max(p.bypass_ramp_days, 1)))
+            relief = min(eff_bypass_cap, lost) * ramp
+            net    = max(0.0, lost - relief)               # unmet by bypass
+
         supply_gap_timeline.append(round(net, 4))
 
         draw = min(eff_spr_draw, net, max(0.0, spr_remaining - spr_floor_mbbl))
@@ -179,10 +202,19 @@ def run(params: ARIOParams, refineries: list[dict] | None = None,
         if not prod_hit and cumulative_gap >= refinery_buffer and feedstock_gap > 0:
             product_shortfall_day, prod_hit = float(t), True
 
-    # Price impact: the GLOBAL Hormuz shortfall drives Brent, but global spare capacity
-    # and pipeline rerouting absorb the first few mbpd. Price responds to what's left.
-    gross_global = HORMUZ_GLOBAL_MBPD * p.disruption_fraction
-    net_global   = max(0.0, gross_global - p.global_spare_mbpd - p.global_bypass_mbpd)
+    # Price impact differs by disruption type:
+    # - Transit (Hormuz): global seaborne shortfall minus spare capacity and pipeline bypass
+    # - Production (OPEC+): the announced cut minus global spare capacity (which DOES absorb cuts)
+    if _prod_cut_mode:
+        # For OPEC+ cuts, supply_cut_mbpd is India's exposure; back-compute global cut via India's ~4.4% share
+        _india_import_share = (p.daily_consumption_mbpd * p.import_dependence_pct / 100.0) / GLOBAL_SUPPLY_MBPD
+        gross_global = p.supply_cut_mbpd / max(_india_import_share, 0.01) * p.disruption_fraction
+        # Spare capacity specifically absorbs production cuts (unlike transit blockades)
+        net_global   = max(0.0, gross_global - p.global_spare_mbpd)
+    else:
+        # Transit disruption: bypass also offsets
+        gross_global = HORMUZ_GLOBAL_MBPD * p.disruption_fraction
+        net_global   = max(0.0, gross_global - p.global_spare_mbpd - p.global_bypass_mbpd)
     price_low  = round(p.price_per_mbpd_low  * net_global, 2)
     price_high = round(p.price_per_mbpd_high * net_global, 2)
 
@@ -236,6 +268,21 @@ def run(params: ARIOParams, refineries: list[dict] | None = None,
             ))
         node_impacts.sort(key=lambda n: -n.peak_gap_mbpd)
 
+    # ── GDP trajectory: per-day GDP-growth hit driven by the day's price shock ──
+    # Each day's gap drives a proportional price shock → NIPFP macro transmission.
+    # This gives a time series rather than a single-point estimate (brief Area 2).
+    gdp_trajectory: list[float] = []
+    for day_gap in supply_gap_timeline:
+        day_frac = day_gap / max(peak_gap, 0.001)
+        if _prod_cut_mode:
+            day_net_global = max(0.0, gross_global * day_frac - p.global_spare_mbpd)
+        else:
+            day_net_global = max(0.0, (HORMUZ_GLOBAL_MBPD * p.disruption_fraction
+                                       * day_frac
+                                       - p.global_spare_mbpd - p.global_bypass_mbpd))
+        day_price_mid = ((p.price_per_mbpd_low + p.price_per_mbpd_high) / 2.0) * day_net_global
+        gdp_trajectory.append(round(day_price_mid * p.gdp_pct_per_usd_bbl, 4))
+
     return ARIOResult(
         # Exposed timeline matches the gap_mbpd/gap_duration_days definition above
         # (pre-SPR-draw) so a day-by-day chart's peak always equals gap_mbpd. The
@@ -250,6 +297,7 @@ def run(params: ARIOParams, refineries: list[dict] | None = None,
         price_impact_high=price_high,
         gdp_proxy_impact_pct=gdp_hit,           # price-driven, sourced (NIPFP)
         inflation_impact_pct=inflation_hit,
+        gdp_trajectory_pct=gdp_trajectory,      # day-by-day GDP-growth hit (Area 2 "trajectory")
         node_impacts=node_impacts,
         sector_impacts=sector_impacts,
         assumptions=p.sources(),

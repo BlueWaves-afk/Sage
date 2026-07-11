@@ -504,16 +504,31 @@ async def write_risk_state(
     # ── Consistency gate ──────────────────────────────────────────────────
     # Graph write first; the wiki risk block is appended only after it commits,
     # so a failed add_episode can't leave the wiki ahead of the graph.
-    await g.add_episode(
-        name=episode_name,
-        episode_body=episode_text,
-        source=EpisodeType.text,
-        source_description="SAGE risk state",
-        reference_time=now,
-        entity_types=ENTITY_TYPES,
-        edge_types=EDGE_TYPES,
-        edge_type_map=EDGE_TYPE_MAP,
+    #
+    # During demo mode, skip add_episode (Nova Micro + Titan embed, ~56s) so the
+    # consumer is not blocked on every risk-state flush. The deterministic
+    # RISK_STATE edge below is all that matters for the demo risk score to climb.
+    from knowledge.demo_control import DEMO_FLAG_KEY as _DEMO_FLAG_KEY
+    import redis.asyncio as _aioredis, os as _os
+    _demo_r = _aioredis.from_url(
+        _os.environ.get("REDIS_URL", "redis://redis:6379/0"), decode_responses=True
     )
+    try:
+        _demo_active = (await _demo_r.get(_DEMO_FLAG_KEY)) == "1"
+    finally:
+        await _demo_r.aclose()
+
+    if not _demo_active:
+        await g.add_episode(
+            name=episode_name,
+            episode_body=episode_text,
+            source=EpisodeType.text,
+            source_description="SAGE risk state",
+            reference_time=now,
+            entity_types=ENTITY_TYPES,
+            edge_types=EDGE_TYPES,
+            edge_type_map=EDGE_TYPE_MAP,
+        )
 
     # Deterministic RISK_STATE edge — DO NOT rely on LLM extraction for this.
     # RISK_STATE is a self-property (score/band/factors) with exact numeric values;
@@ -527,22 +542,31 @@ async def write_risk_state(
 
     # Graph committed — update only the risk frontmatter fields in place.
     # Body prose and [[wikilinks]] are preserved; no appended blocks accumulate.
-    from knowledge.wikilink_processor import update_frontmatter_risk
-    current = load_wiki_page(entity)
-    updated = update_frontmatter_risk(
-        content=current,
-        score=score,
-        band=band,
-        factors={
-            "ais":       factor_ais,
-            "gdelt":     factor_gdelt,
-            "price":     factor_price,
-            "sanctions": factor_sanctions,
-        },
-        valid_at=now.isoformat(),
-        last_updated=now.isoformat(),
-    )
-    write_wiki_page(entity, updated)
+    #
+    # Skipped during demo replay: load_wiki_page + write_wiki_page are SYNCHRONOUS
+    # disk I/O that runs on every risk write. On the memory-constrained demo host
+    # this blocks the asyncio event loop long enough that the ingest consumer's
+    # Redis calls time out, so it falls into its 5s retry sleep and stops draining
+    # the queue — the risk climb stalls. The frontend reads risk from the graph
+    # (RISK_STATE edge, already written above), not the wiki, so the demo climb is
+    # fully visible without touching the wiki files.
+    if not _demo_active:
+        from knowledge.wikilink_processor import update_frontmatter_risk
+        current = load_wiki_page(entity)
+        updated = update_frontmatter_risk(
+            content=current,
+            score=score,
+            band=band,
+            factors={
+                "ais":       factor_ais,
+                "gdelt":     factor_gdelt,
+                "price":     factor_price,
+                "sanctions": factor_sanctions,
+            },
+            valid_at=now.isoformat(),
+            last_updated=now.isoformat(),
+        )
+        write_wiki_page(entity, updated)
 
     return EpisodeRef(episode_uuid=episode_uuid)
 

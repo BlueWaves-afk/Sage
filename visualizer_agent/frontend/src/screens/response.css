@@ -247,3 +247,12 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* G14 — spot market pricing source label */
+.rp-pricing-source {
+  font-size: 9px;
+  color: var(--text-3);
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border-1);
+  letter-spacing: 0.02em;
+}

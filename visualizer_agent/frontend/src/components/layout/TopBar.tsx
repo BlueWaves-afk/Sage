@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { IconUser } from "../icons";
 import "./layout.css";
 
@@ -6,7 +7,23 @@ interface Props {
   live?: boolean;
 }
 
+function useDemoStatus() {
+  const [demo, setDemo] = useState<{ active: boolean; crisis?: string | null } | null>(null);
+  useEffect(() => {
+    const check = () =>
+      fetch("/api/demo/status")
+        .then((r) => r.json())
+        .then(setDemo)
+        .catch(() => {});
+    check();
+    const id = setInterval(check, 5000);
+    return () => clearInterval(id);
+  }, []);
+  return demo;
+}
+
 export default function TopBar({ title, live = true }: Props) {
+  const demo = useDemoStatus();
   return (
     <header className="topbar">
       <div className="topbar-left">
@@ -17,6 +34,11 @@ export default function TopBar({ title, live = true }: Props) {
         </span>
         <span className="topbar-divider" />
         <span className="topbar-title">{title}</span>
+        {demo?.active && (
+          <span className="replay-chip">
+            REPLAY · {demo.crisis ?? "Historical crisis"}
+          </span>
+        )}
       </div>
       <div className="topbar-right">
         <span className="trust-tag">

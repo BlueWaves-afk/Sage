@@ -13,8 +13,11 @@ Triggered in parallel with System 4 by a new ScenarioOutput.
 """
 from __future__ import annotations
 
+import asyncio
+import json
 import logging
 import os
+from datetime import datetime, timezone
 from typing import Literal
 
 
@@ -144,8 +147,19 @@ async def run(
     supplier_grades = _load_supplier_grades()
     bypass_edges    = _load_bypass_edges()
 
+    # Destination-port congestion (async graph read) — fetched here and passed
+    # into the sync solver. Best-effort: no congestion on any error.
+    try:
+        from knowledge.api.read import get_port_congestion
+        port_congestion = await get_port_congestion()
+    except Exception:
+        port_congestion = {}
+
     # Route each supplier to their best open corridor
-    routes = solve_routes(suppliers, corridors, bypass_edges, risk_max=corridor_risk_max)
+    routes = solve_routes(
+        suppliers, corridors, bypass_edges,
+        risk_max=corridor_risk_max, port_congestion=port_congestion,
+    )
 
     options: list[ProcurementOption] = []
     for supplier in suppliers:
@@ -165,6 +179,9 @@ async def run(
             lead_time_days=route.lead_time_days,
             grade_compatibility=compat,
             corridor_risk=route.corridor_risk,
+            congestion_delay_days=route.congestion_delay_days,
+            tanker_availability=route.tanker_availability,
+            tanker_availability_note=route.tanker_availability_note,
             topsis_score=0.0,      # populated by topsis_rank
             rationale="",          # populated below for top-3
             episode_citations=[],
@@ -176,12 +193,17 @@ async def run(
     for opt in ranked[:3]:
         opt.rationale = await _nova_rationale(opt, trigger_refinery, gap_mbpd)
 
-    # Minimal rationale for the rest
+    # Minimal rationale for the rest (includes congestion + tanker if notable)
     for opt in ranked[3:]:
+        extra = ""
+        if opt.congestion_delay_days > 0.05:
+            extra += f" Port congestion +{opt.congestion_delay_days:.1f}d berth wait."
+        if opt.tanker_availability < 0.8:
+            extra += f" {opt.tanker_availability_note}."
         opt.rationale = (
             f"{opt.supplier} ({opt.grade}) via {opt.route_via}: "
             f"TOPSIS {opt.topsis_score:.2f}, cost ${opt.landed_cost_usd_bbl:.2f}/bbl, "
-            f"{opt.lead_time_days:.0f}d lead, compatibility {opt.grade_compatibility:.2f}."
+            f"{opt.lead_time_days:.0f}d lead, compatibility {opt.grade_compatibility:.2f}.{extra}"
         )
 
     data = ProcurementRecData(
@@ -199,6 +221,10 @@ async def run(
 async def _nova_rationale(opt: ProcurementOption, refinery: str, gap_mbpd: float) -> str:
     try:
         from knowledge.synthesis import _call_nova_pro
+        congestion_note = (
+            f"Destination-port congestion adds {opt.congestion_delay_days:.1f}d berth wait. "
+            if opt.congestion_delay_days > 0.05 else ""
+        )
         prompt = (
             f"You are SAGE's procurement analyst. Write ONE concise paragraph (4-6 sentences) "
             f"explaining why {opt.supplier} ({opt.grade}) routed via {opt.route_via} "
@@ -208,10 +234,13 @@ async def _nova_rationale(opt: ProcurementOption, refinery: str, gap_mbpd: float
             f"Lead time: {opt.lead_time_days:.0f} days. "
             f"Grade compatibility: {opt.grade_compatibility:.2f}/1.0. "
             f"Corridor risk: {opt.corridor_risk:.2f}/1.0. "
+            f"{congestion_note}"
+            f"Tanker availability: {opt.tanker_availability_note}. "
             f"Score breakdown: {opt.score_breakdown}.\n"
             f"Be specific about the grade's processing characteristics, the route's risk profile, "
             f"and any trade-offs (e.g. longer lead time offset by lower cost, or high compatibility "
-            f"offsetting a slightly elevated corridor risk). Do not use bullet points."
+            f"offsetting a slightly elevated corridor risk). Mention port congestion and tanker "
+            f"availability if they materially affect lead time. Do not use bullet points."
         )
         return await _call_nova_pro(prompt, opt.supplier)
     except Exception as exc:
@@ -247,3 +276,83 @@ def _load_grade_names() -> dict[str, str]:
 
 def _grade_name(country: str) -> str:
     return _load_grade_names().get(country, "Unknown Grade")
+
+
+# ── Worker service loop ───────────────────────────────────────────────────────
+# Entry point for the standalone `python -m alt_procurement_agent.runner`
+# container. Consumes procurement jobs from a Redis queue so the container is a
+# stable, horizontally-scalable worker instead of a process that imports and
+# exits. Idle = blocking pop (stable). The in-process path in
+# orchestration/graph.py stays the default; enqueue a JSON job to
+# PROCUREMENT_JOB_QUEUE to offload a run here.
+#
+# Job shape: {"scenario_id": str, "trigger_refinery": str,
+#             "status": "confirmed"|"speculative", "gap_mbpd": float,
+#             "result_key": str|null}
+
+PROCUREMENT_JOB_QUEUE = os.environ.get("PROCUREMENT_JOB_QUEUE", "sage:procurement_jobs")
+_HEARTBEAT_KEY        = "sage:worker:procurement:heartbeat"
+
+
+_kb_ready = False
+
+
+async def _ensure_kb() -> None:
+    """Lazily init the KB the first time a real job arrives. The slim worker
+    image may not carry the full KB stack; a worker with no jobs never needs it
+    and stays a stable idle consumer."""
+    global _kb_ready
+    if not _kb_ready:
+        from knowledge.connection import init as kb_init
+        await kb_init()
+        _kb_ready = True
+
+
+async def _serve() -> None:
+    import redis.asyncio as aioredis
+    from redis.exceptions import TimeoutError as RedisTimeoutError
+
+    redis_url = os.environ.get("REDIS_URL", "redis://redis:6379/0")
+    # socket_timeout=None so the blocking BLPOP isn't cut short by a read timeout.
+    client = aioredis.from_url(redis_url, decode_responses=True, socket_timeout=None)
+    log.info("alt_procurement_agent worker started (idle-ready); queue=%s", PROCUREMENT_JOB_QUEUE)
+
+    try:
+        while True:
+            try:
+                res = await client.blpop(PROCUREMENT_JOB_QUEUE, timeout=5)
+            except (RedisTimeoutError, asyncio.TimeoutError):
+                res = None
+            try:
+                await client.set(_HEARTBEAT_KEY,
+                                 datetime.now(timezone.utc).isoformat(), ex=30)
+            except Exception:
+                pass
+            if not res:
+                continue
+            try:
+                _, raw = res
+                job = json.loads(raw)
+                await _ensure_kb()
+                scenario_id = await run(
+                    scenario_id=job["scenario_id"],
+                    trigger_refinery=job["trigger_refinery"],
+                    status=job.get("status", "confirmed"),
+                    gap_mbpd=float(job.get("gap_mbpd", 0.5)),
+                )
+                result_key = job.get("result_key")
+                if result_key:
+                    await client.rpush(result_key, json.dumps({"scenario_id": scenario_id}))
+                    await client.expire(result_key, 120)
+                log.info("procurement job complete: %s", scenario_id)
+            except Exception as exc:
+                log.error("procurement worker job failed: %s", exc)
+                await asyncio.sleep(1)
+    finally:
+        await client.aclose()
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO,
+                        format="%(asctime)s %(levelname)s %(name)s %(message)s")
+    asyncio.run(_serve())

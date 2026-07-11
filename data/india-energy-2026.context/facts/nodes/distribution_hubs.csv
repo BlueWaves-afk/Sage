@@ -1,0 +1,9 @@
+entity_id,canonical_name,region,demand_mbpd,primary_product_mix,location_lat,location_lon,tier,source,as_of,notes
+hub_gujarat,Gujarat Hub,West India,1.42,crude+petcoke+naphtha,22.5,70.5,real,PPAC-2025,2025,Reliance Jamnagar + Nayara Vadinar; demand real (PPAC State Consumption 2025)
+hub_maharashtra,Maharashtra Hub,West India,0.28,diesel+petrol+LPG,19.0,73.5,real,PPAC-2025,2025,MRPL + coastal terminals; demand real (PPAC 2025)
+hub_karnataka,Karnataka Hub,South India,0.30,diesel+LPG+crude,13.0,75.5,real,PPAC-2025,2025,MRPL Mangaluru; demand real (PPAC 2025)
+hub_tamilnadu,Tamil Nadu Hub,South India,0.22,crude+naphtha+fuel_oil,13.1,80.2,real,PPAC-2025,2025,CPCL Chennai; demand real (PPAC 2025)
+hub_andhra,Andhra Pradesh Hub,East Coast,0.18,crude+fuel_oil+diesel,17.7,83.2,real,PPAC-2025,2025,HPCL Visakhapatnam; demand real (PPAC 2025)
+hub_odisha,Odisha Hub,East Coast,0.32,crude+petrol+diesel,20.3,86.7,real,PPAC-2025,2025,IOCL Paradip; demand real (PPAC 2025)
+hub_up_north,North India Hub,North India,0.48,diesel+LPG+petrol,28.7,77.2,derived,PPAC-2025,2025,IOCL Panipat + Mathura; demand derived from PPAC state allocation
+hub_haryana_punjab,Haryana-Punjab Hub,North India,0.14,diesel+LPG,30.2,74.9,derived,PPAC-2025,2025,HPCL Bhatinda; demand derived from PPAC 2025 state split

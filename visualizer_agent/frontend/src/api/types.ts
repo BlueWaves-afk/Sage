@@ -46,6 +46,9 @@ export interface ProcurementOption {
   corridor_risk: number;
   topsis_score: number;
   rationale: string;
+  congestion_delay_days?: number;
+  tanker_availability?: number;
+  tanker_availability_note?: string;
 }
 
 // Mirrors contracts/outputs.py::ProcurementRecData exactly — the real /api/procurement
@@ -96,6 +99,7 @@ export interface ScenarioOutput {
   price_impact_high: number;
   spr_depletion_days: number;
   gdp_proxy_impact_pct: number | null;
+  gdp_trajectory_pct?: number[];
   inflation_impact_pct: number | null;
   sector_impacts: SectorImpact[];
   node_impacts: NodeImpact[];
@@ -256,6 +260,8 @@ export interface ScenarioRunRequest {
   spr_policy: "aggressive" | "moderate" | "none";
   demand_destruction_pct: number;
   run_downstream: boolean;
+  supply_cut_mbpd?: number;
+  cut_supplier?: string;
 }
 
 export interface ScenarioRunStatus {
@@ -278,6 +284,8 @@ export interface ScenarioPreset {
   blurb: string;
   custom?: boolean;
   source_scenario_id?: string;
+  supply_cut_mbpd?: number;
+  cut_supplier?: string;
 }
 
 export interface ScenarioCard {
@@ -356,4 +364,19 @@ export interface AgentTraceEvent {
   entity: string | null;
   origin: "auto" | "user" | null;
   ts: string;
+}
+
+export interface ResponseTimeRun {
+  total_s: number;
+  signal_to_risk_s: number | null;
+  risk_to_scenario_s: number | null;
+  scenario_to_procurement_s: number | null;
+  procurement_to_reserve_s: number | null;
+  started_at: string;
+}
+
+export interface ResponseTimeSummary {
+  last_run: ResponseTimeRun | null;
+  rolling_median_s: number | null;
+  runs: ResponseTimeRun[];
 }

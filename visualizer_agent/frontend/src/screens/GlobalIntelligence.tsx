@@ -10,7 +10,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import "./intelligence.css";
 
 // Entity types double as the map's layer filters.
-const TYPE_FILTERS = ["Corridor", "Supplier", "Refinery", "CrudeGrade", "Port", "SPRCavern", "Authority", "GeoEvent"];
+const TYPE_FILTERS = ["Corridor", "Supplier", "Refinery", "CrudeGrade", "Port", "SPRCavern", "Authority", "GeoEvent", "ProductionField", "DistributionHub"];
 const TYPE_LABEL: Record<string, string> = {
   Corridor: "Corridors",
   Supplier: "Suppliers",
@@ -20,6 +20,8 @@ const TYPE_LABEL: Record<string, string> = {
   SPRCavern: "SPR",
   Authority: "Authorities",
   GeoEvent: "Events",
+  ProductionField: "Wellheads",
+  DistributionHub: "Demand Hubs",
 };
 const BAND_LEGEND: [string, string][] = [
   ["CALM", "#2a9d8f"],
@@ -30,14 +32,16 @@ const BAND_LEGEND: [string, string][] = [
 ];
 
 const TYPE_LEGEND: [string, string][] = [
-  ["Corridor",   "rgb(230,84,74)"],
-  ["Supplier",   "rgb(90,160,220)"],
-  ["Refinery",   "rgb(45,190,165)"],
-  ["Crude Grade","rgb(168,120,230)"],
-  ["Port",       "rgb(70,195,225)"],
-  ["SPR",        "rgb(233,196,106)"],
-  ["Authority",  "rgb(150,165,190)"],
-  ["Event",      "rgb(244,162,97)"],
+  ["Corridor",         "rgb(230,84,74)"],
+  ["Supplier",         "rgb(90,160,220)"],
+  ["Refinery",         "rgb(45,190,165)"],
+  ["Crude Grade",      "rgb(168,120,230)"],
+  ["Port",             "rgb(70,195,225)"],
+  ["SPR",              "rgb(233,196,106)"],
+  ["Authority",        "rgb(150,165,190)"],
+  ["Event",            "rgb(244,162,97)"],
+  ["Wellhead",         "rgb(255,140,50)"],
+  ["Demand Hub",       "rgb(120,210,100)"],
 ];
 
 export default function GlobalIntelligence() {
@@ -48,6 +52,7 @@ export default function GlobalIntelligence() {
   const [selected, setSelected] = useState<GraphNode | null>(null);
   const [showFlows, setShowFlows] = useState(false);
   const [showHeatmap, setShowHeatmap] = useState(false);
+  const [showRoutes, setShowRoutes] = useState(true);
   const [blastMode, setBlastMode] = useState(false);
   const [blastNode, setBlastNode] = useState<GraphNode | null>(null);
   const [riskHistory, setRiskHistory] = useState<RiskHistoryPoint[]>([]);
@@ -68,6 +73,22 @@ export default function GlobalIntelligence() {
       setRiskHistory(env.data ?? []);
     });
   }, [blastMode]);
+
+  // Build corridor id → risk score map from graph nodes for route coloring
+  const corridorRisk = useMemo(() => {
+    const map: Record<string, number> = {};
+    if (!graph) return map;
+    for (const node of graph.nodes) {
+      if (node.type === "Corridor") {
+        // node.id is the entity_id from corridors.csv (e.g. "corridor_hormuz")
+        map[node.id] = node.score;
+        // Also map by partial name match for robustness
+        const key = node.name.toLowerCase().replace(/[^a-z]/g, "_");
+        map[`corridor_${key}`] = node.score;
+      }
+    }
+    return map;
+  }, [graph]);
 
   const filtered = useMemo(() => {
     if (!graph) return { nodes: [], edges: [] };
@@ -130,6 +151,7 @@ export default function GlobalIntelligence() {
             <button className={`gi-colorby-btn${colorBy === "type" ? " on" : ""}`} onClick={() => setColorBy("type")}>Type</button>
             <button className={`gi-colorby-btn${showFlows ? " on" : ""}`} onClick={() => setShowFlows((v) => !v)} title="Animate supply flows">Flows</button>
             <button className={`gi-colorby-btn${showHeatmap ? " on" : ""}`} onClick={() => setShowHeatmap((v) => !v)} title="Risk density heatmap">Heat</button>
+            <button className={`gi-colorby-btn${showRoutes ? " on" : ""}`} onClick={() => setShowRoutes((v) => !v)} title="Shipping lane route polylines">Routes</button>
             <button className={`gi-colorby-btn${blastMode ? " on" : ""}`} onClick={() => { setBlastMode((v) => !v); setBlastNode(null); }} title="Click a node to see its blast radius">Blast</button>
           </div>
         </div>
@@ -141,6 +163,8 @@ export default function GlobalIntelligence() {
             onNodeClick={handleNodeClick}
             showFlows={showFlows}
             showHeatmap={showHeatmap}
+            showRoutes={showRoutes}
+            corridorRisk={corridorRisk}
             blastRadiusId={blastMode ? (blastNode?.id ?? null) : null}
           />
           {colorBy === "risk" && (

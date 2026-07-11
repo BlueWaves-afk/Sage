@@ -454,3 +454,43 @@
 }
 .cc-feed-link:hover { color: var(--cyan); border-bottom-color: var(--cyan-dim); }
 .cc-feed-ext { color: var(--cyan-dim); font-size: 10px; }
+
+/* G9 — Demo Mode ignition bar */
+.cc-demo-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0 2px;
+}
+.cc-demo-btn {
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 5px 14px;
+  border-radius: 3px;
+  border: 1px solid var(--cyan);
+  background: transparent;
+  color: var(--cyan);
+  cursor: pointer;
+  transition: background var(--dur-fast, 0.12s) ease, color var(--dur-fast, 0.12s) ease, opacity var(--dur-fast, 0.12s) ease;
+  white-space: nowrap;
+}
+.cc-demo-btn:hover:not(:disabled) { background: var(--cyan); color: var(--bg-0, #000); }
+.cc-demo-btn.running {
+  border-color: var(--c-amber, #f59e0b);
+  color: var(--c-amber, #f59e0b);
+  animation: cc-demo-pulse 1.2s ease-in-out infinite;
+}
+.cc-demo-btn.done { border-color: var(--c-green, #4ade80); color: var(--c-green, #4ade80); }
+.cc-demo-btn:disabled { opacity: 0.7; cursor: default; }
+.cc-demo-hint {
+  font-size: 9px;
+  color: var(--text-3);
+  font-family: var(--font-mono, monospace);
+}
+@keyframes cc-demo-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}

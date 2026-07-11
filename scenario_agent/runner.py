@@ -9,14 +9,20 @@ See .claude/design/system2_design.md.
 """
 from __future__ import annotations
 
+import asyncio
 import json
+import logging
+import os
 import uuid
+from datetime import datetime, timezone
 from typing import Literal, Optional
 
 from contracts.outputs import ScenarioOutputData
 from knowledge.api.read import get_subgraph, get_spr_state
 from knowledge.api.write import write_scenario
 from scenario_agent.ario import ARIOParams, run as run_ario, run_monte_carlo
+
+log = logging.getLogger(__name__)
 
 Status = Literal["speculative", "confirmed"]
 
@@ -124,6 +130,7 @@ async def run(
         price_impact_high=result.price_impact_high,
         spr_depletion_days=result.spr_depletion_days,
         gdp_proxy_impact_pct=result.gdp_proxy_impact_pct,
+        gdp_trajectory_pct=result.gdp_trajectory_pct,
         inflation_impact_pct=result.inflation_impact_pct,
         node_impacts=node_impacts,
         sector_impacts=sector_impacts,
@@ -322,3 +329,81 @@ async def _run_gnn(subgraph, params: ARIOParams, refineries=None, sectors=None):
     per-node attribution as the confirmed path (previously these were dropped in speculative mode).
     """
     return run_ario(params, refineries, sectors)
+
+
+# ── Worker service loop ───────────────────────────────────────────────────────
+# Entry point for the standalone `python -m scenario_agent.runner` container.
+# Consumes scenario jobs from a Redis queue so the container is a stable,
+# horizontally-scalable worker rather than a process that imports and exits.
+# When idle it blocks on the queue pop (stable, ~zero CPU). The in-process path
+# in orchestration/graph.py stays the default; enqueue a JSON job to
+# SCENARIO_JOB_QUEUE to offload a run here.
+#
+# Job shape: {"trigger_entity": str, "status": "confirmed"|"speculative",
+#             "scenario": {...}|null, "result_key": str|null}
+
+SCENARIO_JOB_QUEUE = os.environ.get("SCENARIO_JOB_QUEUE", "sage:scenario_jobs")
+_HEARTBEAT_KEY     = "sage:worker:scenario:heartbeat"
+
+
+_kb_ready = False
+
+
+async def _ensure_kb() -> None:
+    """Lazily init the KB the first time a real job arrives. The slim worker
+    image may not carry the full KB stack (graphiti_core); a worker with no
+    jobs never needs it and stays a stable idle consumer."""
+    global _kb_ready
+    if not _kb_ready:
+        from knowledge.connection import init as kb_init
+        await kb_init()
+        _kb_ready = True
+
+
+async def _serve() -> None:
+    import redis.asyncio as aioredis
+    from redis.exceptions import TimeoutError as RedisTimeoutError
+
+    redis_url = os.environ.get("REDIS_URL", "redis://redis:6379/0")
+    # socket_timeout=None so the blocking BLPOP isn't cut short by a read timeout.
+    client = aioredis.from_url(redis_url, decode_responses=True, socket_timeout=None)
+    log.info("scenario_agent worker started (idle-ready); queue=%s", SCENARIO_JOB_QUEUE)
+
+    try:
+        while True:
+            try:
+                res = await client.blpop(SCENARIO_JOB_QUEUE, timeout=5)
+            except (RedisTimeoutError, asyncio.TimeoutError):
+                res = None
+            try:
+                await client.set(_HEARTBEAT_KEY,
+                                 datetime.now(timezone.utc).isoformat(), ex=30)
+            except Exception:
+                pass
+            if not res:
+                continue
+            try:
+                _, raw = res
+                job = json.loads(raw)
+                await _ensure_kb()
+                scenario_id = await run(
+                    trigger_entity=job["trigger_entity"],
+                    status=job.get("status", "confirmed"),
+                    scenario=job.get("scenario"),
+                )
+                result_key = job.get("result_key")
+                if result_key:
+                    await client.rpush(result_key, json.dumps({"scenario_id": scenario_id}))
+                    await client.expire(result_key, 120)
+                log.info("scenario job complete: %s", scenario_id)
+            except Exception as exc:
+                log.error("scenario worker job failed: %s", exc)
+                await asyncio.sleep(1)
+    finally:
+        await client.aclose()
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO,
+                        format="%(asctime)s %(levelname)s %(name)s %(message)s")
+    asyncio.run(_serve())

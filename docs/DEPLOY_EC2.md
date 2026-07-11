@@ -80,13 +80,15 @@ docker compose ps                     # all healthy
 
 The graph store is empty on a fresh volume. Instantiate the sourced `.context`
 bundle — this loads the 61 real, cited entities + edges + params (no fabricated
-data):
+data). `sage_instantiate.py` LLM-authors a rich narrative wiki page per entity by
+default (Nova Pro); pass `--no-llm-author` for deterministic stubs, or
+`--facts-only` to skip narratives entirely:
 
 ```bash
-docker compose exec sage-core python -m scripts.seed_kb
+docker compose exec sage-core python -m scripts.sage_instantiate
 # or from host with the stack up:
 PYTHONPATH=. FALKORDB_HOST=localhost REDIS_URL=redis://localhost:6380/0 \
-  python3.11 scripts/seed_kb.py
+  LLM_PROVIDER=bedrock python3.11 scripts/sage_instantiate.py
 ```
 
 Then start System 1 so real signals flow in and the KB computes risk on its own:

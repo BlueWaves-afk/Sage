@@ -1,0 +1,4 @@
+src_entity_id,dst_entity_id,share_pct,grade_id,tier,source,as_of,notes
+supplier_aramco,refinery_negishi,40,Arab Light,real,METI-Japan,2025,Aramco primary supplier to Eneos refineries
+supplier_adnoc,refinery_chiba,24,Murban,real,METI-Japan,2025,ADNOC Murban primary for Idemitsu
+supplier_kpc,refinery_sakai,8,Kuwait Export,real,METI-Japan,2025,KPC to Cosmo Oil Sakai

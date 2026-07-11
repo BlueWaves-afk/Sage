@@ -1,0 +1,4 @@
+param,value,unit,tier,source,as_of,notes
+japan_daily_consumption_mbpd,3.18,mbpd,real,IEA-OilReport,2025,Japan total crude imports + product imports 2025 avg
+hormuz_dependency_pct,0.88,fraction,real,METI-Japan,2025,~88% Japan crude imports via Hormuz
+baseline_brent_usd_per_bbl,82.0,USD/bbl,real,EIA-Brent,2025,baseline Brent for scenario modeling

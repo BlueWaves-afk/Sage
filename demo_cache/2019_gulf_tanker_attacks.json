@@ -1,0 +1,1412 @@
+[
+  {
+    "date": "2019-05-12",
+    "features": {
+      "ais_gap_count_24h": 5.0,
+      "ais_dark_vessel_count": 2.0,
+      "ais_anomaly_score_max": 0.5154,
+      "ais_gap_duration_max_h": 8.0,
+      "ais_monitored_cell_pct": 0.818,
+      "ais_velocity_std": 0.506,
+      "gdelt_tone_24h_mean": -1.8169,
+      "gdelt_tone_delta": -0.0037,
+      "news_severity_max": 0.5077,
+      "news_event_count_24h": 6.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-05-13",
+    "features": {
+      "ais_gap_count_24h": 3.16,
+      "ais_dark_vessel_count": 2.09,
+      "ais_anomaly_score_max": 0.5521,
+      "ais_gap_duration_max_h": 8.19,
+      "ais_monitored_cell_pct": 0.814,
+      "ais_velocity_std": 0.521,
+      "gdelt_tone_24h_mean": -1.8217,
+      "gdelt_tone_delta": -0.0048,
+      "news_severity_max": 0.5355,
+      "news_event_count_24h": 6.0,
+      "price_brent_pct_change_24h": -0.005523,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-05-14",
+    "features": {
+      "ais_gap_count_24h": 3.31,
+      "ais_dark_vessel_count": 2.19,
+      "ais_anomaly_score_max": 0.5655,
+      "ais_gap_duration_max_h": 8.38,
+      "ais_monitored_cell_pct": 0.812,
+      "ais_velocity_std": 0.526,
+      "gdelt_tone_24h_mean": -1.8279,
+      "gdelt_tone_delta": -0.0062,
+      "news_severity_max": 0.546,
+      "news_event_count_24h": 6.0,
+      "price_brent_pct_change_24h": 0.014381,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-05-15",
+    "features": {
+      "ais_gap_count_24h": 3.47,
+      "ais_dark_vessel_count": 2.28,
+      "ais_anomaly_score_max": 0.5773,
+      "ais_gap_duration_max_h": 8.56,
+      "ais_monitored_cell_pct": 0.811,
+      "ais_velocity_std": 0.531,
+      "gdelt_tone_24h_mean": -1.8357,
+      "gdelt_tone_delta": -0.0078,
+      "news_severity_max": 0.5554,
+      "news_event_count_24h": 6.0,
+      "price_brent_pct_change_24h": 0.00744,
+      "price_war_risk_premium": 0.000804,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-05-16",
+    "features": {
+      "ais_gap_count_24h": 4.62,
+      "ais_dark_vessel_count": 2.38,
+      "ais_anomaly_score_max": 0.5953,
+      "ais_gap_duration_max_h": 8.75,
+      "ais_monitored_cell_pct": 0.809,
+      "ais_velocity_std": 0.538,
+      "gdelt_tone_24h_mean": -1.8458,
+      "gdelt_tone_delta": -0.0101,
+      "news_severity_max": 0.5695,
+      "news_event_count_24h": 6.0,
+      "price_brent_pct_change_24h": 0.011843,
+      "price_war_risk_premium": 0.012627,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-05-17",
+    "features": {
+      "ais_gap_count_24h": 3.78,
+      "ais_dark_vessel_count": 2.47,
+      "ais_anomaly_score_max": 0.6259,
+      "ais_gap_duration_max_h": 8.94,
+      "ais_monitored_cell_pct": 0.805,
+      "ais_velocity_std": 0.55,
+      "gdelt_tone_24h_mean": -1.8586,
+      "gdelt_tone_delta": -0.0128,
+      "news_severity_max": 0.5933,
+      "news_event_count_24h": 6.0,
+      "price_brent_pct_change_24h": -0.005646,
+      "price_war_risk_premium": 0.006456,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-05-18",
+    "features": {
+      "ais_gap_count_24h": 3.94,
+      "ais_dark_vessel_count": 2.56,
+      "ais_anomaly_score_max": 0.6007,
+      "ais_gap_duration_max_h": 9.12,
+      "ais_monitored_cell_pct": 0.808,
+      "ais_velocity_std": 0.54,
+      "gdelt_tone_24h_mean": -1.875,
+      "gdelt_tone_delta": -0.0164,
+      "news_severity_max": 0.5755,
+      "news_event_count_24h": 6.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-05-19",
+    "features": {
+      "ais_gap_count_24h": 4.09,
+      "ais_dark_vessel_count": 2.66,
+      "ais_anomaly_score_max": 0.6386,
+      "ais_gap_duration_max_h": 9.31,
+      "ais_monitored_cell_pct": 0.803,
+      "ais_velocity_std": 0.555,
+      "gdelt_tone_24h_mean": -1.8958,
+      "gdelt_tone_delta": -0.0208,
+      "news_severity_max": 0.6053,
+      "news_event_count_24h": 6.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-05-20",
+    "features": {
+      "ais_gap_count_24h": 4.25,
+      "ais_dark_vessel_count": 3.75,
+      "ais_anomaly_score_max": 0.6208,
+      "ais_gap_duration_max_h": 9.5,
+      "ais_monitored_cell_pct": 0.806,
+      "ais_velocity_std": 0.548,
+      "gdelt_tone_24h_mean": -1.9223,
+      "gdelt_tone_delta": -0.0265,
+      "news_severity_max": 0.5938,
+      "news_event_count_24h": 6.0,
+      "price_brent_pct_change_24h": -0.003324,
+      "price_war_risk_premium": 0.002888,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-05-21",
+    "features": {
+      "ais_gap_count_24h": 4.41,
+      "ais_dark_vessel_count": 2.84,
+      "ais_anomaly_score_max": 0.6502,
+      "ais_gap_duration_max_h": 9.69,
+      "ais_monitored_cell_pct": 0.802,
+      "ais_velocity_std": 0.56,
+      "gdelt_tone_24h_mean": -1.9559,
+      "gdelt_tone_delta": -0.0336,
+      "news_severity_max": 0.618,
+      "news_event_count_24h": 7.0,
+      "price_brent_pct_change_24h": 0.002918,
+      "price_war_risk_premium": 0.005717,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-05-22",
+    "features": {
+      "ais_gap_count_24h": 4.56,
+      "ais_dark_vessel_count": 2.94,
+      "ais_anomaly_score_max": 0.684,
+      "ais_gap_duration_max_h": 9.88,
+      "ais_monitored_cell_pct": 0.798,
+      "ais_velocity_std": 0.574,
+      "gdelt_tone_24h_mean": -1.9983,
+      "gdelt_tone_delta": -0.0424,
+      "news_severity_max": 0.6462,
+      "news_event_count_24h": 7.0,
+      "price_brent_pct_change_24h": -0.016487,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-05-23",
+    "features": {
+      "ais_gap_count_24h": 4.72,
+      "ais_dark_vessel_count": 3.03,
+      "ais_anomaly_score_max": 0.6816,
+      "ais_gap_duration_max_h": 10.06,
+      "ais_monitored_cell_pct": 0.798,
+      "ais_velocity_std": 0.573,
+      "gdelt_tone_24h_mean": -2.0515,
+      "gdelt_tone_delta": -0.0532,
+      "news_severity_max": 0.648,
+      "news_event_count_24h": 7.0,
+      "price_brent_pct_change_24h": -0.045499,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 1.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-05-24",
+    "features": {
+      "ais_gap_count_24h": 5.88,
+      "ais_dark_vessel_count": 3.12,
+      "ais_anomaly_score_max": 0.6608,
+      "ais_gap_duration_max_h": 10.25,
+      "ais_monitored_cell_pct": 0.801,
+      "ais_velocity_std": 0.564,
+      "gdelt_tone_24h_mean": -2.118,
+      "gdelt_tone_delta": -0.0665,
+      "news_severity_max": 0.6368,
+      "news_event_count_24h": 7.0,
+      "price_brent_pct_change_24h": 0.013725,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-05-25",
+    "features": {
+      "ais_gap_count_24h": 5.03,
+      "ais_dark_vessel_count": 3.22,
+      "ais_anomaly_score_max": 0.7202,
+      "ais_gap_duration_max_h": 10.44,
+      "ais_monitored_cell_pct": 0.794,
+      "ais_velocity_std": 0.588,
+      "gdelt_tone_24h_mean": -2.2005,
+      "gdelt_tone_delta": -0.0825,
+      "news_severity_max": 0.6868,
+      "news_event_count_24h": 8.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-05-26",
+    "features": {
+      "ais_gap_count_24h": 6.19,
+      "ais_dark_vessel_count": 3.31,
+      "ais_anomaly_score_max": 0.6945,
+      "ais_gap_duration_max_h": 10.62,
+      "ais_monitored_cell_pct": 0.797,
+      "ais_velocity_std": 0.578,
+      "gdelt_tone_24h_mean": -2.3018,
+      "gdelt_tone_delta": -0.1013,
+      "news_severity_max": 0.6743,
+      "news_event_count_24h": 8.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-05-27",
+    "features": {
+      "ais_gap_count_24h": 5.34,
+      "ais_dark_vessel_count": 3.41,
+      "ais_anomaly_score_max": 0.7241,
+      "ais_gap_duration_max_h": 10.81,
+      "ais_monitored_cell_pct": 0.793,
+      "ais_velocity_std": 0.59,
+      "gdelt_tone_24h_mean": -2.425,
+      "gdelt_tone_delta": -0.1232,
+      "news_severity_max": 0.7047,
+      "news_event_count_24h": 8.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-05-28",
+    "features": {
+      "ais_gap_count_24h": 5.5,
+      "ais_dark_vessel_count": 3.5,
+      "ais_anomaly_score_max": 0.6962,
+      "ais_gap_duration_max_h": 11.0,
+      "ais_monitored_cell_pct": 0.796,
+      "ais_velocity_std": 0.578,
+      "gdelt_tone_24h_mean": -2.5727,
+      "gdelt_tone_delta": -0.1477,
+      "news_severity_max": 0.6937,
+      "news_event_count_24h": 8.0,
+      "price_brent_pct_change_24h": 0.020673,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 1.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-05-29",
+    "features": {
+      "ais_gap_count_24h": 5.66,
+      "ais_dark_vessel_count": 3.59,
+      "ais_anomaly_score_max": 0.6974,
+      "ais_gap_duration_max_h": 11.19,
+      "ais_monitored_cell_pct": 0.796,
+      "ais_velocity_std": 0.579,
+      "gdelt_tone_24h_mean": -2.747,
+      "gdelt_tone_delta": -0.1743,
+      "news_severity_max": 0.7062,
+      "news_event_count_24h": 8.0,
+      "price_brent_pct_change_24h": -0.009414,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-05-30",
+    "features": {
+      "ais_gap_count_24h": 5.81,
+      "ais_dark_vessel_count": 3.69,
+      "ais_anomaly_score_max": 0.7174,
+      "ais_gap_duration_max_h": 11.38,
+      "ais_monitored_cell_pct": 0.794,
+      "ais_velocity_std": 0.587,
+      "gdelt_tone_24h_mean": -2.9488,
+      "gdelt_tone_delta": -0.2018,
+      "news_severity_max": 0.7346,
+      "news_event_count_24h": 9.0,
+      "price_brent_pct_change_24h": -0.037149,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 1.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-05-31",
+    "features": {
+      "ais_gap_count_24h": 5.97,
+      "ais_dark_vessel_count": 3.78,
+      "ais_anomaly_score_max": 0.7342,
+      "ais_gap_duration_max_h": 11.56,
+      "ais_monitored_cell_pct": 0.792,
+      "ais_velocity_std": 0.594,
+      "gdelt_tone_24h_mean": -3.1774,
+      "gdelt_tone_delta": -0.2286,
+      "news_severity_max": 0.7625,
+      "news_event_count_24h": 10.0,
+      "price_brent_pct_change_24h": -0.035592,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 1.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-06-01",
+    "features": {
+      "ais_gap_count_24h": 6.12,
+      "ais_dark_vessel_count": 3.88,
+      "ais_anomaly_score_max": 0.7581,
+      "ais_gap_duration_max_h": 11.75,
+      "ais_monitored_cell_pct": 0.789,
+      "ais_velocity_std": 0.603,
+      "gdelt_tone_24h_mean": -3.43,
+      "gdelt_tone_delta": -0.2526,
+      "news_severity_max": 0.7972,
+      "news_event_count_24h": 10.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-06-02",
+    "features": {
+      "ais_gap_count_24h": 6.28,
+      "ais_dark_vessel_count": 3.97,
+      "ais_anomaly_score_max": 0.7774,
+      "ais_gap_duration_max_h": 11.94,
+      "ais_monitored_cell_pct": 0.787,
+      "ais_velocity_std": 0.611,
+      "gdelt_tone_24h_mean": -3.7016,
+      "gdelt_tone_delta": -0.2716,
+      "news_severity_max": 0.8298,
+      "news_event_count_24h": 11.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-06-03",
+    "features": {
+      "ais_gap_count_24h": 6.44,
+      "ais_dark_vessel_count": 4.06,
+      "ais_anomaly_score_max": 0.7906,
+      "ais_gap_duration_max_h": 12.12,
+      "ais_monitored_cell_pct": 0.785,
+      "ais_velocity_std": 0.616,
+      "gdelt_tone_24h_mean": -3.9851,
+      "gdelt_tone_delta": -0.2835,
+      "news_severity_max": 0.8586,
+      "news_event_count_24h": 11.0,
+      "price_brent_pct_change_24h": -0.049775,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 1.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-06-04",
+    "features": {
+      "ais_gap_count_24h": 7.59,
+      "ais_dark_vessel_count": 4.16,
+      "ais_anomaly_score_max": 0.8055,
+      "ais_gap_duration_max_h": 12.31,
+      "ais_monitored_cell_pct": 0.783,
+      "ais_velocity_std": 0.622,
+      "gdelt_tone_24h_mean": -4.2722,
+      "gdelt_tone_delta": -0.2871,
+      "news_severity_max": 0.8889,
+      "news_event_count_24h": 12.0,
+      "price_brent_pct_change_24h": 0.01126,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-06-05",
+    "features": {
+      "ais_gap_count_24h": 7.75,
+      "ais_dark_vessel_count": 4.25,
+      "ais_anomaly_score_max": 0.7692,
+      "ais_gap_duration_max_h": 12.5,
+      "ais_monitored_cell_pct": 0.788,
+      "ais_velocity_std": 0.608,
+      "gdelt_tone_24h_mean": -4.554,
+      "gdelt_tone_delta": -0.2818,
+      "news_severity_max": 0.8805,
+      "news_event_count_24h": 12.0,
+      "price_brent_pct_change_24h": -0.021623,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 1.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-06-06",
+    "features": {
+      "ais_gap_count_24h": 6.91,
+      "ais_dark_vessel_count": 4.34,
+      "ais_anomaly_score_max": 0.81,
+      "ais_gap_duration_max_h": 12.69,
+      "ais_monitored_cell_pct": 0.783,
+      "ais_velocity_std": 0.624,
+      "gdelt_tone_24h_mean": -4.8222,
+      "gdelt_tone_delta": -0.2682,
+      "news_severity_max": 0.929,
+      "news_event_count_24h": 13.0,
+      "price_brent_pct_change_24h": 0.017153,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-06-07",
+    "features": {
+      "ais_gap_count_24h": 7.06,
+      "ais_dark_vessel_count": 4.44,
+      "ais_anomaly_score_max": 0.7903,
+      "ais_gap_duration_max_h": 12.88,
+      "ais_monitored_cell_pct": 0.785,
+      "ais_velocity_std": 0.616,
+      "gdelt_tone_24h_mean": -5.0704,
+      "gdelt_tone_delta": -0.2482,
+      "news_severity_max": 0.9308,
+      "news_event_count_24h": 14.0,
+      "price_brent_pct_change_24h": 0.026269,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 1.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-06-08",
+    "features": {
+      "ais_gap_count_24h": 7.22,
+      "ais_dark_vessel_count": 4.53,
+      "ais_anomaly_score_max": 0.7606,
+      "ais_gap_duration_max_h": 13.06,
+      "ais_monitored_cell_pct": 0.789,
+      "ais_velocity_std": 0.604,
+      "gdelt_tone_24h_mean": -5.2938,
+      "gdelt_tone_delta": -0.2234,
+      "news_severity_max": 0.9234,
+      "news_event_count_24h": 14.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-06-09",
+    "features": {
+      "ais_gap_count_24h": 7.38,
+      "ais_dark_vessel_count": 4.62,
+      "ais_anomaly_score_max": 0.827,
+      "ais_gap_duration_max_h": 13.25,
+      "ais_monitored_cell_pct": 0.781,
+      "ais_velocity_std": 0.631,
+      "gdelt_tone_24h_mean": -5.49,
+      "gdelt_tone_delta": -0.1962,
+      "news_severity_max": 0.9862,
+      "news_event_count_24h": 15.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-06-10",
+    "features": {
+      "ais_gap_count_24h": 9.53,
+      "ais_dark_vessel_count": 4.72,
+      "ais_anomaly_score_max": 0.8039,
+      "ais_gap_duration_max_h": 13.44,
+      "ais_monitored_cell_pct": 0.784,
+      "ais_velocity_std": 0.622,
+      "gdelt_tone_24h_mean": -5.6589,
+      "gdelt_tone_delta": -0.1689,
+      "news_severity_max": 0.9802,
+      "news_event_count_24h": 15.0,
+      "price_brent_pct_change_24h": -0.0158,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-06-11",
+    "features": {
+      "ais_gap_count_24h": 7.69,
+      "ais_dark_vessel_count": 4.81,
+      "ais_anomaly_score_max": 0.8354,
+      "ais_gap_duration_max_h": 13.62,
+      "ais_monitored_cell_pct": 0.78,
+      "ais_velocity_std": 0.634,
+      "gdelt_tone_24h_mean": -5.8015,
+      "gdelt_tone_delta": -0.1426,
+      "news_severity_max": 1.0,
+      "news_event_count_24h": 15.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-06-12",
+    "features": {
+      "ais_gap_count_24h": 7.84,
+      "ais_dark_vessel_count": 4.91,
+      "ais_anomaly_score_max": 0.8196,
+      "ais_gap_duration_max_h": 13.81,
+      "ais_monitored_cell_pct": 0.782,
+      "ais_velocity_std": 0.628,
+      "gdelt_tone_24h_mean": -5.9201,
+      "gdelt_tone_delta": -0.1186,
+      "news_severity_max": 1.0,
+      "news_event_count_24h": 15.0,
+      "price_brent_pct_change_24h": -0.037245,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 1.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 1,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-06-13",
+    "features": {
+      "ais_gap_count_24h": 8.0,
+      "ais_dark_vessel_count": 5.0,
+      "ais_anomaly_score_max": 0.8867,
+      "ais_gap_duration_max_h": 14.0,
+      "ais_monitored_cell_pct": 0.774,
+      "ais_velocity_std": 0.655,
+      "gdelt_tone_24h_mean": -6.0174,
+      "gdelt_tone_delta": -0.0973,
+      "news_severity_max": 1.0,
+      "news_event_count_24h": 16.0,
+      "price_brent_pct_change_24h": 0.022345,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 1.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 1,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-06-14",
+    "features": {
+      "ais_gap_count_24h": 7.81,
+      "ais_dark_vessel_count": 4.9,
+      "ais_anomaly_score_max": 0.8027,
+      "ais_gap_duration_max_h": 13.62,
+      "ais_monitored_cell_pct": 0.784,
+      "ais_velocity_std": 0.621,
+      "gdelt_tone_24h_mean": -5.7876,
+      "gdelt_tone_delta": 0.2298,
+      "news_severity_max": 0.9879,
+      "news_event_count_24h": 15.0,
+      "price_brent_pct_change_24h": 0.011417,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 1,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-06-15",
+    "features": {
+      "ais_gap_count_24h": 7.62,
+      "ais_dark_vessel_count": 4.81,
+      "ais_anomaly_score_max": 0.7898,
+      "ais_gap_duration_max_h": 13.24,
+      "ais_monitored_cell_pct": 0.785,
+      "ais_velocity_std": 0.616,
+      "gdelt_tone_24h_mean": -5.2568,
+      "gdelt_tone_delta": 0.5308,
+      "news_severity_max": 0.9428,
+      "news_event_count_24h": 14.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-06-16",
+    "features": {
+      "ais_gap_count_24h": 7.43,
+      "ais_dark_vessel_count": 4.71,
+      "ais_anomaly_score_max": 0.8046,
+      "ais_gap_duration_max_h": 12.86,
+      "ais_monitored_cell_pct": 0.783,
+      "ais_velocity_std": 0.622,
+      "gdelt_tone_24h_mean": -4.7966,
+      "gdelt_tone_delta": 0.4602,
+      "news_severity_max": 0.9232,
+      "news_event_count_24h": 13.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-06-17",
+    "features": {
+      "ais_gap_count_24h": 7.24,
+      "ais_dark_vessel_count": 4.62,
+      "ais_anomaly_score_max": 0.782,
+      "ais_gap_duration_max_h": 12.48,
+      "ais_monitored_cell_pct": 0.786,
+      "ais_velocity_std": 0.613,
+      "gdelt_tone_24h_mean": -4.3977,
+      "gdelt_tone_delta": 0.3989,
+      "news_severity_max": 0.8797,
+      "news_event_count_24h": 12.0,
+      "price_brent_pct_change_24h": -0.017255,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-06-18",
+    "features": {
+      "ais_gap_count_24h": 7.05,
+      "ais_dark_vessel_count": 4.52,
+      "ais_anomaly_score_max": 0.7876,
+      "ais_gap_duration_max_h": 12.1,
+      "ais_monitored_cell_pct": 0.785,
+      "ais_velocity_std": 0.615,
+      "gdelt_tone_24h_mean": -4.0519,
+      "gdelt_tone_delta": 0.3458,
+      "news_severity_max": 0.8608,
+      "news_event_count_24h": 12.0,
+      "price_brent_pct_change_24h": 0.019692,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-06-19",
+    "features": {
+      "ais_gap_count_24h": 7.86,
+      "ais_dark_vessel_count": 4.43,
+      "ais_anomaly_score_max": 0.7516,
+      "ais_gap_duration_max_h": 11.71,
+      "ais_monitored_cell_pct": 0.79,
+      "ais_velocity_std": 0.601,
+      "gdelt_tone_24h_mean": -3.7521,
+      "gdelt_tone_delta": 0.2998,
+      "news_severity_max": 0.8138,
+      "news_event_count_24h": 11.0,
+      "price_brent_pct_change_24h": -0.00515,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-06-20",
+    "features": {
+      "ais_gap_count_24h": 6.67,
+      "ais_dark_vessel_count": 4.33,
+      "ais_anomaly_score_max": 0.7813,
+      "ais_gap_duration_max_h": 11.33,
+      "ais_monitored_cell_pct": 0.786,
+      "ais_velocity_std": 0.613,
+      "gdelt_tone_24h_mean": -3.4922,
+      "gdelt_tone_delta": 0.2599,
+      "news_severity_max": 0.8188,
+      "news_event_count_24h": 10.0,
+      "price_brent_pct_change_24h": 0.042543,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 1.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-06-21",
+    "features": {
+      "ais_gap_count_24h": 7.48,
+      "ais_dark_vessel_count": 4.24,
+      "ais_anomaly_score_max": 0.7547,
+      "ais_gap_duration_max_h": 10.95,
+      "ais_monitored_cell_pct": 0.789,
+      "ais_velocity_std": 0.602,
+      "gdelt_tone_24h_mean": -3.267,
+      "gdelt_tone_delta": 0.2252,
+      "news_severity_max": 0.7838,
+      "news_event_count_24h": 10.0,
+      "price_brent_pct_change_24h": 0.011637,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-06-22",
+    "features": {
+      "ais_gap_count_24h": 6.29,
+      "ais_dark_vessel_count": 4.14,
+      "ais_anomaly_score_max": 0.7301,
+      "ais_gap_duration_max_h": 10.57,
+      "ais_monitored_cell_pct": 0.792,
+      "ais_velocity_std": 0.592,
+      "gdelt_tone_24h_mean": -3.0717,
+      "gdelt_tone_delta": 0.1953,
+      "news_severity_max": 0.7524,
+      "news_event_count_24h": 9.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-06-23",
+    "features": {
+      "ais_gap_count_24h": 6.1,
+      "ais_dark_vessel_count": 4.05,
+      "ais_anomaly_score_max": 0.7071,
+      "ais_gap_duration_max_h": 10.19,
+      "ais_monitored_cell_pct": 0.795,
+      "ais_velocity_std": 0.583,
+      "gdelt_tone_24h_mean": -2.9024,
+      "gdelt_tone_delta": 0.1693,
+      "news_severity_max": 0.7238,
+      "news_event_count_24h": 9.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-06-24",
+    "features": {
+      "ais_gap_count_24h": 5.9,
+      "ais_dark_vessel_count": 4.95,
+      "ais_anomaly_score_max": 0.689,
+      "ais_gap_duration_max_h": 9.81,
+      "ais_monitored_cell_pct": 0.797,
+      "ais_velocity_std": 0.576,
+      "gdelt_tone_24h_mean": -2.7556,
+      "gdelt_tone_delta": 0.1468,
+      "news_severity_max": 0.7005,
+      "news_event_count_24h": 8.0,
+      "price_brent_pct_change_24h": -0.005215,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 1.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-06-25",
+    "features": {
+      "ais_gap_count_24h": 6.71,
+      "ais_dark_vessel_count": 3.86,
+      "ais_anomaly_score_max": 0.6735,
+      "ais_gap_duration_max_h": 9.43,
+      "ais_monitored_cell_pct": 0.799,
+      "ais_velocity_std": 0.569,
+      "gdelt_tone_24h_mean": -2.6284,
+      "gdelt_tone_delta": 0.1272,
+      "news_severity_max": 0.6804,
+      "news_event_count_24h": 8.0,
+      "price_brent_pct_change_24h": 0.002929,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-06-26",
+    "features": {
+      "ais_gap_count_24h": 5.52,
+      "ais_dark_vessel_count": 3.76,
+      "ais_anomaly_score_max": 0.6954,
+      "ais_gap_duration_max_h": 9.05,
+      "ais_monitored_cell_pct": 0.797,
+      "ais_velocity_std": 0.578,
+      "gdelt_tone_24h_mean": -2.5181,
+      "gdelt_tone_delta": 0.1103,
+      "news_severity_max": 0.6894,
+      "news_event_count_24h": 8.0,
+      "price_brent_pct_change_24h": 0.022137,
+      "price_war_risk_premium": 0.011757,
+      "price_bocd_flag": 1.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2019-06-27",
+    "features": {
+      "ais_gap_count_24h": 6.33,
+      "ais_dark_vessel_count": 3.67,
+      "ais_anomaly_score_max": 0.6993,
+      "ais_gap_duration_max_h": 8.67,
+      "ais_monitored_cell_pct": 0.796,
+      "ais_velocity_std": 0.58,
+      "gdelt_tone_24h_mean": -2.4225,
+      "gdelt_tone_delta": 0.0956,
+      "news_severity_max": 0.686,
+      "news_event_count_24h": 8.0,
+      "price_brent_pct_change_24h": 0.000902,
+      "price_war_risk_premium": 0.015116,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2019 Gulf of Oman tanker attacks",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='tanker attack Hormuz Iran'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  }
+]

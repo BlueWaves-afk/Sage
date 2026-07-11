@@ -172,16 +172,52 @@ def _predict(fv: _FeatureVector) -> _FusionResult:
     if _fitted_model is None and FUSION_MODEL_PATH.exists():
         try:
             with open(FUSION_MODEL_PATH, "rb") as f:
-                _fitted_model = pickle.load(f)
+                raw = pickle.load(f)
+            # pkl is saved as {"model": ..., "explainer": ..., "meta": ...}
+            _fitted_model = raw["model"] if isinstance(raw, dict) else raw
             log.info("Loaded fitted fusion model from %s", FUSION_MODEL_PATH)
         except Exception as exc:
             log.warning("Failed to load fusion model: %s — using weighted sum", exc)
 
     if _fitted_model is not None:
         try:
-            return _fitted_model.predict(fv)
+            import numpy as np
+            # Feature order must match training (build_calibration_data.py JSON key order).
+            # price_war_risk_premium comes BEFORE price_bocd_flag/price_regime in the
+            # training JSON — _FeatureVector has a different order, so extract explicitly.
+            X = np.array([[
+                fv.ais_gap_count_24h,
+                fv.ais_dark_vessel_count,
+                fv.ais_anomaly_score_max,
+                fv.ais_gap_duration_max_h,
+                fv.ais_monitored_cell_pct,
+                fv.ais_velocity_std,
+                fv.gdelt_tone_24h_mean,
+                fv.gdelt_tone_delta,
+                fv.news_severity_max,
+                fv.news_event_count_24h,
+                fv.price_brent_pct_change_24h,
+                fv.price_war_risk_premium,   # training col 12
+                fv.price_bocd_flag,           # training col 13
+                fv.price_regime,              # training col 14
+                fv.sanctions_new_additions_24h,
+                fv.sanctions_vessel_count,
+                fv.sanctions_major_entity,
+            ]])
+            score = float(_fitted_model.predict_proba(X)[0][1])
+            # Build a _FusionResult mirroring the weighted-sum shape.
+            wr = _weighted_fusion(fv)  # get factor breakdown cheaply
+            return _FusionResult(
+                score=score,
+                factor_ais=wr.factor_ais,
+                factor_gdelt=wr.factor_gdelt,
+                factor_price=wr.factor_price,
+                factor_sanctions=wr.factor_sanctions,
+                rationale=f"GBM-Platt score={score:.3f}",
+                model_version="gbm-v1",
+            )
         except Exception as exc:
-            log.warning("Fitted model predict failed: %s — falling back to weighted sum", exc)
+            log.warning("GBM predict failed: %s — falling back to weighted sum", exc)
 
     return _weighted_fusion(fv)
 
@@ -194,11 +230,31 @@ async def run_consumer_loop() -> None:
     """
     Blocking consumer loop. Runs as a long-lived coroutine in the SAGE core container.
     """
+    # Launch EOD batch flush as a background task (fires once daily at EOD_FLUSH_UTC).
+    from knowledge.deferred_ingest import run_eod_flush_loop
+    asyncio.create_task(run_eod_flush_loop(REDIS_URL))
+
     client = aioredis.from_url(REDIS_URL, decode_responses=True)
     log.info("SAGE ingest consumer started. Queue: %s", QUEUE_KEY)
 
+    from knowledge.demo_control import (
+        is_demo_active, is_replay_signal, DEMO_FLUSH_INTERVAL_S,
+    )
+    demo_prev = False
+
     try:
         while True:
+            # ── Demo sandbox: clear risk caches on entering/leaving demo mode so
+            # the replay climbs from a clean baseline and live re-derives cleanly
+            # afterwards. Cheap Redis GET each loop; no-op when no demo runs.
+            demo_active = await is_demo_active(client)
+            if demo_active != demo_prev:
+                _last_risk.clear()
+                _signal_buffer.clear()
+                log.info("Demo sandbox %s — cleared risk caches",
+                         "ENTERED" if demo_active else "EXITED")
+                demo_prev = demo_active
+
             try:
                 result = await client.blpop(QUEUE_KEY, timeout=1)
             except Exception as exc:
@@ -208,19 +264,24 @@ async def run_consumer_loop() -> None:
 
             if result:
                 _, raw = result
-                await _handle_raw(raw, client)
+                await _handle_raw(raw, client, demo_active=demo_active)
 
             now = time.monotonic()
             global _last_flush
-            if now - _last_flush >= FLUSH_INTERVAL_S:
-                await _flush_risk_states()
+            interval = DEMO_FLUSH_INTERVAL_S if demo_active else FLUSH_INTERVAL_S
+            if now - _last_flush >= interval:
+                await _flush_risk_states(demo_active=demo_active)
                 _last_flush = now
 
     finally:
         await client.aclose()
 
 
-async def _handle_raw(raw: str, redis_client: Optional[object] = None) -> None:
+async def _handle_raw(
+    raw: str,
+    redis_client: Optional[object] = None,
+    demo_active: bool = False,
+) -> None:
     """Deserialise one signal JSON and hand it to ingest_signal()."""
     try:
         data   = json.loads(raw)
@@ -229,31 +290,48 @@ async def _handle_raw(raw: str, redis_client: Optional[object] = None) -> None:
         log.error("Malformed signal JSON: %s | raw=%.200s", exc, raw)
         return
 
-    try:
-        result = await ingest_signal(signal)
-        log.debug("Ingested %s → %s", signal.signal_id, result.decision)
+    # Demo sandbox: while a replay is running, DROP live signals so real data
+    # cannot poison the demo (and vice-versa). Replay signals pass through.
+    if demo_active:
+        from knowledge.demo_control import is_replay_signal
+        if not is_replay_signal(signal):
+            log.debug("Demo active — dropping live signal %s", signal.signal_id)
+            return
 
+    # Signals with force_synthesis=True (sanctions diffs, BOCD price breakpoints)
+    # bypass the deferred gate entirely — they are always time-critical.
+    # All other signals are buffered; the fusion score decides whether they get
+    # immediate ingest (score ≥ IMMEDIATE_INGEST_THRESHOLD) or EOD batch ingest.
+    # force_synthesis=True fires immediate Nova Pro synthesis for live critical signals
+    # (sanctions diffs, BOCD price breakpoints). During demo replay, these would each
+    # block the consumer for 56s+ — skip immediate LLM for replay signals; they are
+    # deferred and flushed when the entity risk crosses IMMEDIATE_INGEST_THRESHOLD.
+    if signal.force_synthesis and not demo_active:
+        try:
+            result = await ingest_signal(signal)
+            log.debug("Immediate ingest (force_synthesis) %s → %s",
+                      signal.signal_id, result.decision)
+        except Exception as exc:
+            log.error("ingest_signal (force) failed for %s: %s", signal.signal_id, exc)
+
+    for entity in signal.entity_refs:
+        _signal_buffer[entity].append(signal)
+
+    # In demo mode, use a larger batch size so signals from one replay tick flush
+    # together (one tick sends ~15 AIS + 20 news = 35 signals; with BATCH_SIZE=10
+    # those split across 3+ batches, diluting the feature vector). 50 fits one
+    # tick's full signal volume in a single fusion call.
+    effective_batch = 50 if demo_active else BATCH_SIZE
+    for entity, buf in list(_signal_buffer.items()):
+        if len(buf) >= effective_batch:
+            await _run_fusion_for_entity(entity, buf)
+            _signal_buffer[entity] = []
+
+    # Fire sandbox fork in background for HIGH signals (risk assessment only,
+    # no LLM calls — this just checks thresholds and registers pending scenarios).
+    if signal.priority_hint == "HIGH":
         for entity in signal.entity_refs:
-            _signal_buffer[entity].append(signal)
-
-        for entity, buf in list(_signal_buffer.items()):
-            if len(buf) >= BATCH_SIZE:
-                await _run_fusion_for_entity(entity, buf)
-                _signal_buffer[entity] = []
-
-        # Fire sandbox fork in background for HIGH signals
-        if signal.priority_hint == "HIGH":
-            for entity in signal.entity_refs:
-                asyncio.create_task(_maybe_sandbox_fork(signal, entity))
-            # Second-brain learning: let the LLM refine dependency-edge exposure
-            # weights bitemporally if this signal implies a supply-chain shift.
-            # Background + best-effort so it never delays ingest.
-            asyncio.create_task(_maybe_learn_edges(signal))
-            # Refresh India supply chain brief (cooldown-gated, best-effort).
-            asyncio.create_task(_refresh_india_brief())
-
-    except Exception as exc:
-        log.error("ingest_signal failed for %s: %s", signal.signal_id, exc)
+            asyncio.create_task(_maybe_sandbox_fork(signal, entity))
 
 
 async def _maybe_learn_edges(signal: NormalizedSignal) -> None:
@@ -276,15 +354,17 @@ async def _refresh_india_brief() -> None:
         log.debug("[india_brief] refresh non-fatal error: %s", exc)
 
 
-async def _flush_risk_states() -> None:
+async def _flush_risk_states(demo_active: bool = False) -> None:
     """Flush all buffered signals through fusion and write risk states."""
     for entity, buf in list(_signal_buffer.items()):
         if buf:
-            await _run_fusion_for_entity(entity, buf)
+            await _run_fusion_for_entity(entity, buf, demo_active=demo_active)
             _signal_buffer[entity] = []
 
 
-async def _run_fusion_for_entity(entity: str, signals: list[NormalizedSignal]) -> None:
+async def _run_fusion_for_entity(
+    entity: str, signals: list[NormalizedSignal], demo_active: bool = False,
+) -> None:
     """Aggregate buffered signals, run fusion model, write RISK_STATE edge."""
     fv = _FeatureVector()
 
@@ -309,6 +389,23 @@ async def _run_fusion_for_entity(entity: str, signals: list[NormalizedSignal]) -
     sanction_vessels = 0
     major_entity     = 0.0
 
+    # Explicit aggregate overrides. Real sensory agents emit one signal per raw
+    # event, so fusion COUNTS events to derive 24h aggregates (below). A signal
+    # may instead carry a pre-aggregated field (e.g. "gap_count_24h") — a
+    # pre-summarised source, or the demo replaying labelled daily aggregates
+    # without flooding the queue with hundreds of synthetic events. When present
+    # these take precedence via max(), so the true daily count reaches the GBM
+    # even from a single signal. None ⇒ no override seen ⇒ use the counted value.
+    ovr_gap_count: float | None = None
+    ovr_dark:      float | None = None
+    ovr_mon_pct:   float | None = None
+    ovr_event_cnt: float | None = None
+    ovr_sanc_adds: float | None = None
+    ovr_sanc_vess: float | None = None
+
+    def _mx(cur, val):
+        return val if cur is None else max(cur, val)
+
     for sig in signals:
         p = sig.payload or {}
 
@@ -325,6 +422,12 @@ async def _run_fusion_for_entity(entity: str, signals: list[NormalizedSignal]) -
             vstd = p.get("velocity_std")
             if vstd is not None:
                 velocity_stds.append(float(vstd))
+            if "gap_count_24h" in p:
+                ovr_gap_count = _mx(ovr_gap_count, float(p["gap_count_24h"]))
+            if "dark_vessel_count" in p:
+                ovr_dark = _mx(ovr_dark, float(p["dark_vessel_count"]))
+            if "monitored_cell_pct" in p:
+                ovr_mon_pct = _mx(ovr_mon_pct, float(p["monitored_cell_pct"]))
 
         elif sig.source in ("gdelt", "news"):
             tone = p.get("tone") or p.get("gdelt_tone")
@@ -337,6 +440,8 @@ async def _run_fusion_for_entity(entity: str, signals: list[NormalizedSignal]) -
             severity_max = max(severity_max, sev)
             if sev > 0.7:
                 event_count += 1
+            if "event_count_24h" in p:
+                ovr_event_cnt = _mx(ovr_event_cnt, float(p["event_count_24h"]))
 
         elif sig.source == "price":
             price_change     = float(p.get("price_change_pct", price_change))
@@ -352,14 +457,32 @@ async def _run_fusion_for_entity(entity: str, signals: list[NormalizedSignal]) -
                     major_entity = 1.0
             if p.get("vessel_mmsi"):
                 sanction_vessels += 1
+            if "new_additions_24h" in p:
+                ovr_sanc_adds = _mx(ovr_sanc_adds, float(p["new_additions_24h"]))
+            if "vessel_count_24h" in p:
+                ovr_sanc_vess = _mx(ovr_sanc_vess, float(p["vessel_count_24h"]))
+            if p.get("major_entity"):
+                major_entity = 1.0
 
     n_ais = max(sum(1 for s in signals if s.source == "ais"), 1)
+
+    # Apply explicit aggregate overrides where a signal supplied them.
+    if ovr_gap_count is not None:
+        ais_gap_count = max(ais_gap_count, int(round(ovr_gap_count)))
+    if ovr_dark is not None:
+        dark_count = max(dark_count, int(round(ovr_dark)))
+    if ovr_event_cnt is not None:
+        event_count = max(event_count, int(round(ovr_event_cnt)))
+    if ovr_sanc_adds is not None:
+        sanction_adds = max(sanction_adds, int(round(ovr_sanc_adds)))
+    if ovr_sanc_vess is not None:
+        sanction_vessels = max(sanction_vessels, int(round(ovr_sanc_vess)))
 
     fv.ais_gap_count_24h          = float(ais_gap_count)
     fv.ais_dark_vessel_count      = float(dark_count)
     fv.ais_anomaly_score_max      = anomaly_max
     fv.ais_gap_duration_max_h     = gap_duration_max
-    fv.ais_monitored_cell_pct     = monitored_cell_hits / n_ais
+    fv.ais_monitored_cell_pct     = ovr_mon_pct if ovr_mon_pct is not None else monitored_cell_hits / n_ais
     fv.ais_velocity_std           = sum(velocity_stds) / len(velocity_stds) if velocity_stds else 0.0
     fv.gdelt_tone_24h_mean        = sum(gdelt_tones) / len(gdelt_tones) if gdelt_tones else 0.0
     fv.gdelt_tone_delta           = sum(gdelt_tone_deltas) / len(gdelt_tone_deltas) if gdelt_tone_deltas else 0.0
@@ -374,6 +497,15 @@ async def _run_fusion_for_entity(entity: str, signals: list[NormalizedSignal]) -
     fv.sanctions_major_entity     = major_entity
 
     result      = _predict(fv)
+    log.info(
+        "[fusion-dbg] %s n=%d gap_dur=%.1f gap_cnt=%d dark=%d anom=%.2f "
+        "evt=%d sev=%.2f tone=%.1f bocd=%.0f war=%.2f sanc_v=%d maj=%.0f -> gbm=%.3f",
+        entity, len(signals), fv.ais_gap_duration_max_h, int(fv.ais_gap_count_24h),
+        int(fv.ais_dark_vessel_count), fv.ais_anomaly_score_max, int(fv.news_event_count_24h),
+        fv.news_severity_max, fv.gdelt_tone_24h_mean, fv.price_bocd_flag,
+        fv.price_war_risk_premium, int(fv.sanctions_vessel_count),
+        fv.sanctions_major_entity, result.score,
+    )
     # Coerce to tz-aware UTC — live agents may emit naive datetimes, and mixing
     # naive/aware in max() raises. Normalise before comparing. (No local
     # `from datetime import timezone` anywhere else in this function — that
@@ -459,13 +591,59 @@ async def _run_fusion_for_entity(entity: str, signals: list[NormalizedSignal]) -
         # Cascade this primary score to dependents across the supply-chain graph
         # (a risky corridor raises its refineries/ports; a sanctioned supplier
         # raises the refineries it feeds). Only ever raises risk, never lowers.
-        try:
-            from knowledge.cascade import cascade_risk_from
-            await cascade_risk_from(entity, effective_score)
-        except Exception as exc:
-            log.debug("risk cascade from '%s' failed: %s", entity, exc)
+        # Skipped during demo replay: the BFS fans out reads + per-neighbour
+        # writes on every 3s flush, saturating the shared FalkorDB and stalling
+        # the consumer so the primary Hormuz score can't climb. The demo is about
+        # the primary entity crossing, not downstream propagation.
+        if not demo_active:
+            try:
+                from knowledge.cascade import cascade_risk_from
+                await cascade_risk_from(entity, effective_score)
+            except Exception as exc:
+                log.debug("risk cascade from '%s' failed: %s", entity, exc)
     except Exception as exc:
         log.error("write_risk_state failed for '%s': %s", entity, exc)
+
+    # ── LLM ingest gate ───────────────────────────────────────────────────────
+    # Signals whose force_synthesis=True were already ingested in _handle_raw().
+    # For the rest: if effective_score crosses the immediate threshold, flush
+    # all deferred signals for this entity NOW (one batch LLM call). Otherwise,
+    # park them — the EOD flush will consolidate them into a single daily call.
+    from knowledge.deferred_ingest import (
+        IMMEDIATE_INGEST_THRESHOLD, defer_signal, flush_entity,
+    )
+    non_force_signals = [s for s in signals if not s.force_synthesis]
+    if not non_force_signals:
+        return
+
+    if effective_score >= IMMEDIATE_INGEST_THRESHOLD:
+        log.info(
+            "[ingest-gate] score %.3f ≥ %.2f for '%s' — flushing immediately (%d signals)",
+            effective_score, IMMEDIATE_INGEST_THRESHOLD, entity, len(non_force_signals),
+        )
+        # Add current window signals to deferred store, then flush everything.
+        for sig in non_force_signals:
+            await defer_signal(sig, entity, REDIS_URL)
+        asyncio.create_task(_flush_entity_task(entity))
+    else:
+        log.debug(
+            "[ingest-gate] score %.3f < %.2f for '%s' — deferring %d signals to EOD",
+            effective_score, IMMEDIATE_INGEST_THRESHOLD, entity, len(non_force_signals),
+        )
+        for sig in non_force_signals:
+            await defer_signal(sig, entity, REDIS_URL)
+
+
+async def _flush_entity_task(entity: str) -> None:
+    """Background wrapper so flush_entity() doesn't block the consumer loop."""
+    try:
+        from knowledge.deferred_ingest import flush_entity
+        n = await flush_entity(entity, REDIS_URL)
+        log.info("[ingest-gate] immediate flush complete for '%s': %d signals", entity, n)
+        # Trigger edge learning + India brief refresh now that a real LLM ingest ran.
+        asyncio.create_task(_refresh_india_brief())
+    except Exception as exc:
+        log.error("[ingest-gate] immediate flush failed for '%s': %s", entity, exc)
 
 
 async def _prior_risk_state(entity: str):

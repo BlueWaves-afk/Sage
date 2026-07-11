@@ -41,6 +41,7 @@ export default function ScenarioBuilder({ onRunComplete, onLoadScenarioId }: Pro
   }
 
   // Controlled parameters
+  const [disruptionType, setDisruptionType] = useState<"transit" | "production">("transit");
   const [entity, setEntity] = useState("Strait of Hormuz");
   const [fracPct, setFracPct] = useState(80);           // 0–100 → disruption_fraction
   const [days, setDays] = useState(14);
@@ -49,6 +50,9 @@ export default function ScenarioBuilder({ onRunComplete, onLoadScenarioId }: Pro
   const [sprPolicy, setSprPolicy] = useState<"aggressive" | "moderate" | "none">("aggressive");
   const [demandPct, setDemandPct] = useState(0);        // 0–30
   const [runDownstream, setRunDownstream] = useState(true);
+  // G4: OPEC+ production-cut knobs
+  const [cutMbpd, setCutMbpd] = useState(0.8);         // India's direct supply loss, mbpd
+  const [cutSupplier, setCutSupplier] = useState("Saudi Aramco");
 
   const [run, setRun] = useState<RunState>({ runId: null, running: false, stage: null, pct: 0, error: null });
 
@@ -62,6 +66,13 @@ export default function ScenarioBuilder({ onRunComplete, onLoadScenarioId }: Pro
     setBypass(p.bypass_compromised_frac >= 0.5);
     setSprPolicy(p.spr_policy);
     setDemandPct(Math.round(p.demand_destruction_pct * 100));
+    if (p.supply_cut_mbpd != null && p.supply_cut_mbpd > 0) {
+      setDisruptionType("production");
+      setCutMbpd(p.supply_cut_mbpd);
+      setCutSupplier(p.cut_supplier ?? p.entity);
+    } else {
+      setDisruptionType("transit");
+    }
   }
 
   // Auto-select first preset when loaded
@@ -94,7 +105,7 @@ export default function ScenarioBuilder({ onRunComplete, onLoadScenarioId }: Pro
   async function handleRun() {
     setRun({ runId: null, running: true, stage: "scenario", pct: 0, error: null });
     const body: ScenarioRunRequest = {
-      entity,
+      entity: disruptionType === "production" ? cutSupplier : entity,
       disruption_fraction: fracPct / 100,
       disruption_days: days,
       escalation_profile: escalation,
@@ -102,6 +113,10 @@ export default function ScenarioBuilder({ onRunComplete, onLoadScenarioId }: Pro
       spr_policy: sprPolicy,
       demand_destruction_pct: demandPct / 100,
       run_downstream: runDownstream,
+      ...(disruptionType === "production" ? {
+        supply_cut_mbpd: cutMbpd,
+        cut_supplier: cutSupplier,
+      } : {}),
     };
     const env = await api.runScenario(body);
     if (!env.data) {
@@ -177,14 +192,45 @@ export default function ScenarioBuilder({ onRunComplete, onLoadScenarioId }: Pro
       <div className="sim-divider" />
 
       <div className="sim-field">
-        <label className="sim-label">Entity</label>
-        <input className="sim-input" value={entity} onChange={(e) => setEntity(e.target.value)} />
+        <label className="sim-label">Disruption Type</label>
+        <div className="sim-seg">
+          <button className={`sim-seg-btn${disruptionType === "transit" ? " on" : ""}`} onClick={() => { setDisruptionType("transit"); setEntity("Strait of Hormuz"); }}>transit</button>
+          <button className={`sim-seg-btn${disruptionType === "production" ? " on" : ""}`} onClick={() => { setDisruptionType("production"); }}>production</button>
+        </div>
       </div>
 
-      <div className="sim-field">
-        <label className="sim-label">Severity <span className="sim-val">{fracPct}%</span></label>
-        <input type="range" className="sim-range" min={0} max={100} value={fracPct} onChange={(e) => setFracPct(+e.target.value)} />
-      </div>
+      {disruptionType === "transit" ? (
+        <>
+          <div className="sim-field">
+            <label className="sim-label">Entity</label>
+            <input className="sim-input" value={entity} onChange={(e) => setEntity(e.target.value)} />
+          </div>
+          <div className="sim-field">
+            <label className="sim-label">Severity <span className="sim-val">{fracPct}%</span></label>
+            <input type="range" className="sim-range" min={0} max={100} value={fracPct} onChange={(e) => setFracPct(+e.target.value)} />
+          </div>
+          <div className="sim-field sim-field-row">
+            <label className="sim-label">Bypass Compromised</label>
+            <button className={`sim-toggle${bypass ? " on" : ""}`} onClick={() => setBypass((v) => !v)}>{bypass ? "YES" : "NO"}</button>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="sim-field">
+            <label className="sim-label">Supplier</label>
+            <input className="sim-input" value={cutSupplier} onChange={(e) => setCutSupplier(e.target.value)} />
+          </div>
+          <div className="sim-field">
+            <label className="sim-label">Cut — India's direct loss <span className="sim-val">{cutMbpd.toFixed(1)} mbpd</span></label>
+            <input type="range" className="sim-range" min={1} max={40} value={Math.round(cutMbpd * 10)} onChange={(e) => setCutMbpd(+e.target.value / 10)} />
+            <div className="sim-field-hint">AIS-derived availability proxy · global spare offsets the remainder</div>
+          </div>
+          <div className="sim-field">
+            <label className="sim-label">Implementation <span className="sim-val">{fracPct}%</span></label>
+            <input type="range" className="sim-range" min={0} max={100} value={fracPct} onChange={(e) => setFracPct(+e.target.value)} />
+          </div>
+        </>
+      )}
 
       <div className="sim-field">
         <label className="sim-label">Duration <span className="sim-val">{days}d</span></label>
@@ -212,11 +258,6 @@ export default function ScenarioBuilder({ onRunComplete, onLoadScenarioId }: Pro
       <div className="sim-field">
         <label className="sim-label">Demand Destruction <span className="sim-val">{demandPct}%</span></label>
         <input type="range" className="sim-range" min={0} max={30} value={demandPct} onChange={(e) => setDemandPct(+e.target.value)} />
-      </div>
-
-      <div className="sim-field sim-field-row">
-        <label className="sim-label">Bypass Compromised</label>
-        <button className={`sim-toggle${bypass ? " on" : ""}`} onClick={() => setBypass((v) => !v)}>{bypass ? "YES" : "NO"}</button>
       </div>
 
       <div className="sim-field sim-field-row">

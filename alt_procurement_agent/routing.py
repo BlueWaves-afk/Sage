@@ -127,6 +127,23 @@ def _load_routing_bundle():
         return _DEFAULT_BASE_COST, _DEFAULT_BASE_DAYS, _DEFAULT_WAR_RISK_PER_UNIT
 
 
+# Port congestion → berth wait + demurrage adder.
+# Source: UNCTAD Port Performance Scorecard 2023 — max berth wait at Indian major ports
+# averages 2.1d at full congestion; we cap at 3d to avoid over-penalising.
+_MAX_BERTH_WAIT_DAYS = 3.0       # days at congestion=1.0
+_DEMURRAGE_PER_DAY = 35_000.0   # USD/day VLCC (Clarkson demurrage norms)
+_VLCC_CARGO_BBL = 2_000_000.0   # typical VLCC cargo size in barrels
+
+# AIS tanker density baseline (VLCCs seen per 24h in key load regions).
+# Below baseline → availability penalty. Sourced from aisstream.io observed norms.
+_AIS_DENSITY_BASELINE: dict[str, float] = {
+    "Gulf":    12.0,   # Persian Gulf load zone
+    "Indian":   4.0,   # Indian Ocean transit
+    "Atlantic": 6.0,   # West Africa / Americas
+}
+_TANKER_LEAD_PENALTY_MAX = 5.0   # extra days when density < 50% of baseline
+
+
 @dataclass
 class RouteOption:
     supplier: str
@@ -135,6 +152,48 @@ class RouteOption:
     landed_cost_usd_bbl: float
     lead_time_days: float
     corridor_risk: float
+    congestion_delay_days: float = 0.0    # G5: port berth-wait at destination
+    tanker_availability: float = 1.0      # G5: 0..1 AIS-derived proxy (1=normal)
+    tanker_availability_note: str = ""    # human-readable label for rationale prose
+
+
+def _get_tanker_availability(region: str) -> tuple[float, str]:
+    """
+    Read AIS vessel density from Redis (sage:ais:vessel_density:{region}).
+    Returns (availability_factor 0..1, note_string).
+    Best-effort; defaults to 1.0 (normal) on Redis miss.
+    """
+    try:
+        import os, redis
+        r = redis.from_url(os.environ.get("REDIS_URL", "redis://redis:6379/0"),
+                           decode_responses=True, socket_timeout=0.5)
+        raw = r.get(f"sage:ais:vessel_density:{region}")
+        r.close()
+        if raw is None:
+            return 1.0, "AIS density: no data (assumed normal)"
+        density = float(raw)
+        baseline = _AIS_DENSITY_BASELINE.get(region, 8.0)
+        ratio = density / max(baseline, 1.0)
+        avail = min(1.0, max(0.1, ratio))
+        if avail >= 0.8:
+            note = f"VLCC density in {region} normal ({density:.0f} vs baseline {baseline:.0f})"
+        elif avail >= 0.5:
+            note = f"VLCC density in {region} reduced ({density:.0f} vs baseline {baseline:.0f}) — +{_TANKER_LEAD_PENALTY_MAX*(1-avail):.1f}d lead"
+        else:
+            note = f"VLCC density in {region} low ({density:.0f} vs baseline {baseline:.0f}) — availability constrained"
+        return avail, note
+    except Exception:
+        return 1.0, "AIS density: unavailable (assumed normal)"
+
+
+# Map supplier country → AIS region key for tanker availability lookup
+_COUNTRY_TO_AIS_REGION: dict[str, str] = {
+    "Saudi Arabia": "Gulf", "Iraq": "Gulf", "United Arab Emirates": "Gulf",
+    "Kuwait": "Gulf", "Qatar": "Gulf", "Iran": "Gulf",
+    "Russia": "Atlantic", "Nigeria": "Atlantic", "Angola": "Atlantic",
+    "United States": "Atlantic", "Brazil": "Atlantic", "Venezuela": "Atlantic",
+    "Kazakhstan": "Indian",
+}
 
 
 def solve(
@@ -142,6 +201,7 @@ def solve(
     corridors: list[CorridorView],
     bypass_edges: list[dict],       # [{src, via_corridor, cost_premium, added_days}]
     risk_max: float = 0.5,
+    port_congestion: dict | None = None,   # {port_name: congestion 0..1}; fetched by the async caller
 ) -> dict[str, RouteOption]:
     """
     For each non-sanctioned supplier, returns the lowest landed-cost open route.
@@ -155,6 +215,20 @@ def solve(
     baseline_brent = _load_baseline_brent()
     corridor_by_name = {c.display_name: c for c in corridors}
 
+    # G5: destination-port congestion (Port.congestion 0..1), fetched by the async
+    # caller and passed in — get_port_congestion() is a coroutine and solve() is
+    # sync, so it cannot be awaited here. Best-effort; defaults to no congestion.
+    port_congestion = port_congestion or {}
+    # India's major crude import ports — use their average congestion as the destination factor.
+    _INDIA_PORTS = ["Mundra Port", "Vadinar Port", "Paradip Port", "Vizag Port", "Kochi Port"]
+    avg_congestion = (
+        sum(port_congestion.get(p, 0.0) for p in _INDIA_PORTS) / len(_INDIA_PORTS)
+    )
+    congestion_delay = round(avg_congestion * _MAX_BERTH_WAIT_DAYS, 2)
+    demurrage_usd_bbl = round(
+        congestion_delay * _DEMURRAGE_PER_DAY / _VLCC_CARGO_BBL, 4
+    )
+
     result: dict[str, RouteOption] = {}
     for supplier in suppliers:
         country = supplier.country or ""
@@ -163,6 +237,11 @@ def solve(
         sup_base_cost = base_cost.get(country, 4.0)
         sup_base_days = base_days.get(country, 28.0)
         default_corr_name = _DEFAULT_CORRIDOR.get(country, "Suez Canal")
+
+        # G5: tanker availability from AIS vessel density in the load region
+        ais_region = _COUNTRY_TO_AIS_REGION.get(country, "Indian")
+        tanker_avail, tanker_note = _get_tanker_availability(ais_region)
+        tanker_lead_penalty = round(_TANKER_LEAD_PENALTY_MAX * max(0.0, 1.0 - tanker_avail), 2)
 
         candidates: list[RouteOption] = []
 
@@ -180,9 +259,12 @@ def solve(
                     supplier=supplier.display_name,
                     corridor=default_corr_name,
                     is_bypass=False,
-                    landed_cost_usd_bbl=round(baseline_brent + sup_base_cost + war_premium, 2),
-                    lead_time_days=sup_base_days,
+                    landed_cost_usd_bbl=round(baseline_brent + sup_base_cost + war_premium + demurrage_usd_bbl, 2),
+                    lead_time_days=round(sup_base_days + congestion_delay + tanker_lead_penalty, 1),
                     corridor_risk=risk,
+                    congestion_delay_days=congestion_delay,
+                    tanker_availability=tanker_avail,
+                    tanker_availability_note=tanker_note,
                 ))
         else:
             # Corridor genuinely absent from the KB (no risk score ever written for
@@ -191,9 +273,12 @@ def solve(
                 supplier=supplier.display_name,
                 corridor=default_corr_name,
                 is_bypass=False,
-                landed_cost_usd_bbl=round(baseline_brent + sup_base_cost, 2),
-                lead_time_days=sup_base_days,
+                landed_cost_usd_bbl=round(baseline_brent + sup_base_cost + demurrage_usd_bbl, 2),
+                lead_time_days=round(sup_base_days + congestion_delay + tanker_lead_penalty, 1),
                 corridor_risk=0.1,
+                congestion_delay_days=congestion_delay,
+                tanker_availability=tanker_avail,
+                tanker_availability_note=tanker_note,
             ))
 
         # Bypass routes from BYPASS_ROUTE edges
@@ -211,10 +296,13 @@ def solve(
                 corridor=bypass_corr_name,
                 is_bypass=True,
                 landed_cost_usd_bbl=round(
-                    baseline_brent + sup_base_cost + edge.get("cost_premium", 0.0) + war_premium, 2
+                    baseline_brent + sup_base_cost + edge.get("cost_premium", 0.0) + war_premium + demurrage_usd_bbl, 2
                 ),
-                lead_time_days=sup_base_days + edge.get("added_days", 0.0),
+                lead_time_days=round(sup_base_days + edge.get("added_days", 0.0) + congestion_delay + tanker_lead_penalty, 1),
                 corridor_risk=bypass_risk,
+                congestion_delay_days=congestion_delay,
+                tanker_availability=tanker_avail,
+                tanker_availability_note=tanker_note,
             ))
 
         if candidates:

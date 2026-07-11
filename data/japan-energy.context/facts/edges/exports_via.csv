@@ -1,0 +1,4 @@
+src_entity_id,dst_entity_id,volume_mbpd,tier,source,as_of,notes
+supplier_aramco,corridor_hormuz,2.50,real,METI-Japan,2025,Saudi crude exits through Hormuz; Japan receives ~40% from Aramco
+supplier_adnoc,corridor_hormuz,0.75,real,METI-Japan,2025,UAE crude routed via Hormuz
+supplier_kpc,corridor_hormuz,0.26,real,METI-Japan,2025,Kuwait crude via Hormuz

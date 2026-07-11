@@ -12,7 +12,7 @@ import "./voice.css";
 // component only reads it. That's what makes the same UI work regardless of
 // whether the trigger is voice, keyboard, or click.
 
-export default function VoiceOrb({ client }: { client: VoiceClient | null }) {
+export default function VoiceOrb({ client, voiceMode }: { client: VoiceClient | null; voiceMode?: string }) {
   const orb = useVoice((s) => s.orb);
   const enabled = useVoice((s) => s.enabled);
   const connected = useVoice((s) => s.connected);
@@ -105,6 +105,11 @@ export default function VoiceOrb({ client }: { client: VoiceClient | null }) {
 
   return (
     <div className={`voice-dock${expanded ? " expanded" : ""}`}>
+      {voiceMode === "mock" && (
+        <div className="voice-mock-chip" title="Real Gnani STT is unavailable — voice demo mode active (type to talk)">
+          VOICE DEMO MODE
+        </div>
+      )}
       {(interim || status || lastMsg) && expanded && (
         <div className="voice-caption">
           {status && <div className="voice-caption-status">{status}</div>}

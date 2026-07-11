@@ -3,13 +3,29 @@ import { api } from "../../api/hooks";
 import { Badge } from "../ui/ui";
 import type { ScenarioAccuracy, CalibrationFactors } from "../../api/types";
 
+interface FusionModelMeta {
+  version: string;
+  validation: string;
+  auc?: number;
+  mean_loco_auc?: number;
+  threshold?: number;
+  trained_at?: string;
+  n_crises?: number;
+  n_ticks?: number;
+  label?: string;
+}
+
 export default function LearningTab() {
   const [accuracy, setAccuracy] = useState<ScenarioAccuracy | null>(null);
   const [calib, setCalib] = useState<CalibrationFactors | null>(null);
+  const [gbm, setGbm] = useState<FusionModelMeta | null>(null);
 
   useEffect(() => {
     api.scenarioAccuracy().then((env) => setAccuracy(env.data));
     api.scenarioCalibration().then((env) => setCalib(env.data));
+    api.accuracy().then((env) => {
+      if (env.data?.fusion_model) setGbm(env.data.fusion_model);
+    }).catch(() => {});
   }, []);
 
   const crossing = accuracy?.crossing;
@@ -17,6 +33,45 @@ export default function LearningTab() {
 
   return (
     <div className="sim-tab-content">
+
+      {gbm && (
+        <div className="sim-section">
+          <div className="label-sm">
+            Fusion Model
+            <span className="mono" style={{ marginLeft: 8, fontSize: 9, color: "var(--text-3)" }}>
+              {gbm.label ?? `${gbm.version} · ${gbm.validation}`}
+            </span>
+          </div>
+          <div className="sim-kpi-strip">
+            <div className="sim-kpi">
+              <div className="sim-kpi-label">Mean LOCO AUC</div>
+              <div className="sim-kpi-value c-cyan">
+                {gbm.mean_loco_auc != null ? gbm.mean_loco_auc.toFixed(4) : "—"}
+              </div>
+            </div>
+            <div className="sim-kpi">
+              <div className="sim-kpi-label">Full-data AUC</div>
+              <div className="sim-kpi-value">{gbm.auc != null ? gbm.auc.toFixed(4) : "—"}</div>
+            </div>
+            <div className="sim-kpi">
+              <div className="sim-kpi-label">Action Threshold</div>
+              <div className="sim-kpi-value">{gbm.threshold != null ? gbm.threshold.toFixed(4) : "—"}</div>
+            </div>
+            <div className="sim-kpi">
+              <div className="sim-kpi-label">Training Crises</div>
+              <div className="sim-kpi-value">{gbm.n_crises ?? "—"}</div>
+            </div>
+            <div className="sim-kpi">
+              <div className="sim-kpi-label">Labeled Ticks</div>
+              <div className="sim-kpi-value">{gbm.n_ticks ?? "—"}</div>
+            </div>
+          </div>
+          <div style={{ marginTop: 4 }}>
+            <Badge tone="muted">GBM + Platt scaling · LOCO-5 validated · {gbm.trained_at ? `trained ${gbm.trained_at.slice(0,10)}` : ""}</Badge>
+          </div>
+        </div>
+      )}
+
       <div className="sim-section">
         <div className="label-sm">
           Risk-Crossing Accuracy

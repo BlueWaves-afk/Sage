@@ -1,0 +1,4 @@
+entity_id,canonical_name,capacity_mbpd,inventory_days,location_lat,location_lon,tier,source,as_of,notes
+refinery_negishi,Eneos Negishi,0.27,30,35.4,139.6,real,METI-Japan,2025,Japan's largest refinery complex; Yokohama
+refinery_chiba,Idemitsu Chiba,0.19,25,35.5,140.0,real,METI-Japan,2025,Tokyo Bay; Chiba prefecture
+refinery_sakai,Cosmo Sakai,0.14,25,34.6,135.5,real,METI-Japan,2025,Osaka Bay; Sakai city

@@ -110,7 +110,7 @@ All run via `sensory_agent/runner.py` (lazy imports, avoids cross-dep crashes).
 | `visualizer_agent/frontend/src/screens/CommandCenter.tsx` | Main dashboard UI |
 | `visualizer_agent/frontend/src/api/client.ts` | API client (zero mocks) |
 | `visualizer_agent/api_gateway/main.py` | FastAPI gateway (all /api/* endpoints) |
-| `scripts/seed_kb.py` | First-boot KB instantiation (real cited data only) |
+| `scripts/sage_instantiate.py` | First-boot KB instantiation from the .context bundle (LLM-authored wikis) |
 | `data/india-energy-2026.context` | 61-entity bundle with edges + params |
 | `docs/DEPLOY_EC2.md` | EC2 deployment guide |
 
@@ -133,7 +133,7 @@ All run via `sensory_agent/runner.py` (lazy imports, avoids cross-dep crashes).
 
 2. **KB may need re-seeding** — `nodes: 0` in the map graph view means the `get_full_graph` query found no FalkorDB entity nodes. The KB was instantiated (59 entities monitored) but FalkorDB graph nodes may need the static loader to run again:
    ```bash
-   docker compose exec sage-core python -m scripts.seed_kb
+   docker compose exec sage-core python -m scripts.sage_instantiate
    ```
    Then refresh the frontend map.
 
@@ -164,7 +164,7 @@ docker compose logs -f sage-core
 docker compose logs -f sensory-news
 
 # Re-seed KB (if map shows 0 nodes)
-docker compose exec sage-core python -m scripts.seed_kb
+docker compose exec sage-core python -m scripts.sage_instantiate
 
 # API health
 curl localhost:8000/health

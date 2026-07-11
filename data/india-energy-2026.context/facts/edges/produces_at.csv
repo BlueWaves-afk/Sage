@@ -1,0 +1,11 @@
+source_id,target_id,relation,output_mbpd,crude_grade,tier,source,as_of,notes
+supplier_aramco,field_ghawar,PRODUCES_AT,3.80,Arab Light,real,ARAMCO-2025,2025,Ghawar is primary Aramco producing field
+supplier_aramco,field_khurais,PRODUCES_AT,1.50,Arab Light,real,ARAMCO-2025,2025,Khurais complex operated by Aramco
+supplier_aramco,field_safaniya,PRODUCES_AT,0.65,Arab Heavy,real,ARAMCO-2025,2025,Safaniya produces Arab Heavy blend
+supplier_iraqoil,field_rumaila,PRODUCES_AT,1.35,Basra Light,real,OPEC-ASB,2025,Rumaila operated by BP/SOMO consortium
+supplier_iraqoil,field_west_qurna,PRODUCES_AT,0.55,Basra Heavy,real,OPEC-ASB,2025,WQ-2 operated by Lukoil
+supplier_iraqoil,field_basra,PRODUCES_AT,1.80,Basra Light,real,OPEC-ASB,2025,aggregate South Iraq production
+supplier_iraqoil,field_kirkuk,PRODUCES_AT,0.40,Kirkuk Blend,derived,OPEC-ASB,2025,North Iraq; partial export via Turkey pipeline
+supplier_adnoc,field_upper_zakum,PRODUCES_AT,0.80,Upper Zakum crude,real,ADNOC-2025,2025,offshore Abu Dhabi
+supplier_adnoc,field_zakum_lower,PRODUCES_AT,0.40,Lower Zakum crude,real,ADNOC-2025,2025,offshore Abu Dhabi Lower Zakum
+supplier_kazmunaygas,field_tengiz,PRODUCES_AT,0.70,Tengiz blend,real,KMG-2025,2025,exported via CPC pipeline to Novorossiysk

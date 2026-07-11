@@ -371,6 +371,123 @@ REGISTRY: dict[str, EntityRegistryEntry] = {
         aliases=["Russian invasion of Ukraine", "Ukraine war", "2022 Russia sanctions"],
     ),
 
+    # ── G7 ProductionField nodes (wellheads) ─────────────────────────────────────
+    # Upstream production fields that feed into the supply chain. output_mbpd and
+    # spare_mbpd are public EIA/OPEC data.
+
+    "field_ghawar": EntityRegistryEntry(
+        entity_id="field_ghawar", entity_type="ProductionField",
+        canonical_name="Ghawar Field",
+        aliases=["Ghawar", "Ghawar oil field", "Saudi Ghawar"],
+        coordinates={"lat": 25.1, "lon": 49.8},
+    ),
+    "field_rumaila": EntityRegistryEntry(
+        entity_id="field_rumaila", entity_type="ProductionField",
+        canonical_name="Rumaila Field",
+        aliases=["Rumaila", "Rumaila oil field", "Iraq Rumaila"],
+        coordinates={"lat": 30.0, "lon": 47.5},
+    ),
+    "field_upper_zakum": EntityRegistryEntry(
+        entity_id="field_upper_zakum", entity_type="ProductionField",
+        canonical_name="Upper Zakum",
+        aliases=["Upper Zakum", "Zakum field", "ADNOC Zakum"],
+        coordinates={"lat": 24.8, "lon": 53.5},
+    ),
+    "field_khurais": EntityRegistryEntry(
+        entity_id="field_khurais", entity_type="ProductionField",
+        canonical_name="Khurais Complex",
+        aliases=["Khurais", "Khurais oil field"],
+        coordinates={"lat": 25.1, "lon": 48.4},
+    ),
+    "field_west_qurna": EntityRegistryEntry(
+        entity_id="field_west_qurna", entity_type="ProductionField",
+        canonical_name="West Qurna",
+        aliases=["West Qurna", "WQ-1", "WQ-2", "West Qurna Iraq"],
+        coordinates={"lat": 30.8, "lon": 47.7},
+    ),
+    "field_safaniya": EntityRegistryEntry(
+        entity_id="field_safaniya", entity_type="ProductionField",
+        canonical_name="Safaniya Field",
+        aliases=["Safaniya", "Safaniya offshore", "Saudi Safaniya"],
+        coordinates={"lat": 27.8, "lon": 48.8},
+    ),
+    "field_zakum_lower": EntityRegistryEntry(
+        entity_id="field_zakum_lower", entity_type="ProductionField",
+        canonical_name="Lower Zakum",
+        aliases=["Lower Zakum", "Umm Shaif Zakum"],
+        coordinates={"lat": 24.1, "lon": 53.0},
+    ),
+    "field_basra": EntityRegistryEntry(
+        entity_id="field_basra", entity_type="ProductionField",
+        canonical_name="Basra Fields",
+        aliases=["Basra crude fields", "South Iraq fields", "Basra"],
+        coordinates={"lat": 30.5, "lon": 47.8},
+    ),
+    "field_kirkuk": EntityRegistryEntry(
+        entity_id="field_kirkuk", entity_type="ProductionField",
+        canonical_name="Kirkuk Field",
+        aliases=["Kirkuk", "Kirkuk crude", "North Iraq Kirkuk"],
+        coordinates={"lat": 35.5, "lon": 44.4},
+    ),
+    "field_tengiz": EntityRegistryEntry(
+        entity_id="field_tengiz", entity_type="ProductionField",
+        canonical_name="Tengiz Field",
+        aliases=["Tengiz", "Tengizchevroil", "Kazakhstan Tengiz"],
+        coordinates={"lat": 45.5, "lon": 53.0},
+    ),
+
+    # ── G7 DistributionHub nodes (India state-level demand) ───────────────────────
+    # State-level crude demand hubs based on PPAC state consumption data.
+
+    "hub_gujarat": EntityRegistryEntry(
+        entity_id="hub_gujarat", entity_type="DistributionHub",
+        canonical_name="Gujarat Hub",
+        aliases=["Gujarat distribution", "Gujarat refineries hub", "Jamnagar area"],
+        coordinates={"lat": 22.5, "lon": 70.5},
+    ),
+    "hub_maharashtra": EntityRegistryEntry(
+        entity_id="hub_maharashtra", entity_type="DistributionHub",
+        canonical_name="Maharashtra Hub",
+        aliases=["Maharashtra distribution", "Mumbai hub", "Ratnagiri hub"],
+        coordinates={"lat": 19.0, "lon": 73.5},
+    ),
+    "hub_karnataka": EntityRegistryEntry(
+        entity_id="hub_karnataka", entity_type="DistributionHub",
+        canonical_name="Karnataka Hub",
+        aliases=["Karnataka distribution", "Mangaluru hub", "Bangalore region"],
+        coordinates={"lat": 13.0, "lon": 75.5},
+    ),
+    "hub_tamilnadu": EntityRegistryEntry(
+        entity_id="hub_tamilnadu", entity_type="DistributionHub",
+        canonical_name="Tamil Nadu Hub",
+        aliases=["Tamil Nadu distribution", "Chennai hub", "CPCL region"],
+        coordinates={"lat": 13.1, "lon": 80.2},
+    ),
+    "hub_andhra": EntityRegistryEntry(
+        entity_id="hub_andhra", entity_type="DistributionHub",
+        canonical_name="Andhra Pradesh Hub",
+        aliases=["Andhra distribution", "Vizag hub", "HPCL Vizag region"],
+        coordinates={"lat": 17.7, "lon": 83.2},
+    ),
+    "hub_odisha": EntityRegistryEntry(
+        entity_id="hub_odisha", entity_type="DistributionHub",
+        canonical_name="Odisha Hub",
+        aliases=["Odisha distribution", "Paradip hub", "IOCL Paradip region"],
+        coordinates={"lat": 20.3, "lon": 86.7},
+    ),
+    "hub_up_north": EntityRegistryEntry(
+        entity_id="hub_up_north", entity_type="DistributionHub",
+        canonical_name="North India Hub",
+        aliases=["North India distribution", "UP hub", "Panipat region"],
+        coordinates={"lat": 28.7, "lon": 77.2},
+    ),
+    "hub_haryana_punjab": EntityRegistryEntry(
+        entity_id="hub_haryana_punjab", entity_type="DistributionHub",
+        canonical_name="Haryana-Punjab Hub",
+        aliases=["Punjab Haryana hub", "Bathinda distribution", "Northwest India hub"],
+        coordinates={"lat": 30.2, "lon": 74.9},
+    ),
+
     # ── Crude Grades ─────────────────────────────────────────────────────────────
     # No H3 cells / instruments — grades are referenced by name in news/sanctions
     # text and configured on refineries via CONFIGURED_FOR edges. Assays in docs/data.md §4.

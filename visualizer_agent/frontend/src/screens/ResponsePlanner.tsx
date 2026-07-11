@@ -162,6 +162,9 @@ export default function ResponsePlanner() {
                 </span>
               </div>
             </div>
+            <div className="rp-pricing-source mono">
+              Pricing: Clarkson norms + live Brent basis · OSP differentials (Saudi/ADNOC)
+            </div>
             <div className="rp-options">
               {options.map((o, i) => (
                 // A div (not <button>) — RichText renders clickable wikilink
@@ -191,7 +194,7 @@ export default function ResponsePlanner() {
                   </div>
                   <div className="rp-option-metrics">
                     <span>via {o.route_via}</span>
-                    <span className="mono">${o.landed_cost_usd_bbl.toFixed(1)}/bbl</span>
+                    <span className="mono" title="Clarkson norms + live Brent basis">${o.landed_cost_usd_bbl.toFixed(1)}/bbl</span>
                     <span className="mono">{o.lead_time_days}d</span>
                     <span className="mono">compat {o.grade_compatibility.toFixed(2)}</span>
                   </div>

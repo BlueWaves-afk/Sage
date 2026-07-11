@@ -5,6 +5,26 @@ import GapFanChart from "./GapFanChart";
 import { api } from "../../api/hooks";
 import type { ScenarioOutput, MonteCarloBands, GraphNode } from "../../api/types";
 
+/** Inline mini sparkline for the GDP trajectory (G6). */
+function GdpSparkline({ trajectory }: { trajectory: number[] }) {
+  const W = 80, H = 22;
+  const nonZero = trajectory.filter(v => v !== 0);
+  if (!nonZero.length) return null;
+  const min = Math.min(...trajectory);
+  const max = Math.max(...trajectory);
+  const range = max - min || 0.001;
+  const pts = trajectory.map((v, i) => {
+    const x = (i / (trajectory.length - 1)) * W;
+    const y = H - ((v - min) / range) * H;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(" ");
+  return (
+    <svg width={W} height={H} style={{ display: "block", marginTop: 4 }} aria-label="GDP impact trajectory">
+      <polyline points={pts} fill="none" stroke="var(--c-red, #f87171)" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
 interface HorizonPoint { day: number; label: string; critical: boolean }
 
 function buildHorizon(s: ScenarioOutput): HorizonPoint[] {
@@ -104,6 +124,9 @@ export default function ImpactTab({ scenario, onWikilink }: Props) {
         <div className="sim-kpi">
           <div className="sim-kpi-label">GDP Hit</div>
           <div className="sim-kpi-value">{scenario.gdp_proxy_impact_pct != null ? `${scenario.gdp_proxy_impact_pct.toFixed(2)}%` : "—"}</div>
+          {scenario.gdp_trajectory_pct && scenario.gdp_trajectory_pct.length > 0 && (
+            <GdpSparkline trajectory={scenario.gdp_trajectory_pct} />
+          )}
         </div>
         <div className="sim-kpi">
           <div className="sim-kpi-label">Inflation</div>

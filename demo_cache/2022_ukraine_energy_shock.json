@@ -1,0 +1,752 @@
+[
+  {
+    "date": "2022-02-14",
+    "features": {
+      "ais_gap_count_24h": 0.0,
+      "ais_dark_vessel_count": 0.0,
+      "ais_anomaly_score_max": 0.03805648441486711,
+      "ais_gap_duration_max_h": 0.0,
+      "ais_monitored_cell_pct": 0.92,
+      "ais_velocity_std": 0.25,
+      "gdelt_tone_24h_mean": -2.1225,
+      "gdelt_tone_delta": -0.0124,
+      "news_severity_max": 0.17,
+      "news_event_count_24h": 4.0,
+      "price_brent_pct_change_24h": 0.021601,
+      "price_war_risk_premium": 0.086639,
+      "price_bocd_flag": 1.0,
+      "price_regime": 1.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2022 Ukraine war energy shock",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Russia Ukraine oil energy sanctions'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2022-02-15",
+    "features": {
+      "ais_gap_count_24h": 0.0,
+      "ais_dark_vessel_count": 0.0,
+      "ais_anomaly_score_max": 0.05257617066442943,
+      "ais_gap_duration_max_h": 0.0,
+      "ais_monitored_cell_pct": 0.92,
+      "ais_velocity_std": 0.25,
+      "gdelt_tone_24h_mean": -2.1498,
+      "gdelt_tone_delta": -0.0273,
+      "news_severity_max": 0.1828,
+      "news_event_count_24h": 4.0,
+      "price_brent_pct_change_24h": -0.033168,
+      "price_war_risk_premium": 0.04697,
+      "price_bocd_flag": 1.0,
+      "price_regime": 1.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2022 Ukraine war energy shock",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Russia Ukraine oil energy sanctions'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2022-02-16",
+    "features": {
+      "ais_gap_count_24h": 0.0,
+      "ais_dark_vessel_count": 0.0,
+      "ais_anomaly_score_max": 0.012685156216660368,
+      "ais_gap_duration_max_h": 0.0,
+      "ais_monitored_cell_pct": 0.92,
+      "ais_velocity_std": 0.25,
+      "gdelt_tone_24h_mean": -2.2097,
+      "gdelt_tone_delta": -0.0599,
+      "news_severity_max": 0.1568,
+      "news_event_count_24h": 4.0,
+      "price_brent_pct_change_24h": 0.016402,
+      "price_war_risk_premium": 0.062224,
+      "price_bocd_flag": 0.0,
+      "price_regime": 1.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2022 Ukraine war energy shock",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Russia Ukraine oil energy sanctions'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2022-02-17",
+    "features": {
+      "ais_gap_count_24h": 0.0,
+      "ais_dark_vessel_count": 0.0,
+      "ais_anomaly_score_max": 0.06703326458435348,
+      "ais_gap_duration_max_h": 0.0,
+      "ais_monitored_cell_pct": 0.92,
+      "ais_velocity_std": 0.25,
+      "gdelt_tone_24h_mean": -2.3389,
+      "gdelt_tone_delta": -0.1292,
+      "news_severity_max": 0.2062,
+      "news_event_count_24h": 5.0,
+      "price_brent_pct_change_24h": -0.019407,
+      "price_war_risk_premium": 0.039214,
+      "price_bocd_flag": 0.0,
+      "price_regime": 1.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2022 Ukraine war energy shock",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Russia Ukraine oil energy sanctions'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2022-02-18",
+    "features": {
+      "ais_gap_count_24h": 0.0,
+      "ais_dark_vessel_count": 0.0,
+      "ais_anomaly_score_max": 0.0325830213061887,
+      "ais_gap_duration_max_h": 0.0,
+      "ais_monitored_cell_pct": 0.92,
+      "ais_velocity_std": 0.25,
+      "gdelt_tone_24h_mean": -2.6074,
+      "gdelt_tone_delta": -0.2685,
+      "news_severity_max": 0.1983,
+      "news_event_count_24h": 5.0,
+      "price_brent_pct_change_24h": 0.006131,
+      "price_war_risk_premium": 0.044123,
+      "price_bocd_flag": 0.0,
+      "price_regime": 1.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2022 Ukraine war energy shock",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Russia Ukraine oil energy sanctions'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2022-02-19",
+    "features": {
+      "ais_gap_count_24h": 0.0,
+      "ais_dark_vessel_count": 0.0,
+      "ais_anomaly_score_max": 0.06823641463517822,
+      "ais_gap_duration_max_h": 0.0,
+      "ais_monitored_cell_pct": 0.92,
+      "ais_velocity_std": 0.25,
+      "gdelt_tone_24h_mean": -3.1247,
+      "gdelt_tone_delta": -0.5173,
+      "news_severity_max": 0.2595,
+      "news_event_count_24h": 6.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2022 Ukraine war energy shock",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Russia Ukraine oil energy sanctions'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2022-02-20",
+    "features": {
+      "ais_gap_count_24h": 0.0,
+      "ais_dark_vessel_count": 0.0,
+      "ais_anomaly_score_max": 0.03011092450730584,
+      "ais_gap_duration_max_h": 0.0,
+      "ais_monitored_cell_pct": 0.92,
+      "ais_velocity_std": 0.25,
+      "gdelt_tone_24h_mean": -3.9912,
+      "gdelt_tone_delta": -0.8665,
+      "news_severity_max": 0.2887,
+      "news_event_count_24h": 8.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2022 Ukraine war energy shock",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Russia Ukraine oil energy sanctions'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2022-02-21",
+    "features": {
+      "ais_gap_count_24h": 0.0,
+      "ais_dark_vessel_count": 0.0,
+      "ais_anomaly_score_max": 0.027204018051031433,
+      "ais_gap_duration_max_h": 0.0,
+      "ais_monitored_cell_pct": 0.92,
+      "ais_velocity_std": 0.25,
+      "gdelt_tone_24h_mean": -5.15,
+      "gdelt_tone_delta": -1.1588,
+      "news_severity_max": 0.3637,
+      "news_event_count_24h": 10.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 0.0,
+      "sanctions_major_entity": 0.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2022 Ukraine war energy shock",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Russia Ukraine oil energy sanctions'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2022-02-22",
+    "features": {
+      "ais_gap_count_24h": 0.0,
+      "ais_dark_vessel_count": 0.0,
+      "ais_anomaly_score_max": 0.058229801746152575,
+      "ais_gap_duration_max_h": 0.0,
+      "ais_monitored_cell_pct": 0.92,
+      "ais_velocity_std": 0.25,
+      "gdelt_tone_24h_mean": -6.3088,
+      "gdelt_tone_delta": -1.1588,
+      "news_severity_max": 0.4643,
+      "news_event_count_24h": 12.0,
+      "price_brent_pct_change_24h": 0.035279,
+      "price_war_risk_premium": 0.079316,
+      "price_bocd_flag": 1.0,
+      "price_regime": 1.0,
+      "sanctions_new_additions_24h": 2.0,
+      "sanctions_vessel_count": 1.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2022 Ukraine war energy shock",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Russia Ukraine oil energy sanctions'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2022-02-23",
+    "features": {
+      "ais_gap_count_24h": 0.0,
+      "ais_dark_vessel_count": 0.0,
+      "ais_anomaly_score_max": 0.004476976587937926,
+      "ais_gap_duration_max_h": 0.0,
+      "ais_monitored_cell_pct": 0.92,
+      "ais_velocity_std": 0.25,
+      "gdelt_tone_24h_mean": -7.1753,
+      "gdelt_tone_delta": -0.8665,
+      "news_severity_max": 0.4817,
+      "news_event_count_24h": 14.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.07647,
+      "price_bocd_flag": 0.0,
+      "price_regime": 1.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 1.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 1,
+    "crisis_name": "2022 Ukraine war energy shock",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Russia Ukraine oil energy sanctions'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2022-02-24",
+    "features": {
+      "ais_gap_count_24h": 2.0,
+      "ais_dark_vessel_count": 1.0,
+      "ais_anomaly_score_max": 0.3567,
+      "ais_gap_duration_max_h": 3.0,
+      "ais_monitored_cell_pct": 0.837,
+      "ais_velocity_std": 0.443,
+      "gdelt_tone_24h_mean": -7.6926,
+      "gdelt_tone_delta": -0.5173,
+      "news_severity_max": 0.7804,
+      "news_event_count_24h": 17.0,
+      "price_brent_pct_change_24h": 0.023131,
+      "price_war_risk_premium": 0.094891,
+      "price_bocd_flag": 1.0,
+      "price_regime": 1.0,
+      "sanctions_new_additions_24h": 5.0,
+      "sanctions_vessel_count": 4.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 1,
+    "crisis_name": "2022 Ukraine war energy shock",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Russia Ukraine oil energy sanctions'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2022-02-25",
+    "features": {
+      "ais_gap_count_24h": 2.17,
+      "ais_dark_vessel_count": 1.17,
+      "ais_anomaly_score_max": 0.4526,
+      "ais_gap_duration_max_h": 3.17,
+      "ais_monitored_cell_pct": 0.826,
+      "ais_velocity_std": 0.481,
+      "gdelt_tone_24h_mean": -7.388,
+      "gdelt_tone_delta": 0.3046,
+      "news_severity_max": 0.832,
+      "news_event_count_24h": 17.0,
+      "price_brent_pct_change_24h": -0.011607,
+      "price_war_risk_premium": 0.076095,
+      "price_bocd_flag": 0.0,
+      "price_regime": 1.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 4.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 1,
+    "crisis_name": "2022 Ukraine war energy shock",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Russia Ukraine oil energy sanctions'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2022-02-26",
+    "features": {
+      "ais_gap_count_24h": 2.33,
+      "ais_dark_vessel_count": 1.33,
+      "ais_anomaly_score_max": 0.4441,
+      "ais_gap_duration_max_h": 3.33,
+      "ais_monitored_cell_pct": 0.827,
+      "ais_velocity_std": 0.478,
+      "gdelt_tone_24h_mean": -6.684,
+      "gdelt_tone_delta": 0.704,
+      "news_severity_max": 0.7787,
+      "news_event_count_24h": 15.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 4.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2022 Ukraine war energy shock",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Russia Ukraine oil energy sanctions'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2022-02-27",
+    "features": {
+      "ais_gap_count_24h": 2.5,
+      "ais_dark_vessel_count": 1.5,
+      "ais_anomaly_score_max": 0.3839,
+      "ais_gap_duration_max_h": 3.5,
+      "ais_monitored_cell_pct": 0.834,
+      "ais_velocity_std": 0.454,
+      "gdelt_tone_24h_mean": -6.0738,
+      "gdelt_tone_delta": 0.6102,
+      "news_severity_max": 0.6928,
+      "news_event_count_24h": 14.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 4.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2022 Ukraine war energy shock",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Russia Ukraine oil energy sanctions'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2022-02-28",
+    "features": {
+      "ais_gap_count_24h": 3.67,
+      "ais_dark_vessel_count": 1.67,
+      "ais_anomaly_score_max": 0.4278,
+      "ais_gap_duration_max_h": 3.67,
+      "ais_monitored_cell_pct": 0.829,
+      "ais_velocity_std": 0.471,
+      "gdelt_tone_24h_mean": -5.5448,
+      "gdelt_tone_delta": 0.529,
+      "news_severity_max": 0.6905,
+      "news_event_count_24h": 13.0,
+      "price_brent_pct_change_24h": 0.031247,
+      "price_war_risk_premium": 0.104356,
+      "price_bocd_flag": 1.0,
+      "price_regime": 1.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 4.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2022 Ukraine war energy shock",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Russia Ukraine oil energy sanctions'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2022-03-01",
+    "features": {
+      "ais_gap_count_24h": 2.83,
+      "ais_dark_vessel_count": 1.83,
+      "ais_anomaly_score_max": 0.4276,
+      "ais_gap_duration_max_h": 3.83,
+      "ais_monitored_cell_pct": 0.829,
+      "ais_velocity_std": 0.471,
+      "gdelt_tone_24h_mean": -5.0862,
+      "gdelt_tone_delta": 0.4586,
+      "news_severity_max": 0.6598,
+      "news_event_count_24h": 12.0,
+      "price_brent_pct_change_24h": 0.03941,
+      "price_war_risk_premium": 0.141007,
+      "price_bocd_flag": 1.0,
+      "price_regime": 1.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 4.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2022 Ukraine war energy shock",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Russia Ukraine oil energy sanctions'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2022-03-02",
+    "features": {
+      "ais_gap_count_24h": 3.0,
+      "ais_dark_vessel_count": 2.0,
+      "ais_anomaly_score_max": 0.4418,
+      "ais_gap_duration_max_h": 4.0,
+      "ais_monitored_cell_pct": 0.827,
+      "ais_velocity_std": 0.477,
+      "gdelt_tone_24h_mean": -4.6887,
+      "gdelt_tone_delta": 0.3975,
+      "news_severity_max": 0.6439,
+      "news_event_count_24h": 11.0,
+      "price_brent_pct_change_24h": 0.075831,
+      "price_war_risk_premium": 0.219178,
+      "price_bocd_flag": 1.0,
+      "price_regime": 1.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 4.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2022 Ukraine war energy shock",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Russia Ukraine oil energy sanctions'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2022-03-03",
+    "features": {
+      "ais_gap_count_24h": 2.83,
+      "ais_dark_vessel_count": 1.83,
+      "ais_anomaly_score_max": 0.4638,
+      "ais_gap_duration_max_h": 3.83,
+      "ais_monitored_cell_pct": 0.824,
+      "ais_velocity_std": 0.486,
+      "gdelt_tone_24h_mean": -4.3441,
+      "gdelt_tone_delta": 0.3446,
+      "news_severity_max": 0.6375,
+      "news_event_count_24h": 11.0,
+      "price_brent_pct_change_24h": -0.021872,
+      "price_war_risk_premium": 0.181702,
+      "price_bocd_flag": 1.0,
+      "price_regime": 1.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 4.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2022 Ukraine war energy shock",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Russia Ukraine oil energy sanctions'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2022-03-04",
+    "features": {
+      "ais_gap_count_24h": 2.67,
+      "ais_dark_vessel_count": 1.67,
+      "ais_anomaly_score_max": 0.4316,
+      "ais_gap_duration_max_h": 3.67,
+      "ais_monitored_cell_pct": 0.828,
+      "ais_velocity_std": 0.473,
+      "gdelt_tone_24h_mean": -4.0453,
+      "gdelt_tone_delta": 0.2988,
+      "news_severity_max": 0.5934,
+      "news_event_count_24h": 10.0,
+      "price_brent_pct_change_24h": 0.069256,
+      "price_war_risk_premium": 0.253697,
+      "price_bocd_flag": 1.0,
+      "price_regime": 1.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 4.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2022 Ukraine war energy shock",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Russia Ukraine oil energy sanctions'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2022-03-05",
+    "features": {
+      "ais_gap_count_24h": 2.5,
+      "ais_dark_vessel_count": 1.5,
+      "ais_anomaly_score_max": 0.3951,
+      "ais_gap_duration_max_h": 3.5,
+      "ais_monitored_cell_pct": 0.833,
+      "ais_velocity_std": 0.458,
+      "gdelt_tone_24h_mean": -3.7864,
+      "gdelt_tone_delta": 0.2589,
+      "news_severity_max": 0.5488,
+      "news_event_count_24h": 9.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 4.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2022 Ukraine war energy shock",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Russia Ukraine oil energy sanctions'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2022-03-06",
+    "features": {
+      "ais_gap_count_24h": 2.33,
+      "ais_dark_vessel_count": 1.33,
+      "ais_anomaly_score_max": 0.3465,
+      "ais_gap_duration_max_h": 3.33,
+      "ais_monitored_cell_pct": 0.838,
+      "ais_velocity_std": 0.439,
+      "gdelt_tone_24h_mean": -3.5619,
+      "gdelt_tone_delta": 0.2245,
+      "news_severity_max": 0.4973,
+      "news_event_count_24h": 8.0,
+      "price_brent_pct_change_24h": 0.0,
+      "price_war_risk_premium": 0.0,
+      "price_bocd_flag": 0.0,
+      "price_regime": 0.5,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 4.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2022 Ukraine war energy shock",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Russia Ukraine oil energy sanctions'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2022-03-07",
+    "features": {
+      "ais_gap_count_24h": 3.17,
+      "ais_dark_vessel_count": 1.17,
+      "ais_anomaly_score_max": 0.3478,
+      "ais_gap_duration_max_h": 3.17,
+      "ais_monitored_cell_pct": 0.838,
+      "ais_velocity_std": 0.439,
+      "gdelt_tone_24h_mean": -3.3673,
+      "gdelt_tone_delta": 0.1946,
+      "news_severity_max": 0.4853,
+      "news_event_count_24h": 8.0,
+      "price_brent_pct_change_24h": 0.04318,
+      "price_war_risk_premium": 0.294218,
+      "price_bocd_flag": 1.0,
+      "price_regime": 1.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 4.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2022 Ukraine war energy shock",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Russia Ukraine oil energy sanctions'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2022-03-08",
+    "features": {
+      "ais_gap_count_24h": 3.0,
+      "ais_dark_vessel_count": 1.0,
+      "ais_anomaly_score_max": 0.3655,
+      "ais_gap_duration_max_h": 3.0,
+      "ais_monitored_cell_pct": 0.836,
+      "ais_velocity_std": 0.446,
+      "gdelt_tone_24h_mean": -3.1986,
+      "gdelt_tone_delta": 0.1687,
+      "news_severity_max": 0.4874,
+      "news_event_count_24h": 8.0,
+      "price_brent_pct_change_24h": 0.038714,
+      "price_war_risk_premium": 0.327901,
+      "price_bocd_flag": 1.0,
+      "price_regime": 1.0,
+      "sanctions_new_additions_24h": 4.0,
+      "sanctions_vessel_count": 6.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2022 Ukraine war energy shock",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Russia Ukraine oil energy sanctions'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2022-03-09",
+    "features": {
+      "ais_gap_count_24h": 1.73,
+      "ais_dark_vessel_count": 0.87,
+      "ais_anomaly_score_max": 0.3385,
+      "ais_gap_duration_max_h": 2.6,
+      "ais_monitored_cell_pct": 0.839,
+      "ais_velocity_std": 0.435,
+      "gdelt_tone_24h_mean": -3.0523,
+      "gdelt_tone_delta": 0.1463,
+      "news_severity_max": 0.4574,
+      "news_event_count_24h": 7.0,
+      "price_brent_pct_change_24h": -0.131583,
+      "price_war_risk_premium": 0.136773,
+      "price_bocd_flag": 1.0,
+      "price_regime": 1.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 6.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2022 Ukraine war energy shock",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Russia Ukraine oil energy sanctions'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  },
+  {
+    "date": "2022-03-10",
+    "features": {
+      "ais_gap_count_24h": 1.5,
+      "ais_dark_vessel_count": 0.75,
+      "ais_anomaly_score_max": 0.2974,
+      "ais_gap_duration_max_h": 2.25,
+      "ais_monitored_cell_pct": 0.844,
+      "ais_velocity_std": 0.419,
+      "gdelt_tone_24h_mean": -2.9255,
+      "gdelt_tone_delta": 0.1268,
+      "news_severity_max": 0.4181,
+      "news_event_count_24h": 7.0,
+      "price_brent_pct_change_24h": -0.016286,
+      "price_war_risk_premium": 0.109581,
+      "price_bocd_flag": 0.0,
+      "price_regime": 1.0,
+      "sanctions_new_additions_24h": 0.0,
+      "sanctions_vessel_count": 6.0,
+      "sanctions_major_entity": 1.0
+    },
+    "within_24h_of_crossing": 0,
+    "crisis_name": "2022 Ukraine war energy shock",
+    "provenance": {
+      "price": "yfinance BZ=F (real Brent daily close)",
+      "gdelt": "Analytic sigmoid interpolation from GDELT DOC API spot samples; query='Russia Ukraine oil energy sanctions'",
+      "ais": "Proxy from IMO/UKMTO documented incident timelines; interpolated between events; NOT continuous AIS feed",
+      "sanctions": "Proxy from OFAC/UN press release dates (public record); sparse binary event flags"
+    }
+  }
+]

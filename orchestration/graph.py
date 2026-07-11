@@ -430,5 +430,5 @@ async def run_response_pipeline(entity: str, score: float, client: Any = None) -
                 if _publish_stage and client is not None:
                     await _publish_stage(client, str(node_name).upper(), entity, "done")
     except Exception as exc:
-        log.error("[graph] response pipeline failed for '%s': %s", entity, exc)
+        log.error("[graph] response pipeline failed for '%s': %s", entity, exc, exc_info=True)
     return state

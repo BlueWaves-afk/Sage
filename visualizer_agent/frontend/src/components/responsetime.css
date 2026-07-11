@@ -1,0 +1,109 @@
+/* Response Time Strip — G2 */
+.rt-strip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 1rem;
+  margin: 0 0 0.5rem 0;
+  background: var(--surface-2, rgba(255,255,255,0.04));
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  border-radius: 6px;
+  font-size: 0.78rem;
+  cursor: default;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.rt-icon {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.rt-label {
+  color: var(--text-muted, #888);
+  font-weight: 500;
+}
+
+.rt-value {
+  color: var(--accent, #4ade80);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.rt-meta {
+  color: var(--text-muted, #666);
+  font-size: 0.72rem;
+}
+
+/* Hover breakdown */
+.rt-tooltip {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 50;
+  min-width: 240px;
+  padding: 0.65rem 0.85rem;
+  background: var(--surface-overlay, #1a1a2e);
+  border: 1px solid var(--border, rgba(255,255,255,0.12));
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  font-size: 0.75rem;
+  animation: rt-fade-in 0.12s ease;
+}
+
+@keyframes rt-fade-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.rt-tooltip-title {
+  font-weight: 600;
+  color: var(--text-primary, #e5e5e5);
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
+}
+
+.rt-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.2rem 0;
+  color: var(--text-muted, #888);
+}
+
+.rt-tooltip-dur {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary, #ccc);
+  font-weight: 500;
+}
+
+.rt-tooltip-foot {
+  margin-top: 0.5rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--border, rgba(255,255,255,0.06));
+  color: var(--text-muted, #666);
+  font-size: 0.7rem;
+}
+
+.rt-tooltip-foot a {
+  color: var(--accent, #60a5fa);
+  text-decoration: none;
+}
+
+@media (prefers-color-scheme: light) {
+  .rt-strip {
+    background: rgba(0,0,0,0.04);
+    border-color: rgba(0,0,0,0.1);
+  }
+  .rt-tooltip {
+    background: #fff;
+    border-color: rgba(0,0,0,0.12);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  }
+  .rt-label { color: #555; }
+  .rt-meta  { color: #888; }
+  .rt-tooltip-row { color: #555; }
+  .rt-tooltip-dur { color: #222; }
+}

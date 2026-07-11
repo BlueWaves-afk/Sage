@@ -41,6 +41,9 @@ log = logging.getLogger(__name__)
 
 POLL_INTERVAL_S = int(os.environ.get("NEWS_POLL_INTERVAL_S", "900"))  # 15 min
 
+# G10 — Hybrid LLM extraction budget guard
+NEWS_LLM_BUDGET_PER_H = int(os.environ.get("NEWS_LLM_BUDGET_PER_H", "10"))
+
 # ── newsdata.io API ──────────────────────────────────────────────────────────
 
 NEWSDATA_API_KEY = os.environ.get("NEWSDATA_API_KEY", "")  # set in .env.local (gitignored)
@@ -98,6 +101,68 @@ def _extract_entities(text: str) -> list[str]:
             matched_ids.add(entity_id)
 
     return [canonical_name(eid) for eid in matched_ids]
+
+
+async def _llm_extract_entities(text: str, redis_client=None) -> list[str]:
+    """
+    G10: Conditional Nova Micro extraction when alias-scan returns nothing and
+    severity is high. Budget-guarded: max NEWS_LLM_BUDGET_PER_H calls/hour via
+    Redis counter `news:llm_calls:YYYYMMDDHH`.
+    """
+    try:
+        import redis as _redis
+        from datetime import timezone as _tz
+
+        # Budget check
+        budget_key = f"news:llm_calls:{datetime.now(tz=timezone.utc).strftime('%Y%m%d%H')}"
+        if redis_client is None:
+            redis_url = os.environ.get("REDIS_URL", "redis://localhost:6379")
+            redis_client = _redis.from_url(redis_url, decode_responses=True)
+        count = int(redis_client.get(budget_key) or 0)
+        if count >= NEWS_LLM_BUDGET_PER_H:
+            log.debug("[news] LLM budget exhausted (%d/%d this hour)", count, NEWS_LLM_BUDGET_PER_H)
+            return []
+
+        from knowledge.bedrock import BedrockLLM
+        llm = BedrockLLM()
+        prompt = (
+            "You are an energy supply-chain analyst. Extract entity names from the article "
+            "that relate to oil suppliers, maritime corridors, refineries, or geopolitical "
+            "actors affecting India's crude supply. Output only a JSON array of entity names, "
+            "e.g. [\"Saudi Aramco\", \"Strait of Hormuz\"]. If none, output [].\n\n"
+            f"Article: {text[:600]}"
+        )
+        response = await asyncio.get_event_loop().run_in_executor(
+            None,
+            lambda: llm.chat([{"role": "user", "content": prompt}],
+                             model_id="amazon.nova-micro-v1:0", n_tokens=150),
+        )
+
+        # Increment budget counter (TTL 3700s ≈ slightly over 1 hour)
+        redis_client.incr(budget_key)
+        redis_client.expire(budget_key, 3700)
+
+        # Parse response
+        raw = response.strip() if isinstance(response, str) else ""
+        import json as _json
+        start = raw.find("[")
+        end = raw.rfind("]")
+        if start == -1 or end == -1:
+            return []
+        names = _json.loads(raw[start:end + 1])
+        # Resolve via registry
+        resolved = []
+        for name in names:
+            cn = resolve_name(name)
+            if cn:
+                resolved.append(cn)
+        if resolved:
+            log.info("[news] LLM extracted %d entities from high-severity article", len(resolved))
+        return resolved
+
+    except Exception as exc:
+        log.debug("[news] LLM extraction failed: %s", exc)
+        return []
 
 
 def _extract_actor_action(text: str) -> tuple[str, str]:
@@ -226,16 +291,20 @@ async def _poll_newsdata_latest() -> list[NormalizedSignal]:
                 except (ValueError, TypeError):
                     pass
 
-            # Entity resolution
-            refs = _extract_entities(text)
-            if not refs:
-                continue  # no tracked entity → discard
-
-            # Sentiment analysis
+            # Sentiment analysis first so we can use severity for LLM gate
             tone = predict_tone(title)
             severity = sentiment_to_severity(
                 predict_sentiment(title)[0]
             )
+
+            # Entity resolution — alias-scan fast path, LLM fallback for high severity
+            refs = _extract_entities(text)
+            if not refs:
+                if severity >= 0.7:
+                    # G10: escalate to Nova Micro only when no alias matched and risk is high
+                    refs = await _llm_extract_entities(text)
+                if not refs:
+                    continue  # no tracked entity → discard
 
             # Actor/action extraction
             actor, action = _extract_actor_action(text)

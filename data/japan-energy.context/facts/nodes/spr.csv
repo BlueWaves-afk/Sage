@@ -1,0 +1,3 @@
+entity_id,canonical_name,capacity_mmt,current_fill_mmt,location_lat,location_lon,tier,source,as_of,notes
+spr_jogmec_national,JOGMEC National Reserve,12.5,9.8,35.7,139.8,real,METI-Japan,2025,Japan national strategic petroleum reserve; ~90 days national consumption
+spr_jogmec_private,Industry Private Reserve,7.0,5.9,35.5,139.9,derived,METI-Japan,2025,mandatory private stockpile (70 days); held at refineries and terminals

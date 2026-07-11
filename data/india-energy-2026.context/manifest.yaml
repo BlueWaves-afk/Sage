@@ -211,14 +211,18 @@ nodes:
   - {type: CrudeGrade, file: facts/nodes/crude_grades.csv}
   - {type: Port,       file: facts/nodes/ports.csv}
   - {type: SPRCavern,  file: facts/nodes/spr_caverns.csv}
-  - {type: Authority,  file: facts/nodes/authorities.csv}
-  - {type: GeoEvent,   file: facts/nodes/geo_events.csv}
+  - {type: Authority,        file: facts/nodes/authorities.csv}
+  - {type: GeoEvent,         file: facts/nodes/geo_events.csv}
+  - {type: ProductionField,  file: facts/nodes/production_fields.csv}
+  - {type: DistributionHub,  file: facts/nodes/distribution_hubs.csv}
 edges:
   - {type: EXPORTS_VIA,    file: facts/edges/exports_via.csv}
   - {type: FEEDS,          file: facts/edges/feeds.csv}
   - {type: SUPPLIES,       file: facts/edges/supplies.csv}
   - {type: CONFIGURED_FOR, file: facts/edges/configured_for.csv}
   - {type: BYPASS_ROUTE,   file: facts/edges/bypass_routes.csv}
+  - {type: PRODUCES_AT,    file: facts/edges/produces_at.csv}
+  - {type: DISTRIBUTES_TO, file: facts/edges/distributes_to.csv}
 
 # Model parameters — sourced, provenance-tracked, swappable per-bundle.
 # All systems read from these files; nothing is hardcoded in agent code.

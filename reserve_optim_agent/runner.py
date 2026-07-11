@@ -52,6 +52,38 @@ def _load_spr_bundle_params() -> tuple[dict[str, float], float]:
         return _DEFAULT_RESOLVE_PROB, _DEFAULT_REFILL_PREMIUM
 
 
+def _load_per_refinery_demand() -> float:
+    """
+    G14: sum capacity_mbpd × utilization_pct from bundle refineries.csv to get
+    total India daily consumption in MMT/day. Converts mbpd → MMT/day via
+    standard oil density factor (1 bbl = 0.136 MMT for crude average).
+    Falls back to SDP bundle default if bundle unavailable.
+    """
+    bundle_path = os.environ.get("SAGE_BUNDLE_PATH", "")
+    if not bundle_path:
+        return 0.0  # caller will use sdp_b["daily_consumption_mmt"]
+    try:
+        from knowledge.context.loader import load_bundle
+        bundle = load_bundle(bundle_path)
+        refineries = bundle.node_rows.get("Refinery", [])
+        total_mbpd = 0.0
+        for r in refineries:
+            cap = float(r.get("capacity_mbpd") or 0.0)
+            util_field = r.get("utilization_pct") or r.get("utilization") or "0.88"
+            try:
+                util = float(util_field)
+                if util > 1.0:
+                    util /= 100.0
+            except (ValueError, TypeError):
+                util = 0.88
+            total_mbpd += cap * util
+        # 1 mbpd = 1000 bbl/day × 0.136 MMT/bbl ÷ 1000 = 0.136 MMT/day per mbpd
+        return total_mbpd * 0.136
+    except Exception as exc:
+        log.debug("[spr] per-refinery demand fallback: %s", exc)
+        return 0.0
+
+
 def _load_economics_defaults() -> dict:
     defaults = {
         "baseline_brent_usd_per_bbl":       80.0,
@@ -113,12 +145,19 @@ async def run(
     # SDP/CMDP: solve for optimal day-by-day schedule
     from reserve_optim_agent.sdp import _load_sdp_bundle
     sdp_b = _load_sdp_bundle()
+    # G14: per-refinery demand from bundle (capacity × utilization). Falls back to
+    # the aggregate SDP constant when the bundle isn't loaded or refineries.csv
+    # doesn't carry utilization data.
+    per_refinery_consumption = _load_per_refinery_demand()
+    daily_consumption = per_refinery_consumption if per_refinery_consumption > 0 else sdp_b["daily_consumption_mmt"]
+    log.info("[spr] daily_consumption_mmt=%.4f (source: %s)",
+             daily_consumption, "per-refinery" if per_refinery_consumption > 0 else "sdp-bundle")
     params = SDPParams(
         spr_initial_mmt       = total_fill_mmt,
         gap_mbpd              = gap_mbpd,
         gap_duration_days     = gap_duration_days,
         price_per_bbl          = price_per_bbl,
-        daily_consumption_mmt  = sdp_b["daily_consumption_mmt"],
+        daily_consumption_mmt  = daily_consumption,
         horizon_days           = max(gap_duration_days + 30, sdp_b["spr_horizon_days"]),
         buffer_threshold_days  = sdp_b["buffer_threshold_days"],
         discount_rate          = sdp_b["sdp_discount_rate"],

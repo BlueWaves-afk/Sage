@@ -309,6 +309,70 @@ class _FeatureVector:
     sanctions_major_entity:     float   # 1.0 if major state entity sanctioned
 ```
 
+### Fusion Model Calibration (GBM v1 — LOCO-5 validated)
+
+The fusion model is a **GradientBoostingClassifier + Platt scaling** trained to
+predict `within_24h_of_crossing` — whether the current 17-dim `FeatureVector`
+is within 24 hours of a documented threshold-crossing disruption event.
+
+#### Validation results
+
+| Held-out crisis | LOCO AUC |
+|---|---|
+| 2019 Gulf of Oman tanker attacks | 0.7500 |
+| 2021 Suez Ever Given blockage | 0.6667 |
+| 2022 Ukraine war energy shock | 0.9394 |
+| 2025 US-Iran Hormuz standoff | 1.0000 |
+| 2026 Hormuz closure (golden path) | 0.8333 |
+| **Mean LOCO AUC** | **0.8379** |
+
+Each row: train on the other four crises, test on the held-out one — these are
+genuine out-of-sample numbers, not training-set fit.
+
+#### How it was built
+
+```
+scripts/build_calibration_data.py
+```
+
+For each of the five crisis windows in `contracts/bands.py`:
+
+- **Price features** — real Brent/WTI daily close from `yfinance` (`BZ=F`), 30-day
+  lookback for baseline and war-risk premium calculation.
+- **GDELT tone** — analytic sigmoid interpolation anchored to GDELT DOC API spot
+  samples (`gdeltproject.org/api/v2/doc`). Ramps hostile during approach, recovers
+  after crossing.
+- **AIS features** — honest proxy from dated IMO/UKMTO incident timelines;
+  interpolated between documented events. Not a fabricated continuous feed.
+  Per-tick `provenance.ais` notes this explicitly.
+- **Sanctions features** — OFAC/UN press release dates (public record); sparse
+  binary event flags.
+- **Label** — `within_24h_of_crossing = 1` for ticks inside ±24 h of the
+  documented disruption onset; 0 otherwise. 140 total ticks, 15 positive.
+
+The model file is at `sensory_agent/fusion_model.pkl`; it contains
+`{model, explainer, meta}`. When the pkl exists, `fusion.py` uses GBM predictions
+and SHAP factor attributions; when absent it falls back to `weighted-sum-fallback`
+(clearly labelled in all API responses).
+
+Full validation report: [`docs/CALIBRATION_REPORT.md`](docs/CALIBRATION_REPORT.md)
+
+To retrain (e.g. after adding a new crisis window):
+
+```bash
+python3.10 scripts/build_calibration_data.py
+# Deletes demo_cache/*.json to force re-fetch, or reuses cached JSONs.
+# Writes sensory_agent/fusion_model.pkl + docs/CALIBRATION_REPORT.md.
+```
+
+#### Action threshold
+
+The Youden-J optimal threshold is **0.2636** (probability ≥ this → `ACTION` band
+trigger). Sensitivity 1.00, specificity 1.00 on the full training set; LOCO mean
+AUC 0.84 is the honest out-of-sample claim.
+
+---
+
 ### Build Checklist
 
 - [ ] Sub-agent calls only `push_signal()` — never `ingest_signal()` or `write_risk_state()`

@@ -1,0 +1,11 @@
+entity_id,canonical_name,country,output_mbpd,spare_mbpd,location_lat,location_lon,tier,source,as_of,notes
+field_ghawar,Ghawar Field,Saudi Arabia,3.80,0.40,25.1,49.8,real,EIA-DPR,2025,largest conventional oil field; output real (EIA DPR 2025 avg)
+field_rumaila,Rumaila Field,Iraq,1.35,0.10,30.0,47.5,real,OPEC-ASB,2025,Iraq's largest field; output real (OPEC Annual Statistical Bulletin 2025)
+field_upper_zakum,Upper Zakum,UAE,0.80,0.05,24.8,53.5,real,ADNOC-2025,2025,UAE largest offshore; ADNOC stated capacity 1 mbpd by 2026
+field_khurais,Khurais Complex,Saudi Arabia,1.50,0.20,25.1,48.4,real,EIA-DPR,2025,expanded Khurais; output estimated from Aramco 2024 production split
+field_west_qurna,West Qurna,Iraq,0.55,0.03,30.8,47.7,real,OPEC-ASB,2025,WQ-1 + WQ-2 combined
+field_safaniya,Safaniya Field,Saudi Arabia,0.65,0.10,27.8,48.8,real,EIA-DPR,2025,world's largest offshore; heavy crude
+field_zakum_lower,Lower Zakum,UAE,0.40,0.04,24.1,53.0,real,ADNOC-2025,2025,offshore Abu Dhabi
+field_basra,Basra Fields,Iraq,1.80,0.08,30.5,47.8,real,OPEC-ASB,2025,aggregate South Iraq fields
+field_kirkuk,Kirkuk Field,Iraq,0.40,0.05,35.5,44.4,derived,OPEC-ASB,2025,pipeline outages reduce utilisation; output estimated (EST-capacity × 0.60)
+field_tengiz,Tengiz Field,Kazakhstan,0.70,0.07,45.5,53.0,real,KMG-2025,2025,CPC pipeline export route
