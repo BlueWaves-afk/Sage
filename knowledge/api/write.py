@@ -69,6 +69,30 @@ async def _cache_output(kind: str, scenario_id: str, data: BaseModel) -> None:
         log.warning("Output cache failed for %s:%s (non-fatal): %s", kind, scenario_id, exc)
 
 
+async def _demo_running() -> bool:
+    """True while a demo replay is active (Redis flag set by demo_ignite).
+
+    Pipeline output writers (scenario/procurement/SPR) use this to skip the heavy
+    graphiti add_episode path — Nova entity extraction + Titan embed + a fulltext
+    dedup search that TIMES OUT on the loaded graph. During a demo we still write
+    the Redis output cache (what /api/scenario|procurement|spr read), so every
+    panel populates instantly; only the durable graph episode is deferred.
+    """
+    import os
+    try:
+        import redis.asyncio as aioredis
+        from knowledge.demo_control import DEMO_FLAG_KEY
+        client = aioredis.from_url(
+            os.environ.get("REDIS_URL", "redis://redis:6379/0"), decode_responses=True
+        )
+        try:
+            return (await client.get(DEMO_FLAG_KEY)) == "1"
+        finally:
+            await client.aclose()
+    except Exception:
+        return False
+
+
 # ---------------------------------------------------------------------------
 # Scenario Library (Feature A) — durable index + meta card, separate from the
 # 24h full-payload cache above so the library survives payload expiry.
@@ -611,16 +635,18 @@ async def write_scenario(data: ScenarioOutputData) -> EpisodeRef:
         f"This ScenarioOutput AFFECTS_SCENARIO {data.scenario_id}."
     )
 
-    await g.add_episode(
-        name=f"scenario_{data.scenario_id}",
-        episode_body=episode_body,
-        source=EpisodeType.text,
-        source_description="SAGE scenario output | System 2",
-        reference_time=now,
-        entity_types=ENTITY_TYPES,
-        edge_types=EDGE_TYPES,
-        edge_type_map=EDGE_TYPE_MAP,
-    )
+    _demo_active = await _demo_running()
+    if not _demo_active:
+        await g.add_episode(
+            name=f"scenario_{data.scenario_id}",
+            episode_body=episode_body,
+            source=EpisodeType.text,
+            source_description="SAGE scenario output | System 2",
+            reference_time=now,
+            entity_types=ENTITY_TYPES,
+            edge_types=EDGE_TYPES,
+            edge_type_map=EDGE_TYPE_MAP,
+        )
 
     episode_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"scenario_{data.scenario_id}"))
 
@@ -628,8 +654,9 @@ async def write_scenario(data: ScenarioOutputData) -> EpisodeRef:
     # Graph episode committed above — now fold the scenario result into the
     # narrative, same consistency-gate pattern as ingest_signal/write_risk_state:
     # never write the wiki ahead of a graph write that might have failed.
-    # Skipped for counterfactual sandbox forks (isolation rule).
-    if data.status != "counterfactual":
+    # Skipped for counterfactual sandbox forks (isolation rule) and during demo
+    # replay (synthesize() is another Bedrock call that would stall the pipeline).
+    if data.status != "counterfactual" and not _demo_active:
         try:
             await _reconcile_scenario_into_wiki(data, now)
         except Exception as exc:
@@ -764,20 +791,22 @@ async def write_procurement(data: ProcurementRecData) -> EpisodeRef:
     if data.ranked:
         episode_body += f"\nRationale for #1: {data.ranked[0].rationale}"
 
-    await g.add_episode(
-        name=f"procurement_{data.scenario_id}",
-        episode_body=episode_body,
-        source=EpisodeType.text,
-        source_description="SAGE procurement recommendation | System 3",
-        reference_time=now,
-        entity_types=ENTITY_TYPES,
-        edge_types=EDGE_TYPES,
-        edge_type_map=EDGE_TYPE_MAP,
-    )
+    _demo_active = await _demo_running()
+    if not _demo_active:
+        await g.add_episode(
+            name=f"procurement_{data.scenario_id}",
+            episode_body=episode_body,
+            source=EpisodeType.text,
+            source_description="SAGE procurement recommendation | System 3",
+            reference_time=now,
+            entity_types=ENTITY_TYPES,
+            edge_types=EDGE_TYPES,
+            edge_type_map=EDGE_TYPE_MAP,
+        )
 
     episode_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"procurement_{data.scenario_id}"))
 
-    if data.status != "counterfactual" and data.target_refinery:
+    if data.status != "counterfactual" and data.target_refinery and not _demo_active:
         try:
             await _reconcile_procurement_into_wiki(data, now)
         except Exception as exc:
@@ -885,20 +914,22 @@ async def write_spr_schedule(data: SPRScheduleData) -> EpisodeRef:
         + f"\n\nThis SPR schedule AFFECTS_SCENARIO {data.scenario_id}."
     )
 
-    await g.add_episode(
-        name=f"spr_{data.scenario_id}",
-        episode_body=episode_body,
-        source=EpisodeType.text,
-        source_description="SAGE SPR schedule | System 4",
-        reference_time=now,
-        entity_types=ENTITY_TYPES,
-        edge_types=EDGE_TYPES,
-        edge_type_map=EDGE_TYPE_MAP,
-    )
+    _demo_active = await _demo_running()
+    if not _demo_active:
+        await g.add_episode(
+            name=f"spr_{data.scenario_id}",
+            episode_body=episode_body,
+            source=EpisodeType.text,
+            source_description="SAGE SPR schedule | System 4",
+            reference_time=now,
+            entity_types=ENTITY_TYPES,
+            edge_types=EDGE_TYPES,
+            edge_type_map=EDGE_TYPE_MAP,
+        )
 
     episode_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"spr_{data.scenario_id}"))
 
-    if data.status != "counterfactual":
+    if data.status != "counterfactual" and not _demo_active:
         try:
             await _reconcile_spr_into_wiki(data, now)
         except Exception as exc:
