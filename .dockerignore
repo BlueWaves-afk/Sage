@@ -1,0 +1,35 @@
+# Runtime data / persistence dirs (owned by container users — break `docker build`
+# context loading with permission-denied, and must never be baked into an image).
+**/redis_store
+**/appendonlydir
+**/falkordb_data
+**/*.rdb
+**/*.aof
+data/**/redis_store
+
+# VCS / CI
+.git
+.github
+
+# Python caches / envs
+**/__pycache__
+**/*.pyc
+.venv
+venv
+.pytest_cache
+.mypy_cache
+
+# Node / frontend build artifacts (frontend image builds these itself)
+**/node_modules
+visualizer_agent/frontend/dist
+visualizer_agent/frontend/.vite
+
+# Secrets / local env (defense in depth — also gitignored)
+.env
+.env.local
+*.pem
+
+# Editor / OS
+.claude
+.DS_Store
+**/*.log
