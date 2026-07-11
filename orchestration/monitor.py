@@ -36,6 +36,67 @@ EVENTS_CHANNEL  = "sage:events"
 _fired_bands: dict[str, str] = {}
 # entity → scenario_ref for scenarios we know about (used for expiry detection)
 _registered_scenarios: dict[str, str] = {}
+# entity → monotonic time of last pipeline fire. A hub whose score oscillates across
+# the action threshold would otherwise re-fire the full Bedrock pipeline every poll;
+# the cooldown caps one autonomous run per entity per window regardless of wobble.
+_last_fire_ts: dict[str, float] = {}
+FIRE_COOLDOWN_S = float(os.environ.get("SAGE_FIRE_COOLDOWN_S", "600"))
+
+
+def _fire_allowed(entity: str) -> bool:
+    import time
+    last = _last_fire_ts.get(entity)
+    return last is None or (time.monotonic() - last) >= FIRE_COOLDOWN_S
+
+
+def _mark_fired(entity: str) -> None:
+    import time
+    _last_fire_ts[entity] = time.monotonic()
+
+# ── Pipeline-trigger allowlist ────────────────────────────────────────────────
+# The autonomous response pipeline (scenario → procurement → SPR) only makes sense
+# for SUPPLY-CHAIN entities — a corridor, supplier, refinery or port whose risk
+# implies a concrete procurement/reserve action. Geopolitical hub nodes (a country,
+# an Authority, a GeoEvent) can legitimately score high from news tone without any
+# procurement response being meaningful; firing an ARIO cascade + Bedrock synthesis
+# for "United States" is both wrong and a wasted LLM call. We gate firing on entity
+# type, resolved from graph labels and cached briefly.
+_ELIGIBLE_TYPES = {
+    "Corridor", "Supplier", "Refinery", "Port", "ProductionField", "DistributionHub",
+}
+_eligible_names: set[str] = set()
+_eligible_ts: float = 0.0
+_ELIGIBLE_TTL_S = 120.0
+
+
+async def _refresh_eligible() -> None:
+    """Cache the set of pipeline-eligible entity NAMES (by supply-chain label)."""
+    global _eligible_names, _eligible_ts
+    import time
+    if time.monotonic() - _eligible_ts < _ELIGIBLE_TTL_S and _eligible_names:
+        return
+    try:
+        from knowledge.api.read import _cypher
+        labels_list = "[" + ",".join(f"'{t}'" for t in _ELIGIBLE_TYPES) + "]"
+        rows = await _cypher(
+            f"MATCH (n:Entity) WHERE any(l IN n.labels WHERE l IN {labels_list}) "
+            f"RETURN n.name AS name"
+        )
+        names = {r.get("name") for r in rows if r.get("name")}
+        if names:
+            _eligible_names = names
+            _eligible_ts = time.monotonic()
+    except Exception as exc:
+        log.debug("[monitor] eligible-set refresh failed (non-fatal): %s", exc)
+
+
+def _pipeline_eligible(entity: str) -> bool:
+    """True if the entity is a supply-chain type the response pipeline should fire for.
+    Fail-open only when the eligible set is empty (cold start) so a resolution
+    outage never silences the pipeline entirely."""
+    if not _eligible_names:
+        return True
+    return entity in _eligible_names
 
 
 async def run_monitor() -> None:
@@ -51,6 +112,7 @@ async def run_monitor() -> None:
         demo_active = await is_demo_active(client)
         if demo_active and not demo_prev:
             _fired_bands.clear()
+            _last_fire_ts.clear()
             log.info("Demo sandbox ENTERED — cleared trigger dedup")
         demo_prev = demo_active
 
@@ -64,6 +126,7 @@ async def run_monitor() -> None:
 async def _poll() -> None:
     scores = await get_risk_scores()
     client = aioredis.from_url(REDIS_URL, decode_responses=True)
+    await _refresh_eligible()
 
     try:
         for view in scores:
@@ -71,15 +134,26 @@ async def _poll() -> None:
             score  = view.score
             prev   = _fired_bands.get(entity, "calm")
 
-            if score >= CRITICAL_THRESHOLD and prev != "critical":
+            # Only supply-chain entities trigger the response pipeline. A non-eligible
+            # entity (country/authority/event) can still be scored and shown, but we
+            # don't fire ARIO + procurement + SPR (or burn Bedrock) for it.
+            if score >= SANDBOX_FORK_THRESHOLD and not _pipeline_eligible(entity):
+                if prev != "calm":
+                    _fired_bands.pop(entity, None)
+                log.debug("[monitor] %s at %.2f — not pipeline-eligible, skipping fire", entity, score)
+                continue
+
+            if score >= CRITICAL_THRESHOLD and prev != "critical" and _fire_allowed(entity):
                 _fired_bands[entity] = "critical"
+                _mark_fired(entity)
                 scenario_ref = await _get_pending(client, entity)
                 await _publish(client, "critical", entity, score, scenario_ref)
                 from orchestration.triggers import on_critical
                 await on_critical(entity, score)
 
-            elif score >= ACTION_THRESHOLD and prev not in ("action", "critical"):
+            elif score >= ACTION_THRESHOLD and prev not in ("action", "critical") and _fire_allowed(entity):
                 _fired_bands[entity] = "action"
+                _mark_fired(entity)
                 scenario_ref = await _get_pending(client, entity)
                 await _publish(client, "action", entity, score, scenario_ref)
                 from orchestration.triggers import on_action
@@ -89,8 +163,9 @@ async def _poll() -> None:
                     await client.delete(f"sage:pending:{entity}")
                     _registered_scenarios.pop(entity, None)
 
-            elif score >= SANDBOX_FORK_THRESHOLD and prev not in ("elevated", "action", "critical"):
+            elif score >= SANDBOX_FORK_THRESHOLD and prev not in ("elevated", "action", "critical") and _fire_allowed(entity):
                 _fired_bands[entity] = "elevated"
+                _mark_fired(entity)
                 scenario_ref = await _get_pending(client, entity)
                 await _publish(client, "elevated", entity, score, scenario_ref)
                 from orchestration.triggers import on_elevated

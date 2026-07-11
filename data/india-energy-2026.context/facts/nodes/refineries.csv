@@ -1,9 +1,9 @@
-entity_id,canonical_name,capacity_mbpd,inventory_days,location_lat,location_lon,tier,source,as_of,notes
-refinery_jamnagar,Jamnagar Refinery,1.40,22,22.47,70.07,real,PPAC-refinery,2025,capacity real (DTA 0.66 + SEZ 0.58 + debottleneck); inventory_days estimated (EST-inventory)
-refinery_mangaluru,Mangaluru,0.30,22,12.91,74.84,real,PPAC-refinery,2025,15 MMTPA; inventory_days estimated (EST-inventory)
-refinery_paradip,Paradip,0.30,22,20.31,86.69,real,PPAC-refinery,2025,15 MMTPA; inventory_days estimated (EST-inventory)
-refinery_panipat,Panipat,0.30,22,29.39,76.97,real,PPAC-refinery,2025,IOCL 15 MMTPA; inventory_days estimated (EST-inventory)
-refinery_kochi,Kochi,0.31,22,9.97,76.28,real,PPAC-refinery,2025,BPCL 15.5 MMTPA; inventory_days estimated (EST-inventory)
-refinery_nayara,Vadinar Refinery,0.40,22,22.28,69.73,real,PPAC-refinery,2025,Nayara Energy 20 MMTPA; inventory_days estimated (EST-inventory)
-refinery_visakh,Visakhapatnam Refinery,0.30,22,17.69,83.22,real,PPAC-refinery,2025,HPCL 15 MMTPA; inventory_days estimated (EST-inventory)
-refinery_chennai,Chennai Refinery,0.21,22,13.16,80.26,real,PPAC-refinery,2025,CPCL 10.5 MMTPA; inventory_days estimated (EST-inventory)
+entity_id,canonical_name,capacity_mbpd,utilization_pct,inventory_days,location_lat,location_lon,tier,source,as_of,notes
+refinery_jamnagar,Jamnagar Refinery,1.40,1.00,22,22.47,70.07,real,PPAC-refinery,2025,capacity real (DTA 0.66 + SEZ 0.58 + debottleneck); utilization real (PPAC 2025 ~100% export-driven); inventory_days estimated (EST-inventory)
+refinery_mangaluru,Mangaluru,0.30,0.95,22,12.91,74.84,real,PPAC-refinery,2025,15 MMTPA; utilization real (PPAC MRPL 2025); inventory_days estimated (EST-inventory)
+refinery_paradip,Paradip,0.30,1.00,22,20.31,86.69,real,PPAC-refinery,2025,15 MMTPA; utilization real (PPAC IOCL 2025); inventory_days estimated (EST-inventory)
+refinery_panipat,Panipat,0.30,0.98,22,29.39,76.97,real,PPAC-refinery,2025,IOCL 15 MMTPA; utilization real (PPAC 2025); inventory_days estimated (EST-inventory)
+refinery_kochi,Kochi,0.31,1.02,22,9.97,76.28,real,PPAC-refinery,2025,BPCL 15.5 MMTPA; utilization real (PPAC 2025 >100%); inventory_days estimated (EST-inventory)
+refinery_nayara,Vadinar Refinery,0.40,1.00,22,22.28,69.73,real,PPAC-refinery,2025,Nayara Energy 20 MMTPA; utilization real (PPAC 2025); inventory_days estimated (EST-inventory)
+refinery_visakh,Visakhapatnam Refinery,0.30,0.95,22,17.69,83.22,real,PPAC-refinery,2025,HPCL 15 MMTPA; utilization real (PPAC 2025); inventory_days estimated (EST-inventory)
+refinery_chennai,Chennai Refinery,0.21,0.92,22,13.16,80.26,real,PPAC-refinery,2025,CPCL 10.5 MMTPA; utilization real (PPAC CPCL 2025); inventory_days estimated (EST-inventory)

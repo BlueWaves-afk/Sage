@@ -49,6 +49,24 @@ sources:
   EIA-chokepoints:
     label: EIA World Oil Transit Chokepoints
     url:   https://www.eia.gov/international/analysis/special-topics/world_oil_transit_Chokepoints
+  PPAC-2025:
+    label: PPAC — India refinery utilization & state-level product demand (2025)
+    url:   https://ppac.gov.in
+  EIA-DPR:
+    label: EIA Drilling Productivity Report — field-level crude output (2025)
+    url:   https://www.eia.gov/petroleum/drilling/
+  OPEC-ASB:
+    label: OPEC Annual Statistical Bulletin — member-country field output (2025)
+    url:   https://www.opec.org/opec_web/en/publications/202.htm
+  ADNOC-2025:
+    label: ADNOC upstream field output disclosures (2025)
+    url:   https://www.adnoc.ae
+  KMG-2025:
+    label: KazMunayGas field output (Tengiz/Kashagan, 2025)
+    url:   https://www.kmg.kz/en/
+  ARAMCO-2025:
+    label: Saudi Aramco field output disclosures (Ghawar/Safaniya/Khurais, 2025)
+    url:   https://www.aramco.com
   PPAC-imports:
     label: PPAC — India crude imports by country (FY2024-25, 244.5 MT total)
     url:   https://ppac.gov.in
