@@ -1227,11 +1227,18 @@ async def response_time() -> dict:
         t3 = _parse_ts(s3[-1]["ts"]) if s3 else None
         t4 = _parse_ts(s4[-1]["ts"]) if s4 else None
 
+        # Stage deltas are derived from agent-trace "done" timestamps, which can
+        # arrive slightly out of order under async publishing (e.g. a fast scenario
+        # whose trace lands after procurement's). Clamp negatives to None so the UI
+        # never shows a nonsensical "-0.9 s" stage on hover.
+        def _pos(x):
+            return x if (x is not None and x >= 0) else None
+
         return {
             "total_s": total_s,
-            "signal_to_risk_s": round(t2 - t0, 1) if t2 else None,
-            "scenario_to_procurement_s": round(t3 - t2, 1) if t3 and t2 else None,
-            "procurement_to_reserve_s": round(t4 - t3, 1) if t4 and t3 else None,
+            "signal_to_risk_s": _pos(round(t2 - t0, 1)) if t2 else None,
+            "scenario_to_procurement_s": _pos(round(t3 - t2, 1)) if t3 and t2 else None,
+            "procurement_to_reserve_s": _pos(round(t4 - t3, 1)) if t4 and t3 else None,
             "started_at": timing.get("t0"),
             "entity": timing.get("entity"),
             "origin": timing.get("origin"),
