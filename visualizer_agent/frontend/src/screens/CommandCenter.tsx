@@ -6,6 +6,7 @@ import { RichText } from "../components/RichText";
 import PipelineBar from "../components/PipelineBar";
 import AgentTraceFeed from "../components/AgentTraceFeed";
 import ResponseTimeStrip from "../components/ResponseTimeStrip";
+import PipelineTimeline from "../components/PipelineTimeline";
 import AmbientBackground from "../components/AmbientBackground";
 import AnimatedNumber from "../components/AnimatedNumber";
 import { Panel, Badge, Meter, OfflineHint, Skel, Kb } from "../components/ui/ui";
@@ -188,6 +189,8 @@ export default function CommandCenter() {
       <AmbientBackground />
       {/* Response time strip — shows after first pipeline run */}
       <ResponseTimeStrip />
+      {/* Feature #5: visual pipeline stage ribbon */}
+      <PipelineTimeline />
 
       {/* G9: Demo Mode ignition button */}
       <div className="cc-demo-bar">

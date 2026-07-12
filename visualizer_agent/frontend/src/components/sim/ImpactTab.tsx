@@ -3,7 +3,7 @@ import { Badge } from "../ui/ui";
 import { RichText } from "../RichText";
 import GapFanChart from "./GapFanChart";
 import { api } from "../../api/hooks";
-import type { ScenarioOutput, MonteCarloBands, GraphNode } from "../../api/types";
+import type { ScenarioOutput, MonteCarloBands, GraphNode, MitigatedResult } from "../../api/types";
 
 /** Inline mini sparkline for the GDP trajectory (G6). */
 function GdpSparkline({ trajectory }: { trajectory: number[] }) {
@@ -54,6 +54,16 @@ export default function ImpactTab({ scenario, onWikilink }: Props) {
   const [realGap, setRealGap] = useState("");
   const [realPrice, setRealPrice] = useState("");
   const [outcomeMsg, setOutcomeMsg] = useState<string | null>(null);
+  const [mitigated, setMitigated] = useState<MitigatedResult | null>(null);
+  const [mitigating, setMitigating] = useState(false);
+
+  async function runMitigated() {
+    setMitigating(true);
+    setMitigated(null);
+    const env = await api.scenarioRunMitigated(scenario.scenario_id);
+    if (env.data) setMitigated(env.data);
+    setMitigating(false);
+  }
 
   async function submitOutcome() {
     const body: Record<string, number> = {};
@@ -176,6 +186,86 @@ export default function ImpactTab({ scenario, onWikilink }: Props) {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Feature #3 — Re-run-with-mitigation */}
+      <div className="sim-section">
+        <div className="label-sm">
+          SAGE Mitigation Value
+          <span className="mono" style={{ marginLeft: 8, fontSize: 9, color: "var(--text-3)" }}>
+            Re-run with procurement reallocation + SPR draw applied
+          </span>
+        </div>
+
+        {!mitigated && !mitigating && (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 6 }}>
+            <p style={{ fontSize: 11, color: "var(--text-2)", flex: 1, lineHeight: 1.5 }}>
+              Apply SAGE's top alternative supplier and SPR draw schedule as inputs,
+              then re-simulate the residual supply gap — demonstrating the value loop end-to-end.
+            </p>
+            <button className="sim-toggle on" onClick={runMitigated} style={{ flexShrink: 0 }}>
+              Run with SAGE Mitigations
+            </button>
+          </div>
+        )}
+
+        {mitigating && (
+          <div style={{ color: "var(--text-3)", fontSize: 12, marginTop: 8 }}>
+            Re-running ARIO with mitigations applied…
+          </div>
+        )}
+
+        {mitigated && (
+          <div style={{ marginTop: 8 }}>
+            {/* Before/After comparison */}
+            <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+              <div className="sim-kpi" style={{ flex: 1 }}>
+                <div className="sim-kpi-label">Base Gap</div>
+                <div className="sim-kpi-value c-coral">{mitigated.base_gap_mbpd.toFixed(2)}<span className="sim-kpi-unit"> mbpd</span></div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", color: "var(--cyan)", fontSize: 20, fontWeight: 700 }}>→</div>
+              <div className="sim-kpi" style={{ flex: 1 }}>
+                <div className="sim-kpi-label">Mitigated Gap</div>
+                <div className="sim-kpi-value c-cyan">{mitigated.mitigated_gap_mbpd.toFixed(2)}<span className="sim-kpi-unit"> mbpd</span></div>
+              </div>
+              <div className="sim-kpi" style={{ flex: 1 }}>
+                <div className="sim-kpi-label">Reduction</div>
+                <div className="sim-kpi-value c-green" style={{ color: "var(--c-green,#6ee7b7)" }}>
+                  −{mitigated.reduction_mbpd.toFixed(2)}<span className="sim-kpi-unit"> ({mitigated.pct_reduction.toFixed(0)}%)</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Before/After visual bar */}
+            <div style={{ marginBottom: 8 }}>
+              <div style={{ display: "flex", gap: 4, alignItems: "center", height: 14, borderRadius: 4, overflow: "hidden", background: "var(--bg-4)" }}>
+                <div style={{
+                  width: `${(mitigated.mitigated_gap_mbpd / mitigated.base_gap_mbpd) * 100}%`,
+                  background: "var(--cyan)", height: "100%", transition: "width 0.6s ease",
+                }} />
+                <div style={{
+                  flex: 1, background: "var(--c-red,#f87171)", height: "100%", opacity: 0.3,
+                }} />
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: "var(--text-3)", marginTop: 3 }}>
+                <span>Residual gap (cyan)</span>
+                <span>Mitigated portion (reduced)</span>
+              </div>
+            </div>
+
+            {/* Mitigation sources */}
+            {mitigated.mitigation_sources.map((s) => (
+              <div key={s.label} style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--text-2)", padding: "3px 0", borderBottom: "1px solid var(--border-1)" }}>
+                <span>{s.label}</span>
+                <span style={{ color: "var(--cyan)", fontVariantNumeric: "tabular-nums" }}>−{s.offset_mbpd.toFixed(3)} mbpd</span>
+              </div>
+            ))}
+
+            <button className="sim-reset" style={{ marginTop: 8 }} onClick={() => setMitigated(null)}>
+              Reset
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

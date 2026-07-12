@@ -150,6 +150,12 @@ export const api = {
 
   demoIgnite: () => get<{ ok: boolean; message: string }>("/api/demo/ignite", { method: "POST" }),
 
+  scenarioSensitivity: (body: { scenario_id?: string; entity?: string; scenario_params?: Record<string, unknown> }) =>
+    post<import("./types").SensitivityRow[]>("/api/scenario/sensitivity", body),
+
+  scenarioRunMitigated: (scenario_id: string) =>
+    post<import("./types").MitigatedResult>("/api/scenario/run-mitigated", { scenario_id }),
+
   copilot: (question: string) =>
     get<CopilotAnswer>("/api/copilot", {
       method: "POST",

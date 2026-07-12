@@ -380,3 +380,25 @@ export interface ResponseTimeSummary {
   rolling_median_s: number | null;
   runs: ResponseTimeRun[];
 }
+
+// Feature #2 — Tornado / sensitivity analysis
+export interface SensitivityRow {
+  param: string;
+  label: string;
+  base_gap: number;
+  swing_low: number;
+  swing_high: number;
+  max_swing: number;
+}
+
+// Feature #3 — Re-run-with-mitigation
+export interface MitigatedResult {
+  scenario_id: string;
+  entity: string;
+  base_gap_mbpd: number;
+  mitigated_gap_mbpd: number;
+  reduction_mbpd: number;
+  pct_reduction: number;
+  mitigation_sources: { label: string; offset_mbpd: number }[];
+  total_offset_mbpd: number;
+}

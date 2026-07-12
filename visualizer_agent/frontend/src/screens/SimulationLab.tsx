@@ -16,9 +16,10 @@ import ProcurementTab from "../components/sim/ProcurementTab";
 import ReserveTab from "../components/sim/ReserveTab";
 import CompareTab from "../components/sim/CompareTab";
 import LearningTab from "../components/sim/LearningTab";
+import SensitivityTab from "../components/sim/SensitivityTab";
 import "./simulation.css";
 
-type Tab = "impact" | "cascade" | "procurement" | "reserve" | "compare" | "learning";
+type Tab = "impact" | "cascade" | "procurement" | "reserve" | "compare" | "sensitivity" | "learning";
 
 function toRiskScore(n: GraphNode): RiskScore {
   return {
@@ -121,8 +122,9 @@ export default function SimulationLab() {
     { id: "cascade",     label: "Cascade" },
     { id: "procurement", label: "Procurement" },
     { id: "reserve",     label: "Reserve" },
-    { id: "compare",     label: "Compare" },
-    { id: "learning",    label: "Learning" },
+    { id: "compare",      label: "Compare" },
+    { id: "sensitivity",  label: "Sensitivity" },
+    { id: "learning",     label: "Learning" },
   ];
 
   return (
@@ -206,6 +208,13 @@ export default function SimulationLab() {
 
             {tab === "compare" && (
               <CompareTab runs={runs} baseline={cachedScenario ?? null} />
+            )}
+
+            {tab === "sensitivity" && scenario && (
+              <SensitivityTab scenario={scenario} />
+            )}
+            {tab === "sensitivity" && !scenario && (
+              <div className="sim-empty">Run a scenario first to enable sensitivity analysis.</div>
             )}
 
             {tab === "learning" && <LearningTab />}
