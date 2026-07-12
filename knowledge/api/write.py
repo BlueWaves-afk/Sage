@@ -29,7 +29,14 @@ from knowledge.schema.edges import EDGE_TYPE_MAP, EDGE_TYPES
 from knowledge.schema.entities import ENTITY_TYPES
 from knowledge.triage import TriageDecision, triage
 
+import asyncio
+
 log = logging.getLogger(__name__)
+
+# Limit concurrent FalkorDB writes — Graphiti's add_episode is ~8-12s and issues
+# dozens of sub-queries; running >2 in parallel saturates the queue and causes
+# timeouts that drop real ingest signals.
+_FALKOR_WRITE_SEM = asyncio.Semaphore(2)
 
 
 # ---------------------------------------------------------------------------
@@ -39,6 +46,12 @@ log = logging.getLogger(__name__)
 class EpisodeRef(BaseModel):
     episode_uuid: str
     scenario_id: Optional[str] = None
+
+
+async def _add_episode(g, **kwargs) -> None:
+    """Semaphore-gated wrapper so concurrent add_episode calls don't saturate FalkorDB."""
+    async with _FALKOR_WRITE_SEM:
+        await g.add_episode(**kwargs)
 
 
 # ---------------------------------------------------------------------------
@@ -333,7 +346,7 @@ async def ingest_signal(signal: NormalizedSignal) -> IngestResult:
         # persisted AFTER add_episode succeeds. If add_episode raises, no wiki
         # page is written, so the /wiki store and the graph never diverge.
         try:
-            await g.add_episode(
+            await _add_episode(g,
                 name=episode_name,
                 episode_body=episode_body,
                 source=EpisodeType.text,
@@ -383,7 +396,7 @@ async def ingest_signal(signal: NormalizedSignal) -> IngestResult:
         )
         extract_name = f"extract_{signal.signal_id}"
         try:
-            await g.add_episode(
+            await _add_episode(g,
                 name=extract_name,
                 episode_body=episode_body,
                 source=EpisodeType.text,
@@ -411,7 +424,7 @@ async def ingest_signal(signal: NormalizedSignal) -> IngestResult:
     # but skip entity_types / edge_types so extraction doesn't run
     raw_name = f"raw_{signal.signal_id}"
     try:
-        await g.add_episode(
+        await _add_episode(g,
             name=raw_name,
             episode_body=f"[RAW] {signal.source} | {signal.observed_at.isoformat()} | {signal.summary}",
             source=EpisodeType.text,
@@ -543,7 +556,7 @@ async def write_risk_state(
         await _demo_r.aclose()
 
     if not _demo_active:
-        await g.add_episode(
+        await _add_episode(g,
             name=episode_name,
             episode_body=episode_text,
             source=EpisodeType.text,
@@ -637,7 +650,7 @@ async def write_scenario(data: ScenarioOutputData) -> EpisodeRef:
 
     _demo_active = await _demo_running()
     if not _demo_active:
-        await g.add_episode(
+        await _add_episode(g,
             name=f"scenario_{data.scenario_id}",
             episode_body=episode_body,
             source=EpisodeType.text,
@@ -793,7 +806,7 @@ async def write_procurement(data: ProcurementRecData) -> EpisodeRef:
 
     _demo_active = await _demo_running()
     if not _demo_active:
-        await g.add_episode(
+        await _add_episode(g,
             name=f"procurement_{data.scenario_id}",
             episode_body=episode_body,
             source=EpisodeType.text,
@@ -916,7 +929,7 @@ async def write_spr_schedule(data: SPRScheduleData) -> EpisodeRef:
 
     _demo_active = await _demo_running()
     if not _demo_active:
-        await g.add_episode(
+        await _add_episode(g,
             name=f"spr_{data.scenario_id}",
             episode_body=episode_body,
             source=EpisodeType.text,
@@ -1027,7 +1040,7 @@ async def write_pending(
         f"This PendingScenario AFFECTS_SCENARIO {scenario_ref}."
     )
 
-    await g.add_episode(
+    await _add_episode(g,
         name=f"pending_{scenario_ref}",
         episode_body=episode_body,
         source=EpisodeType.text,
@@ -1080,7 +1093,7 @@ async def promote_pending(scenario_ref: str, entity: str = "") -> EpisodeRef:
         f"This promoted scenario AFFECTS_SCENARIO {scenario_ref}."
     )
 
-    await g.add_episode(
+    await _add_episode(g,
         name=f"promoted_{scenario_ref}",
         episode_body=episode_body,
         source=EpisodeType.text,
