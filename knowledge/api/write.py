@@ -332,10 +332,17 @@ async def ingest_signal(signal: NormalizedSignal) -> IngestResult:
         entity_texts: list[tuple[str, str]] = []
         now_mono = time.monotonic()
 
+        # Cooldown applies to news/gdelt synthesis, INCLUDING deferred batch flushes
+        # (_batch_ingest sets force_synthesis=True purely to bypass the triage gate,
+        # not because the signal is genuinely time-critical). Only sanctions — which
+        # are infrequent and always material — are exempt from the cooldown so a live
+        # OFAC designation still triggers immediate fresh synthesis.
+        cooldown_exempt = signal.source == "sanctions"
         for entity in entity_refs:
             last = _last_synth.get(entity, 0.0)
-            if now_mono - last < _SYNTH_COOLDOWN_S and not signal.force_synthesis:
-                # Cooldown active — extract entity facts but skip expensive Nova Pro synthesis.
+            if now_mono - last < _SYNTH_COOLDOWN_S and not cooldown_exempt:
+                # Cooldown active — extract entity facts (cheap, Nova Micro) so the
+                # feed still updates, but skip expensive Nova Pro wiki synthesis.
                 log.debug("Synthesis cooldown active for '%s' (%.0fs remaining), downgrading to extract",
                           entity, _SYNTH_COOLDOWN_S - (now_mono - last))
                 decision = "extract"
