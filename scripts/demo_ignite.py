@@ -243,6 +243,75 @@ def _tick_signals(tick: dict) -> list:
     return sigs
 
 
+def _cy_lit(v) -> str:
+    """Cypher literal (FalkorDB GRAPH.QUERY has no param binding over raw redis)."""
+    if isinstance(v, (int, float)):
+        return repr(v)
+    s = str(v).replace("\\", "\\\\").replace("'", "\\'")
+    return f"'{s}'"
+
+
+async def _write_tick_evidence(falkor, tick: dict) -> None:
+    """Write per-tick Episodic evidence records (MENTIONS→Hormuz) so the map's
+    node-level 'Supporting Evidence' panel is populated during the replay. These
+    are the human-readable source signals behind the risk climb — news, AIS,
+    sanctions, price — written directly (no LLM). get_evidence_for() reads
+    (Episodic)-[:MENTIONS]->(Entity) ordered by created_at, filtering synthesis."""
+    f    = tick["features"]
+    date = tick["date"]
+    prov = tick.get("provenance", {})
+    # created_at MUST be "now", not the replay date: get_evidence_for orders by
+    # created_at DESC, so Feb-2026 replay dates would sort BELOW the graph's real
+    # July-2026 episodes and never surface. Stamp ingest-now so replay evidence is
+    # the freshest thing on the node during the demo.
+    created = datetime.now(timezone.utc).isoformat()
+    anom   = float(f.get("ais_anomaly_score_max", 0))
+    tone   = float(f.get("gdelt_tone_24h_mean", 0))
+    sev    = float(f.get("news_severity_max", 0))
+    n_evt  = _clamp_int(f.get("news_event_count_24h", 0), 0, 40)
+    gapc   = _clamp_int(f.get("ais_gap_count_24h", 0), 0, 40)
+    gapd   = float(f.get("ais_gap_duration_max_h", 0))
+    pct    = float(f.get("price_brent_pct_change_24h", 0))
+    war    = float(f.get("price_war_risk_premium", 0))
+    n_sanc = _clamp_int(f.get("sanctions_new_additions_24h", 0), 0, 20)
+    n_vess = _clamp_int(f.get("sanctions_vessel_count", 0), 0, 20)
+
+    records = []
+    if n_evt > 0 or sev > 0:
+        records.append(("news",
+            f"Hormuz maritime tension: GDELT tone {tone:.1f}, {n_evt} conflict-coded events "
+            f"(severity {sev:.2f}). {prov.get('gdelt','GDELT DOC API / Reuters')}",
+            "GDELT DOC API", "https://www.gdeltproject.org"))
+    if gapc > 0:
+        records.append(("ais",
+            f"AIS dark-vessel anomaly in the Strait of Hormuz: {gapc} vessels with AIS gaps up to "
+            f"{max(gapd,5):.0f}h, anomaly score {anom:.2f}. {prov.get('ais','IMO/UKMTO proxy')}",
+            "AIS Sub-mesh (IMO/UKMTO)", "https://www.ukmto.org"))
+    if bool(f.get("price_bocd_flag", 0)) or abs(pct) > 0.01:
+        records.append(("price",
+            f"Brent changepoint: {pct*100:+.1f}% 24h move, war-risk premium {war:.2f}. "
+            f"{prov.get('price','yfinance BZ=F')}",
+            "yfinance BZ=F", "https://finance.yahoo.com/quote/BZ=F"))
+    if n_sanc > 0 or n_vess > 0:
+        records.append(("sanctions",
+            f"OFAC designations tied to Hormuz shipping: {n_sanc} new entries, {n_vess} vessels. "
+            f"{prov.get('sanctions','OFAC/UN')}",
+            "OFAC/UN sanctions", "https://ofac.treasury.gov"))
+
+    for src, content, sd, url in records:
+        u = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"evidence:{date}:{src}"))
+        cy = (
+            f"MERGE (e:Episodic {{uuid: {_cy_lit(u)}}}) "
+            f"SET e.name = {_cy_lit('REPLAY '+date+' '+src)}, e.group_id = '_', "
+            f"e.source = {_cy_lit(src)}, e.source_description = {_cy_lit(sd)}, "
+            f"e.content = {_cy_lit(content)}, e.source_url = {_cy_lit(url)}, "
+            f"e.created_at = {_cy_lit(created)}, e.valid_at = {_cy_lit(created)} "
+            f"WITH e MATCH (n:Entity {{name: {_cy_lit(HORMUZ)}}}) "
+            f"MERGE (e)-[:MENTIONS]->(n)"
+        )
+        await _graph_query(falkor, GRAPH_NAME, cy)
+
+
 # ── Main lifecycle ────────────────────────────────────────────────────────────
 
 async def run(tick_seconds: float, settle: float, do_restore: bool) -> None:
@@ -305,6 +374,14 @@ async def run(tick_seconds: float, settle: float, do_restore: bool) -> None:
                 await _run_fusion_for_entity(HORMUZ, sigs, demo_active=True)
             except Exception as exc:
                 log.warning("  tick %d fusion error: %s", seq + 1, exc)
+            # Evidence drill-down: write lightweight Episodic records (MENTIONS→Hormuz)
+            # so the map's per-node "Supporting Evidence" panel shows the actual
+            # signals that drove the climb. Direct cypher, no Bedrock. Cleaned up by
+            # the snapshot/restore on demo exit.
+            try:
+                await _write_tick_evidence(falkor, tick)
+            except Exception as exc:
+                log.debug("  tick %d evidence error: %s", seq + 1, exc)
             label = tick["within_24h_of_crossing"]
             mark = "🔴" if label else "🟢"
             if label and not crossing_seen:

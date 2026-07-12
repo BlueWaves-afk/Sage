@@ -4,7 +4,7 @@ import WikiDrawer from "../components/WikiDrawer";
 import { Panel, Badge, Meter, OfflineHint } from "../components/ui/ui";
 import { IconBrain, IconCheck } from "../components/icons";
 import { api, useApi } from "../api/hooks";
-import type { GraphNode, RiskHistoryPoint } from "../api/types";
+import type { GraphNode, RiskHistoryPoint, IntelSignal } from "../api/types";
 import { useVoice, voiceStore } from "../voice/useVoiceStore";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import "./intelligence.css";
@@ -57,6 +57,8 @@ export default function GlobalIntelligence() {
   const [blastNode, setBlastNode] = useState<GraphNode | null>(null);
   const [riskHistory, setRiskHistory] = useState<RiskHistoryPoint[]>([]);
   const [historyEntity, setHistoryEntity] = useState<string | null>(null);
+  const [evidence, setEvidence] = useState<IntelSignal[]>([]);
+  const [evidenceLoading, setEvidenceLoading] = useState(false);
 
   const toggle = (t: string) =>
     setActive((a) => (a.includes(t) ? a.filter((x) => x !== t) : [...a, t]));
@@ -72,6 +74,13 @@ export default function GlobalIntelligence() {
     api.riskHistory(node.name, 24).then((env) => {
       setRiskHistory(env.data ?? []);
     });
+    // Load the source signals that drove this node's risk (evidence drill-down).
+    setEvidence([]);
+    setEvidenceLoading(true);
+    api.evidence(node.name, 8)
+      .then((env) => setEvidence(env.data ?? []))
+      .catch(() => setEvidence([]))
+      .finally(() => setEvidenceLoading(false));
   }, [blastMode]);
 
   // Build corridor id → risk score map from graph nodes for route coloring
@@ -240,14 +249,54 @@ export default function GlobalIntelligence() {
         </div>
 
         <div className="gi-section">
-          <div className="label-sm">Supporting Evidence</div>
-          <div className="gi-evidence">
-            {["Reuters", "AIS Live", "OFAC"].map((s) => (
-              <span key={s} className="gi-evidence-chip">
-                <IconCheck width={13} height={13} className="c-cyan" /> {s}
-              </span>
-            ))}
+          <div className="label-sm">
+            Supporting Evidence
+            {selected && <span className="c-cyan"> · {selected.name}</span>}
           </div>
+
+          {!selected ? (
+            // Nothing selected yet — show the source-provenance chips as before.
+            <div className="gi-evidence">
+              {["Reuters", "AIS Live", "OFAC"].map((s) => (
+                <span key={s} className="gi-evidence-chip">
+                  <IconCheck width={13} height={13} className="c-cyan" /> {s}
+                </span>
+              ))}
+              <div className="gi-evidence-hint label-sm">Click any node to see the signals that drove its risk.</div>
+            </div>
+          ) : evidenceLoading ? (
+            <div className="gi-evidence-hint label-sm">Loading evidence…</div>
+          ) : evidence.length === 0 ? (
+            <div className="gi-evidence-hint label-sm">
+              No source signals on record for this node yet — its risk is at baseline.
+            </div>
+          ) : (
+            <div className="gi-evidence-list">
+              {evidence.map((s) => (
+                <a
+                  key={s.id}
+                  className={`gi-evidence-item src-${s.source.toLowerCase()}`}
+                  href={s.source_url || undefined}
+                  target={s.source_url ? "_blank" : undefined}
+                  rel="noreferrer"
+                >
+                  <div className="gi-evidence-item-head">
+                    <span className={`gi-evidence-src src-${s.source.toLowerCase()}`}>{s.source}</span>
+                    {s.recorded_at && (
+                      <span className="gi-evidence-time mono">
+                        {new Date(s.recorded_at).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    )}
+                  </div>
+                  <div className="gi-evidence-head">{s.headline}</div>
+                  {s.detail && s.detail !== s.headline && (
+                    <div className="gi-evidence-detail">{s.detail}</div>
+                  )}
+                </a>
+              ))}
+            </div>
+          )}
+
           <div className="gi-updated mono">
             <span>SOURCE: FALKORDB GRAPH</span>
             <span>{live ? "SYNCED" : "CACHED"}</span>
