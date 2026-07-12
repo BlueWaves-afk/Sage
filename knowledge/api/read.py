@@ -685,9 +685,13 @@ async def get_recent_intelligence(limit: int = 15) -> list[IntelSignal]:
     # newest first, de-duplicated by headline. Episodes persist in FalkorDB, so
     # this survives page reloads and accumulates rather than being overwritten.
     since = (datetime.now(timezone.utc) - timedelta(days=5)).isoformat()
-    scan = max(int(limit) * 8, 120)
+    scan = max(int(limit) * 6, 80)
     rows = await _cypher(
         f"MATCH (e:Episodic) WHERE e.created_at >= '{since}' "
+        f"AND (e.source_description CONTAINS 'source=news' "
+        f"  OR e.source_description CONTAINS 'source=ais' "
+        f"  OR e.source_description CONTAINS 'source=price' "
+        f"  OR e.source_description CONTAINS 'source=sanctions') "
         f"RETURN e.uuid, e.content, e.source_description, "
         f"       e.source, e.created_at, e.source_url "
         f"ORDER BY e.created_at DESC LIMIT {scan}"
