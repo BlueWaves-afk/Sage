@@ -30,6 +30,7 @@ from knowledge.schema.entities import ENTITY_TYPES
 from knowledge.triage import TriageDecision, triage
 
 import asyncio
+import time
 
 log = logging.getLogger(__name__)
 
@@ -37,6 +38,13 @@ log = logging.getLogger(__name__)
 # dozens of sub-queries; running >2 in parallel saturates the queue and causes
 # timeouts that drop real ingest signals.
 _FALKOR_WRITE_SEM = asyncio.Semaphore(2)
+
+# Per-entity synthesis cooldown — prevents repeated Nova Pro wiki synthesis for
+# the same entity within a short window. Continuous news ingestion can fire 20+
+# signals/cycle for entities like "United States", each triggering a full synthesis
+# call. Downgrade to "extract" if the entity was synthesized within this window.
+_SYNTH_COOLDOWN_S: int = int(__import__("os").environ.get("SAGE_SYNTH_COOLDOWN_S", "1800"))
+_last_synth: dict[str, float] = {}  # entity → monotonic time of last synthesis
 
 
 # ---------------------------------------------------------------------------
@@ -322,10 +330,19 @@ async def ingest_signal(signal: NormalizedSignal) -> IngestResult:
         # synthesize() now returns a complete page with frontmatter + wikilinks.
         entity_refs = signal.entity_refs or [signal.summary[:60]]
         entity_texts: list[tuple[str, str]] = []
+        now_mono = time.monotonic()
 
         for entity in entity_refs:
+            last = _last_synth.get(entity, 0.0)
+            if now_mono - last < _SYNTH_COOLDOWN_S and not signal.force_synthesis:
+                # Cooldown active — extract entity facts but skip expensive Nova Pro synthesis.
+                log.debug("Synthesis cooldown active for '%s' (%.0fs remaining), downgrading to extract",
+                          entity, _SYNTH_COOLDOWN_S - (now_mono - last))
+                decision = "extract"
+                continue
             text = await synthesize(signal=signal, entity=entity, persist=False)
             entity_texts.append((entity, text))
+            _last_synth[entity] = now_mono
 
         # Episode body: strip frontmatter so Graphiti gets clean prose (not YAML).
         # Provenance block is appended so Store 1 holds the non-lossy ground truth.
@@ -337,54 +354,59 @@ async def ingest_signal(signal: NormalizedSignal) -> IngestResult:
             except ValueError:
                 return page
 
-        synth_join   = "\n\n---\n\n".join(_body_only(text) for _, text in entity_texts)
-        episode_body = f"{synth_join}\n\n{_render_raw_signal(signal)}"
-        episode_name = f"{signal.source}_{signal.signal_id}"
+        # If all entity_refs were on cooldown, fall through to extract path.
+        if not entity_texts:
+            decision = "extract"
+        else:
+            synth_join   = "\n\n---\n\n".join(_body_only(text) for _, text in entity_texts)
+            episode_body = f"{synth_join}\n\n{_render_raw_signal(signal)}"
+            episode_name = f"{signal.source}_{signal.signal_id}"
 
-        # ── Consistency gate ──────────────────────────────────────────────
-        # The graph write is the atomic boundary we control: the wiki is only
-        # persisted AFTER add_episode succeeds. If add_episode raises, no wiki
-        # page is written, so the /wiki store and the graph never diverge.
-        try:
-            await _add_episode(g,
-                name=episode_name,
-                episode_body=episode_body,
-                source=EpisodeType.text,
-                source_description=f"SAGE synthesis | source={signal.source}",
-                reference_time=signal.observed_at,
-                entity_types=ENTITY_TYPES,
-                edge_types=EDGE_TYPES,
-                edge_type_map=EDGE_TYPE_MAP,
-            )
-            # Graphiti doesn't return the episode UUID directly in add_episode();
-            # we generate a stable one from signal_id for downstream reference
-            episode_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, signal.signal_id))
-            # Stamp source_url as a first-class property so the intelligence/evidence
-            # feeds can render a clickable citation without parsing body text.
-            if signal.source_url:
-                await _stamp_episode_url(g, episode_name, signal.source_url)
-        except Exception as exc:
-            log.error("add_episode failed for signal %s: %s", signal.signal_id, exc)
-            raise
-
-        # Graph write committed — validate and persist wiki pages.
-        # Hard validation errors keep the old page; soft warnings pass through.
-        for entity, text in entity_texts:
-            errors = _validate_page(text)
-            if errors:
-                log.warning(
-                    "Wiki page for '%s' failed validation (keeping old page): %s",
-                    entity, errors,
+        if entity_texts:
+            # ── Consistency gate ──────────────────────────────────────────────
+            # The graph write is the atomic boundary we control: the wiki is only
+            # persisted AFTER add_episode succeeds. If add_episode raises, no wiki
+            # page is written, so the /wiki store and the graph never diverge.
+            try:
+                await _add_episode(g,
+                    name=episode_name,
+                    episode_body=episode_body,
+                    source=EpisodeType.text,
+                    source_description=f"SAGE synthesis | source={signal.source}",
+                    reference_time=signal.observed_at,
+                    entity_types=ENTITY_TYPES,
+                    edge_types=EDGE_TYPES,
+                    edge_type_map=EDGE_TYPE_MAP,
                 )
-            else:
-                write_wiki_page(entity, text)
+                # Graphiti doesn't return the episode UUID directly in add_episode();
+                # we generate a stable one from signal_id for downstream reference
+                episode_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, signal.signal_id))
+                # Stamp source_url as a first-class property so the intelligence/evidence
+                # feeds can render a clickable citation without parsing body text.
+                if signal.source_url:
+                    await _stamp_episode_url(g, episode_name, signal.source_url)
+            except Exception as exc:
+                log.error("add_episode failed for signal %s: %s", signal.signal_id, exc)
+                raise
 
-        return IngestResult(
-            signal_id=signal.signal_id,
-            decision="synthesized",
-            episode_uuid=episode_uuid,
-            risk_updated=risk_updated,
-        )
+            # Graph write committed — validate and persist wiki pages.
+            # Hard validation errors keep the old page; soft warnings pass through.
+            for entity, text in entity_texts:
+                errors = _validate_page(text)
+                if errors:
+                    log.warning(
+                        "Wiki page for '%s' failed validation (keeping old page): %s",
+                        entity, errors,
+                    )
+                else:
+                    write_wiki_page(entity, text)
+
+            return IngestResult(
+                signal_id=signal.signal_id,
+                decision="synthesized",
+                episode_uuid=episode_uuid,
+                risk_updated=risk_updated,
+            )
 
     if decision == "extract":
         # Entity extraction only — no wiki update, cheaper episode
@@ -1040,15 +1062,17 @@ async def write_pending(
         f"This PendingScenario AFFECTS_SCENARIO {scenario_ref}."
     )
 
+    # Skip entity extraction (entity_types=[]) — speculative sandbox notes don't need
+    # Nova Pro extraction; storing the raw episode text is sufficient.
     await _add_episode(g,
         name=f"pending_{scenario_ref}",
         episode_body=episode_body,
         source=EpisodeType.text,
         source_description="SAGE sandbox | speculative",
         reference_time=now,
-        entity_types=ENTITY_TYPES,
-        edge_types=EDGE_TYPES,
-        edge_type_map=EDGE_TYPE_MAP,
+        entity_types=[],
+        edge_types=[],
+        edge_type_map={},
     )
 
     episode_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"pending_{scenario_ref}"))
@@ -1093,15 +1117,17 @@ async def promote_pending(scenario_ref: str, entity: str = "") -> EpisodeRef:
         f"This promoted scenario AFFECTS_SCENARIO {scenario_ref}."
     )
 
+    # Promoted episodes record the crossing event — no entity extraction needed,
+    # the crossing entity is already in the graph from the original ingest path.
     await _add_episode(g,
         name=f"promoted_{scenario_ref}",
         episode_body=episode_body,
         source=EpisodeType.text,
         source_description="SAGE sandbox promotion",
         reference_time=now,
-        entity_types=ENTITY_TYPES,
-        edge_types=EDGE_TYPES,
-        edge_type_map=EDGE_TYPE_MAP,
+        entity_types=[],
+        edge_types=[],
+        edge_type_map={},
     )
 
     episode_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"promoted_{scenario_ref}"))
