@@ -17,25 +17,23 @@
 | Per-refinery demand curves (Area 4 / G14) | ✅ Done | `refineries.csv` utilization_pct → 0.43 MMT/day per-refinery, not aggregate |
 | Business-impact card + claims ledger | ✅ Done | Landing impact card; `docs/EVALUATION.md`, `docs/IMPACT.md` |
 | Durable image (agents baked) | ✅ Done | `docker/sage_core.Dockerfile`; reproducible `--profile sensory --profile agents up -d` |
+| **Geospatial evidence drill-down** | ✅ Done | Click a map node → per-node "Supporting Evidence" panel (`GlobalIntelligence.tsx` → `/api/evidence/{name}`); demo writes live Episodic evidence per tick |
 
 ---
 
 ## Features worth adding (highest rubric leverage)
 
-### 1. Geospatial evidence drill-down — 🔷 Backend-ready
-**What:** Click a node / H3 cell on the map → the actual signals that fired there
-(the AIS dark-vessel gap, the news item, the sanction), with timestamps and source.
-Turns "points on a map" into *evidence depth* — the review's B+ → A move, and the
-single most demo-visible upgrade.
-**State:** Backend already serves it — `GET /api/evidence/{entity}` (`get_evidence_for`,
-returns `IntelSignal` with `h3_cells`). The map already has an `onNodeClick` handler
-(`KnowledgeGraphMap.tsx:399`). **Remaining:** a right-rail "Evidence" panel that, on
-node select, fetches `/api/evidence/{name}` and renders the signal list + a
-"jump to cell" on the map; and routing demo signals through the real ingest path so
-the panel is populated during a replay (the inline-fusion demo currently writes risk
-state directly and doesn't create per-signal evidence records).
-**Effort:** ~1 day (frontend panel + demo signal-path). **Rubric:** Geospatial depth
-B+ → A; UX +1.
+### 1. Geospatial evidence drill-down — ✅ Done
+**What:** Click a map node → the actual signals that drove its risk (AIS dark-vessel
+gap, news item, sanction, price changepoint) with timestamps and source links. Turns
+"points on a map" into *evidence depth* — the review's B+ → A move.
+**Shipped:** `GlobalIntelligence.tsx` `handleNodeClick` fetches `/api/evidence/{name}`
+and renders a per-node "Supporting Evidence" list (colour-coded by source, deep-links
+to the source). The demo's `_write_tick_evidence` writes lightweight Episodic records
+(MENTIONS→Hormuz, `created_at = now`) per replay tick via direct cypher (no Bedrock),
+so the panel populates live during a replay and is cleaned up by snapshot/restore.
+**Still open (minor):** an H3-cell "jump to location" from an evidence item, and
+per-cell drill-down on the AIS heat layer.
 
 ### 2. Tornado / sensitivity chart in the Simulation Lab — ⬜ Planned
 **What:** For a scenario, vary each assumption ±1σ and rank the swing in the outcome
