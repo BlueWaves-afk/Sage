@@ -137,3 +137,44 @@ export const IconExternal = (p: P) => (
     <path d="M14 4h6v6M20 4l-8 8M18 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5" />
   </svg>
 );
+
+export const IconLogo = (p: P) => (
+  <svg
+    width={p.width ?? 20}
+    height={p.height ?? 20}
+    viewBox="0 0 476 601"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...p}
+  >
+    <circle cx="227" cy="41" r="32.5" stroke="currentColor" strokeWidth="15"/>
+    <circle cx="35" cy="143" r="32.5" stroke="currentColor" strokeWidth="15"/>
+    <circle cx="35" cy="283" r="32.5" stroke="currentColor" strokeWidth="15"/>
+    <circle cx="174" cy="406" r="32.5" stroke="currentColor" strokeWidth="15"/>
+    <circle cx="35" cy="462" r="32.5" stroke="currentColor" strokeWidth="15"/>
+    <circle cx="238" cy="566" r="32.5" stroke="currentColor" strokeWidth="15"/>
+    <circle cx="441" cy="462" r="32.5" stroke="currentColor" strokeWidth="15"/>
+    <circle cx="441" cy="342" r="32.5" stroke="currentColor" strokeWidth="15"/>
+    <circle cx="287" cy="203" r="32.5" stroke="currentColor" strokeWidth="15"/>
+    <circle cx="441" cy="143" r="32.5" stroke="currentColor" strokeWidth="15"/>
+    <line x1="227.132" y1="43.229" x2="36.132" y2="140.229" stroke="currentColor" strokeWidth="15"/>
+    <line x1="37.5" y1="143" x2="37.5" y2="283" stroke="currentColor" strokeWidth="15"/>
+    <line x1="36.6863" y1="281.154" x2="175.686" y2="408.154" stroke="currentColor" strokeWidth="15"/>
+    <path d="M224.855 43.3038L442.076 140.743" stroke="currentColor" strokeWidth="15"/>
+    <line x1="35" y1="140.5" x2="441" y2="140.5" stroke="currentColor" strokeWidth="15"/>
+    <line x1="36.517" y1="282.987" x2="131.517" y2="212.987" stroke="currentColor" strokeWidth="15"/>
+    <line x1="37.4966" y1="139.997" x2="132.497" y2="210.997" stroke="currentColor" strokeWidth="15"/>
+    <path d="M130 210.521L334 408.5" stroke="currentColor" strokeWidth="15"/>
+    <line x1="285.436" y1="203.439" x2="332.436" y2="407.439" stroke="currentColor" strokeWidth="15"/>
+    <path d="M442.298 345.137L332 407" stroke="currentColor" strokeWidth="15"/>
+    <path d="M129 211.638L176.128 140.45" stroke="currentColor" strokeWidth="15"/>
+    <line x1="176.778" y1="140.855" x2="226.778" y2="43.8546" stroke="currentColor" strokeWidth="15"/>
+    <line x1="286.776" y1="205.18" x2="172.776" y2="141.18" stroke="currentColor" strokeWidth="15"/>
+    <line x1="131.438" y1="211.446" x2="176.438" y2="409.446" stroke="currentColor" strokeWidth="15"/>
+    <line x1="35.0246" y1="459.5" x2="441.025" y2="463.5" stroke="currentColor" strokeWidth="15"/>
+    <line x1="36.1486" y1="459.779" x2="239.149" y2="564.779" stroke="currentColor" strokeWidth="15"/>
+    <line x1="445.083" y1="464.253" x2="237.083" y2="564.253" stroke="currentColor" strokeWidth="15"/>
+    <line x1="443.5" y1="343" x2="443.5" y2="466" stroke="currentColor" strokeWidth="15"/>
+  </svg>
+);
+

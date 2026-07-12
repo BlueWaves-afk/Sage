@@ -15,6 +15,7 @@ import {
   IconAlert,
   IconSun,
   IconMoon,
+  IconLogo,
 } from "../components/icons";
 import "./landing.css";
 
@@ -45,7 +46,9 @@ export default function Landing() {
       <AmbientBackground />
       <header className="landing-top">
         <div className="landing-brand">
-          <span className="brand">SAGE</span>
+          <span className="brand" style={{ display: "flex", alignItems: "center", paddingRight: "4px" }}>
+            <IconLogo width={18} height={23} />
+          </span>
           <span className={`landing-power${live ? " on" : ""}`}>
             <span className="landing-power-dot" />
           </span>
