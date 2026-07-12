@@ -376,11 +376,33 @@ async def synthesize(
 # LLM call
 # ---------------------------------------------------------------------------
 
+_SYNTH_LLM = None  # dedicated Nova Pro client for user-facing wiki prose
+
+
+def _get_synthesis_llm():
+    """Dedicated Nova Pro client for wiki synthesis.
+
+    Graphiti's shared client is Nova Lite (cheap, for machine-internal extraction).
+    Wiki prose is user-facing (it renders as the Live Intelligence feed detail), so
+    it gets its own Nova Pro client. Falls back to the shared client for non-bedrock
+    providers (stub/openai), which don't distinguish model tiers here.
+    """
+    global _SYNTH_LLM
+    if _SYNTH_LLM is not None:
+        return _SYNTH_LLM
+    import os
+    from knowledge.connection import _get_graphiti
+    if os.environ.get("LLM_PROVIDER", "stub").lower() == "bedrock":
+        from knowledge.bedrock import nova_pro
+        _SYNTH_LLM = nova_pro(os.environ.get("AWS_REGION", "us-east-1"))
+    else:
+        _SYNTH_LLM = _get_graphiti().llm_client
+    return _SYNTH_LLM
+
+
 async def _call_nova_pro(prompt: str, entity: str) -> str:
     try:
-        from knowledge.connection import _get_graphiti
-        g = _get_graphiti()
-        llm = g.llm_client
+        llm = _get_synthesis_llm()
 
         messages = [
             {

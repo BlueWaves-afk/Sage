@@ -585,15 +585,21 @@ async def write_risk_state(
         await _demo_r.aclose()
 
     if not _demo_active:
+        # Skip entity/edge extraction (entity_types=[]) — the RISK_STATE edge is
+        # written deterministically by _write_risk_edge() below, and the entities
+        # referenced already exist in the graph. Running Graphiti's full extraction +
+        # dedup + summarization here (several LLM calls) on every fusion cycle was the
+        # single largest Bedrock cost driver, and its output is redundant. We still
+        # store the episode text for provenance/audit.
         await _add_episode(g,
             name=episode_name,
             episode_body=episode_text,
             source=EpisodeType.text,
             source_description="SAGE risk state",
             reference_time=now,
-            entity_types=ENTITY_TYPES,
-            edge_types=EDGE_TYPES,
-            edge_type_map=EDGE_TYPE_MAP,
+            entity_types=[],
+            edge_types=[],
+            edge_type_map={},
         )
 
     # Deterministic RISK_STATE edge — DO NOT rely on LLM extraction for this.
@@ -679,15 +685,18 @@ async def write_scenario(data: ScenarioOutputData) -> EpisodeRef:
 
     _demo_active = await _demo_running()
     if not _demo_active:
+        # Skip extraction (entity_types=[]) — the full structured ScenarioOutputData
+        # is cached in Redis (see _cache_structured) and read back verbatim by the
+        # API; Graphiti re-extracting entities from the prose adds cost without value.
         await _add_episode(g,
             name=f"scenario_{data.scenario_id}",
             episode_body=episode_body,
             source=EpisodeType.text,
             source_description="SAGE scenario output | System 2",
             reference_time=now,
-            entity_types=ENTITY_TYPES,
-            edge_types=EDGE_TYPES,
-            edge_type_map=EDGE_TYPE_MAP,
+            entity_types=[],
+            edge_types=[],
+            edge_type_map={},
         )
 
     episode_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"scenario_{data.scenario_id}"))
@@ -835,15 +844,17 @@ async def write_procurement(data: ProcurementRecData) -> EpisodeRef:
 
     _demo_active = await _demo_running()
     if not _demo_active:
+        # Skip extraction (entity_types=[]) — structured ProcurementRecData is cached
+        # in Redis and read back verbatim; graph re-extraction adds cost without value.
         await _add_episode(g,
             name=f"procurement_{data.scenario_id}",
             episode_body=episode_body,
             source=EpisodeType.text,
             source_description="SAGE procurement recommendation | System 3",
             reference_time=now,
-            entity_types=ENTITY_TYPES,
-            edge_types=EDGE_TYPES,
-            edge_type_map=EDGE_TYPE_MAP,
+            entity_types=[],
+            edge_types=[],
+            edge_type_map={},
         )
 
     episode_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"procurement_{data.scenario_id}"))
@@ -958,15 +969,17 @@ async def write_spr_schedule(data: SPRScheduleData) -> EpisodeRef:
 
     _demo_active = await _demo_running()
     if not _demo_active:
+        # Skip extraction (entity_types=[]) — structured SPRScheduleData is cached in
+        # Redis and read back verbatim; graph re-extraction adds cost without value.
         await _add_episode(g,
             name=f"spr_{data.scenario_id}",
             episode_body=episode_body,
             source=EpisodeType.text,
             source_description="SAGE SPR schedule | System 4",
             reference_time=now,
-            entity_types=ENTITY_TYPES,
-            edge_types=EDGE_TYPES,
-            edge_type_map=EDGE_TYPE_MAP,
+            entity_types=[],
+            edge_types=[],
+            edge_type_map={},
         )
 
     episode_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"spr_{data.scenario_id}"))
