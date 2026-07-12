@@ -41,6 +41,11 @@ services:
     image: falkordb/falkordb:latest
     restart: unless-stopped
     <<: *default-logging
+    command: >
+      redis-server
+      --loadmodule /usr/lib/redis/modules/falkordb.so
+      MAXQUEUED 500
+      THREAD_COUNT 4
     volumes:
       # Graph + vector store persisted under knowledge/ so the system's memory is co-located.
       - ./knowledge/graph_store:/var/lib/falkordb/data
