@@ -597,8 +597,8 @@ async def write_risk_state(
             source=EpisodeType.text,
             source_description="SAGE risk state",
             reference_time=now,
-            entity_types=[],
-            edge_types=[],
+            entity_types={},
+            edge_types={},
             edge_type_map={},
         )
 
@@ -694,8 +694,8 @@ async def write_scenario(data: ScenarioOutputData) -> EpisodeRef:
             source=EpisodeType.text,
             source_description="SAGE scenario output | System 2",
             reference_time=now,
-            entity_types=[],
-            edge_types=[],
+            entity_types={},
+            edge_types={},
             edge_type_map={},
         )
 
@@ -852,8 +852,8 @@ async def write_procurement(data: ProcurementRecData) -> EpisodeRef:
             source=EpisodeType.text,
             source_description="SAGE procurement recommendation | System 3",
             reference_time=now,
-            entity_types=[],
-            edge_types=[],
+            entity_types={},
+            edge_types={},
             edge_type_map={},
         )
 
@@ -977,8 +977,8 @@ async def write_spr_schedule(data: SPRScheduleData) -> EpisodeRef:
             source=EpisodeType.text,
             source_description="SAGE SPR schedule | System 4",
             reference_time=now,
-            entity_types=[],
-            edge_types=[],
+            entity_types={},
+            edge_types={},
             edge_type_map={},
         )
 
@@ -1090,8 +1090,8 @@ async def write_pending(
         source=EpisodeType.text,
         source_description="SAGE sandbox | speculative",
         reference_time=now,
-        entity_types=[],
-        edge_types=[],
+        entity_types={},
+        edge_types={},
         edge_type_map={},
     )
 
@@ -1145,8 +1145,8 @@ async def promote_pending(scenario_ref: str, entity: str = "") -> EpisodeRef:
         source=EpisodeType.text,
         source_description="SAGE sandbox promotion",
         reference_time=now,
-        entity_types=[],
-        edge_types=[],
+        entity_types={},
+        edge_types={},
         edge_type_map={},
     )
 
