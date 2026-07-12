@@ -14,6 +14,7 @@
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
 [![Read the Series](https://img.shields.io/badge/Read_the_Series-Engineering_SAGE-2563eb?style=for-the-badge&logo=hashnode&logoColor=white)](https://ridingbluewaves.hashnode.dev/engineering-sage-an-anticipatory-intelligence-system-for-indias-crude-oil-supply-chain)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-34.232.109.110-22c55e?style=for-the-badge&logo=amazonaws&logoColor=white)](http://34.232.109.110/)
 
 </div>
 
@@ -51,7 +52,7 @@ A written walkthrough of the design decisions behind SAGE, each an introspective
 8. [Instantiating Foundational Knowledge (Context Bundle)](#instantiating-foundational-knowledge-context-bundle)
 9. [Upgrading the Knowledge Base to a New Bundle](#upgrading-the-knowledge-base-to-a-new-bundle)
 10. [Team Ownership](#team-ownership)
-10. [License](#license)
+11. [License](#license)
 
 ---
 
@@ -472,7 +473,7 @@ security group, and bring-up steps.
 
 - Python 3.11+
 - Docker + Docker Compose
-- AWS CLI configured for the `vigia-developer` account (`203800220566`), region `us-east-1`
+- AWS CLI configured with Bedrock access, region `us-east-1` (or `ap-south-1`)
 - The following API keys available before starting:
 
 | Key | Used by |
