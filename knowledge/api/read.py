@@ -687,17 +687,18 @@ async def get_recent_intelligence(limit: int = 15) -> list[IntelSignal]:
     since = (datetime.now(timezone.utc) - timedelta(days=5)).isoformat()
     rows = await _cypher(
         "MATCH (e:Episodic) WHERE e.created_at >= $since "
-        "RETURN e.uuid AS uuid, e.content AS content, e.source_description AS sd, "
-        "       e.source AS src, e.created_at AS created_at, e.source_url AS surl "
+        "RETURN e.uuid, e.content, e.source_description, "
+        "       e.source, e.created_at, e.source_url "
         "ORDER BY e.created_at DESC LIMIT $scan",
         {"since": since, "scan": max(int(limit) * 8, 120)},
     )
     out: list[IntelSignal] = []
     seen: set[str] = set()
     for r in rows or []:
-        sd = r.get("sd", "") or ""
-        source = _source_of(sd, r.get("src", ""))
-        content = (r.get("content") or "").strip()
+        sd = r.get("e.source_description") or r.get("sd", "") or ""
+        src = r.get("e.source") or r.get("src", "") or ""
+        source = _source_of(sd, src)
+        content = (r.get("e.content") or r.get("content") or "").strip()
         if source in ("text", "synthesis") or "risk level is assessed" in content.lower():
             continue
         head = _headline(content)
@@ -708,16 +709,15 @@ async def get_recent_intelligence(limit: int = 15) -> list[IntelSignal]:
         if key in seen:            # collapse duplicates
             continue
         seen.add(key)
-        raw_url = r.get('surl') or _extract_url(content)
-        if not raw_url:
-            raw_url = _SOURCE_FALLBACK.get(source.lower(), "")
+        raw_url = (r.get("e.source_url") or r.get("surl") or _extract_url(content) or
+                   _SOURCE_FALLBACK.get(source.lower(), ""))
         out.append(IntelSignal(
-            id=str(r.get("uuid") or ""),
+            id=str(r.get("e.uuid") or r.get("uuid") or ""),
             source=source,
             headline=head,
             detail=content[:280],
             source_url=raw_url,
-            recorded_at=str(r.get("created_at") or ""),
+            recorded_at=str(r.get("e.created_at") or r.get("created_at") or ""),
         ))
         if len(out) >= limit:
             break
@@ -731,16 +731,18 @@ async def get_evidence_for(entity: str, limit: int = 12) -> list[IntelSignal]:
     """
     rows = await _cypher(
         "MATCH (e:Episodic)-[:MENTIONS]->(n:Entity {name:$entity}) "
-        "RETURN e.uuid AS uuid, e.content AS content, e.source_description AS sd, "
-        "       e.source AS src, e.created_at AS created_at, e.source_url AS surl "
+        "RETURN e.uuid, e.content, e.source_description, "
+        "       e.source, e.created_at, e.source_url "
         "ORDER BY e.created_at DESC LIMIT $limit",
         {"entity": entity, "limit": int(limit)},
     )
     out: list[IntelSignal] = []
     seen: set[str] = set()
     for r in rows or []:
-        content = (r.get("content") or "").strip()
-        source = _source_of(r.get("sd", ""), r.get("src", ""))
+        content = (r.get("e.content") or r.get("content") or "").strip()
+        sd = r.get("e.source_description") or r.get("sd", "") or ""
+        src = r.get("e.source") or r.get("src", "") or ""
+        source = _source_of(sd, src)
         if source in ("text", "synthesis") or "risk level is assessed" in content.lower():
             continue
         head = _headline(content)
@@ -748,17 +750,16 @@ async def get_evidence_for(entity: str, limit: int = 12) -> list[IntelSignal]:
         if key in seen:
             continue
         seen.add(key)
-        raw_url = r.get('surl') or _extract_url(content)
-        if not raw_url:
-            raw_url = _SOURCE_FALLBACK.get(source.lower(), "")
+        raw_url = (r.get("e.source_url") or r.get("surl") or _extract_url(content) or
+                   _SOURCE_FALLBACK.get(source.lower(), ""))
         out.append(IntelSignal(
-            id=str(r.get("uuid") or ""),
+            id=str(r.get("e.uuid") or r.get("uuid") or ""),
             source=source,
             headline=head,
             detail=content[:280],
             source_url=raw_url,
             entities=[entity],
-            recorded_at=str(r.get("created_at") or ""),
+            recorded_at=str(r.get("e.created_at") or r.get("created_at") or ""),
         ))
     return out
 
