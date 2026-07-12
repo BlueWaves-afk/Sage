@@ -425,15 +425,23 @@ async def ingest_signal(signal: NormalizedSignal) -> IngestResult:
         )
         extract_name = f"extract_{signal.signal_id}"
         try:
+            # Skip entity/edge extraction (entity_types={}). The extract path is the
+            # high-frequency one — every cooled-down entity flush lands here — and
+            # Graphiti's extraction runs expensive fulltext dedup queries per call
+            # that were saturating FalkorDB (Max pending queries exceeded) and firing
+            # a Nova Lite tool-use call each time. The episode is still stored and
+            # tagged source=<source> so it appears in the Live Intelligence feed; the
+            # richer graph (entities/edges) is maintained by the once-per-30-min
+            # synthesis path, and referenced entities already exist in the graph.
             await _add_episode(g,
                 name=extract_name,
                 episode_body=episode_body,
                 source=EpisodeType.text,
                 source_description=f"SAGE extract | source={signal.source}",
                 reference_time=signal.observed_at,
-                entity_types=ENTITY_TYPES,
-                edge_types=EDGE_TYPES,
-                edge_type_map=EDGE_TYPE_MAP,
+                entity_types={},
+                edge_types={},
+                edge_type_map={},
             )
             episode_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, signal.signal_id))
             if signal.source_url:
