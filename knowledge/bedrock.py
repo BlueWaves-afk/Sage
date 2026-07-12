@@ -496,6 +496,25 @@ def nova_pro(region: str = _AWS_REGION) -> BedrockLLMClient:
     )
 
 
+def nova_lite(region: str = _AWS_REGION) -> BedrockLLMClient:
+    """Nova Lite (medium) + Nova Micro (small) dual-model client.
+
+    Used as Graphiti's internal client: entity/edge extraction, dedup, and node
+    summarization run on every add_episode but their output is machine-internal
+    (schema-constrained tool-use), never shown to a user. Nova Lite is ~13x cheaper
+    than Nova Pro on input ($0.06 vs $0.80 per 1M) and its schema-forced extraction
+    quality is more than adequate here. User-facing wiki prose synthesis keeps its
+    own dedicated Nova Pro client (see knowledge/synthesis.py), so this downgrade
+    does not touch anything a human reads.
+    """
+    return BedrockLLMClient(
+        model_id=_NOVA_LITE,
+        small_model_id=_NOVA_MICRO,
+        region=region,
+        temperature=0.0,
+    )
+
+
 def nova_micro(region: str = _AWS_REGION) -> BedrockLLMClient:
     """Nova Micro only — both model sizes route to Micro. Used in tests."""
     return BedrockLLMClient(

@@ -29,7 +29,22 @@ from knowledge.schema.edges import EDGE_TYPE_MAP, EDGE_TYPES
 from knowledge.schema.entities import ENTITY_TYPES
 from knowledge.triage import TriageDecision, triage
 
+import asyncio
+import time
+
 log = logging.getLogger(__name__)
+
+# Limit concurrent FalkorDB writes — Graphiti's add_episode is ~8-12s and issues
+# dozens of sub-queries; running >2 in parallel saturates the queue and causes
+# timeouts that drop real ingest signals.
+_FALKOR_WRITE_SEM = asyncio.Semaphore(2)
+
+# Per-entity synthesis cooldown — prevents repeated Nova Pro wiki synthesis for
+# the same entity within a short window. Continuous news ingestion can fire 20+
+# signals/cycle for entities like "United States", each triggering a full synthesis
+# call. Downgrade to "extract" if the entity was synthesized within this window.
+_SYNTH_COOLDOWN_S: int = int(__import__("os").environ.get("SAGE_SYNTH_COOLDOWN_S", "1800"))
+_last_synth: dict[str, float] = {}  # entity → monotonic time of last synthesis
 
 
 # ---------------------------------------------------------------------------
@@ -39,6 +54,12 @@ log = logging.getLogger(__name__)
 class EpisodeRef(BaseModel):
     episode_uuid: str
     scenario_id: Optional[str] = None
+
+
+async def _add_episode(g, **kwargs) -> None:
+    """Semaphore-gated wrapper so concurrent add_episode calls don't saturate FalkorDB."""
+    async with _FALKOR_WRITE_SEM:
+        await g.add_episode(**kwargs)
 
 
 # ---------------------------------------------------------------------------
@@ -309,10 +330,26 @@ async def ingest_signal(signal: NormalizedSignal) -> IngestResult:
         # synthesize() now returns a complete page with frontmatter + wikilinks.
         entity_refs = signal.entity_refs or [signal.summary[:60]]
         entity_texts: list[tuple[str, str]] = []
+        now_mono = time.monotonic()
 
+        # Cooldown applies to news/gdelt synthesis, INCLUDING deferred batch flushes
+        # (_batch_ingest sets force_synthesis=True purely to bypass the triage gate,
+        # not because the signal is genuinely time-critical). Only sanctions — which
+        # are infrequent and always material — are exempt from the cooldown so a live
+        # OFAC designation still triggers immediate fresh synthesis.
+        cooldown_exempt = signal.source == "sanctions"
         for entity in entity_refs:
+            last = _last_synth.get(entity, 0.0)
+            if now_mono - last < _SYNTH_COOLDOWN_S and not cooldown_exempt:
+                # Cooldown active — extract entity facts (cheap, Nova Micro) so the
+                # feed still updates, but skip expensive Nova Pro wiki synthesis.
+                log.debug("Synthesis cooldown active for '%s' (%.0fs remaining), downgrading to extract",
+                          entity, _SYNTH_COOLDOWN_S - (now_mono - last))
+                decision = "extract"
+                continue
             text = await synthesize(signal=signal, entity=entity, persist=False)
             entity_texts.append((entity, text))
+            _last_synth[entity] = now_mono
 
         # Episode body: strip frontmatter so Graphiti gets clean prose (not YAML).
         # Provenance block is appended so Store 1 holds the non-lossy ground truth.
@@ -324,54 +361,59 @@ async def ingest_signal(signal: NormalizedSignal) -> IngestResult:
             except ValueError:
                 return page
 
-        synth_join   = "\n\n---\n\n".join(_body_only(text) for _, text in entity_texts)
-        episode_body = f"{synth_join}\n\n{_render_raw_signal(signal)}"
-        episode_name = f"{signal.source}_{signal.signal_id}"
+        # If all entity_refs were on cooldown, fall through to extract path.
+        if not entity_texts:
+            decision = "extract"
+        else:
+            synth_join   = "\n\n---\n\n".join(_body_only(text) for _, text in entity_texts)
+            episode_body = f"{synth_join}\n\n{_render_raw_signal(signal)}"
+            episode_name = f"{signal.source}_{signal.signal_id}"
 
-        # ── Consistency gate ──────────────────────────────────────────────
-        # The graph write is the atomic boundary we control: the wiki is only
-        # persisted AFTER add_episode succeeds. If add_episode raises, no wiki
-        # page is written, so the /wiki store and the graph never diverge.
-        try:
-            await g.add_episode(
-                name=episode_name,
-                episode_body=episode_body,
-                source=EpisodeType.text,
-                source_description=f"SAGE synthesis | source={signal.source}",
-                reference_time=signal.observed_at,
-                entity_types=ENTITY_TYPES,
-                edge_types=EDGE_TYPES,
-                edge_type_map=EDGE_TYPE_MAP,
-            )
-            # Graphiti doesn't return the episode UUID directly in add_episode();
-            # we generate a stable one from signal_id for downstream reference
-            episode_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, signal.signal_id))
-            # Stamp source_url as a first-class property so the intelligence/evidence
-            # feeds can render a clickable citation without parsing body text.
-            if signal.source_url:
-                await _stamp_episode_url(g, episode_name, signal.source_url)
-        except Exception as exc:
-            log.error("add_episode failed for signal %s: %s", signal.signal_id, exc)
-            raise
-
-        # Graph write committed — validate and persist wiki pages.
-        # Hard validation errors keep the old page; soft warnings pass through.
-        for entity, text in entity_texts:
-            errors = _validate_page(text)
-            if errors:
-                log.warning(
-                    "Wiki page for '%s' failed validation (keeping old page): %s",
-                    entity, errors,
+        if entity_texts:
+            # ── Consistency gate ──────────────────────────────────────────────
+            # The graph write is the atomic boundary we control: the wiki is only
+            # persisted AFTER add_episode succeeds. If add_episode raises, no wiki
+            # page is written, so the /wiki store and the graph never diverge.
+            try:
+                await _add_episode(g,
+                    name=episode_name,
+                    episode_body=episode_body,
+                    source=EpisodeType.text,
+                    source_description=f"SAGE synthesis | source={signal.source}",
+                    reference_time=signal.observed_at,
+                    entity_types=ENTITY_TYPES,
+                    edge_types=EDGE_TYPES,
+                    edge_type_map=EDGE_TYPE_MAP,
                 )
-            else:
-                write_wiki_page(entity, text)
+                # Graphiti doesn't return the episode UUID directly in add_episode();
+                # we generate a stable one from signal_id for downstream reference
+                episode_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, signal.signal_id))
+                # Stamp source_url as a first-class property so the intelligence/evidence
+                # feeds can render a clickable citation without parsing body text.
+                if signal.source_url:
+                    await _stamp_episode_url(g, episode_name, signal.source_url)
+            except Exception as exc:
+                log.error("add_episode failed for signal %s: %s", signal.signal_id, exc)
+                raise
 
-        return IngestResult(
-            signal_id=signal.signal_id,
-            decision="synthesized",
-            episode_uuid=episode_uuid,
-            risk_updated=risk_updated,
-        )
+            # Graph write committed — validate and persist wiki pages.
+            # Hard validation errors keep the old page; soft warnings pass through.
+            for entity, text in entity_texts:
+                errors = _validate_page(text)
+                if errors:
+                    log.warning(
+                        "Wiki page for '%s' failed validation (keeping old page): %s",
+                        entity, errors,
+                    )
+                else:
+                    write_wiki_page(entity, text)
+
+            return IngestResult(
+                signal_id=signal.signal_id,
+                decision="synthesized",
+                episode_uuid=episode_uuid,
+                risk_updated=risk_updated,
+            )
 
     if decision == "extract":
         # Entity extraction only — no wiki update, cheaper episode
@@ -383,15 +425,23 @@ async def ingest_signal(signal: NormalizedSignal) -> IngestResult:
         )
         extract_name = f"extract_{signal.signal_id}"
         try:
-            await g.add_episode(
+            # Skip entity/edge extraction (entity_types={}). The extract path is the
+            # high-frequency one — every cooled-down entity flush lands here — and
+            # Graphiti's extraction runs expensive fulltext dedup queries per call
+            # that were saturating FalkorDB (Max pending queries exceeded) and firing
+            # a Nova Lite tool-use call each time. The episode is still stored and
+            # tagged source=<source> so it appears in the Live Intelligence feed; the
+            # richer graph (entities/edges) is maintained by the once-per-30-min
+            # synthesis path, and referenced entities already exist in the graph.
+            await _add_episode(g,
                 name=extract_name,
                 episode_body=episode_body,
                 source=EpisodeType.text,
                 source_description=f"SAGE extract | source={signal.source}",
                 reference_time=signal.observed_at,
-                entity_types=ENTITY_TYPES,
-                edge_types=EDGE_TYPES,
-                edge_type_map=EDGE_TYPE_MAP,
+                entity_types={},
+                edge_types={},
+                edge_type_map={},
             )
             episode_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, signal.signal_id))
             if signal.source_url:
@@ -411,7 +461,7 @@ async def ingest_signal(signal: NormalizedSignal) -> IngestResult:
     # but skip entity_types / edge_types so extraction doesn't run
     raw_name = f"raw_{signal.signal_id}"
     try:
-        await g.add_episode(
+        await _add_episode(g,
             name=raw_name,
             episode_body=f"[RAW] {signal.source} | {signal.observed_at.isoformat()} | {signal.summary}",
             source=EpisodeType.text,
@@ -543,15 +593,21 @@ async def write_risk_state(
         await _demo_r.aclose()
 
     if not _demo_active:
-        await g.add_episode(
+        # Skip entity/edge extraction (entity_types=[]) — the RISK_STATE edge is
+        # written deterministically by _write_risk_edge() below, and the entities
+        # referenced already exist in the graph. Running Graphiti's full extraction +
+        # dedup + summarization here (several LLM calls) on every fusion cycle was the
+        # single largest Bedrock cost driver, and its output is redundant. We still
+        # store the episode text for provenance/audit.
+        await _add_episode(g,
             name=episode_name,
             episode_body=episode_text,
             source=EpisodeType.text,
             source_description="SAGE risk state",
             reference_time=now,
-            entity_types=ENTITY_TYPES,
-            edge_types=EDGE_TYPES,
-            edge_type_map=EDGE_TYPE_MAP,
+            entity_types={},
+            edge_types={},
+            edge_type_map={},
         )
 
     # Deterministic RISK_STATE edge — DO NOT rely on LLM extraction for this.
@@ -637,15 +693,18 @@ async def write_scenario(data: ScenarioOutputData) -> EpisodeRef:
 
     _demo_active = await _demo_running()
     if not _demo_active:
-        await g.add_episode(
+        # Skip extraction (entity_types=[]) — the full structured ScenarioOutputData
+        # is cached in Redis (see _cache_structured) and read back verbatim by the
+        # API; Graphiti re-extracting entities from the prose adds cost without value.
+        await _add_episode(g,
             name=f"scenario_{data.scenario_id}",
             episode_body=episode_body,
             source=EpisodeType.text,
             source_description="SAGE scenario output | System 2",
             reference_time=now,
-            entity_types=ENTITY_TYPES,
-            edge_types=EDGE_TYPES,
-            edge_type_map=EDGE_TYPE_MAP,
+            entity_types={},
+            edge_types={},
+            edge_type_map={},
         )
 
     episode_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"scenario_{data.scenario_id}"))
@@ -793,15 +852,17 @@ async def write_procurement(data: ProcurementRecData) -> EpisodeRef:
 
     _demo_active = await _demo_running()
     if not _demo_active:
-        await g.add_episode(
+        # Skip extraction (entity_types=[]) — structured ProcurementRecData is cached
+        # in Redis and read back verbatim; graph re-extraction adds cost without value.
+        await _add_episode(g,
             name=f"procurement_{data.scenario_id}",
             episode_body=episode_body,
             source=EpisodeType.text,
             source_description="SAGE procurement recommendation | System 3",
             reference_time=now,
-            entity_types=ENTITY_TYPES,
-            edge_types=EDGE_TYPES,
-            edge_type_map=EDGE_TYPE_MAP,
+            entity_types={},
+            edge_types={},
+            edge_type_map={},
         )
 
     episode_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"procurement_{data.scenario_id}"))
@@ -916,15 +977,17 @@ async def write_spr_schedule(data: SPRScheduleData) -> EpisodeRef:
 
     _demo_active = await _demo_running()
     if not _demo_active:
-        await g.add_episode(
+        # Skip extraction (entity_types=[]) — structured SPRScheduleData is cached in
+        # Redis and read back verbatim; graph re-extraction adds cost without value.
+        await _add_episode(g,
             name=f"spr_{data.scenario_id}",
             episode_body=episode_body,
             source=EpisodeType.text,
             source_description="SAGE SPR schedule | System 4",
             reference_time=now,
-            entity_types=ENTITY_TYPES,
-            edge_types=EDGE_TYPES,
-            edge_type_map=EDGE_TYPE_MAP,
+            entity_types={},
+            edge_types={},
+            edge_type_map={},
         )
 
     episode_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"spr_{data.scenario_id}"))
@@ -1027,15 +1090,17 @@ async def write_pending(
         f"This PendingScenario AFFECTS_SCENARIO {scenario_ref}."
     )
 
-    await g.add_episode(
+    # Skip entity extraction (entity_types=[]) — speculative sandbox notes don't need
+    # Nova Pro extraction; storing the raw episode text is sufficient.
+    await _add_episode(g,
         name=f"pending_{scenario_ref}",
         episode_body=episode_body,
         source=EpisodeType.text,
         source_description="SAGE sandbox | speculative",
         reference_time=now,
-        entity_types=ENTITY_TYPES,
-        edge_types=EDGE_TYPES,
-        edge_type_map=EDGE_TYPE_MAP,
+        entity_types={},
+        edge_types={},
+        edge_type_map={},
     )
 
     episode_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"pending_{scenario_ref}"))
@@ -1080,15 +1145,17 @@ async def promote_pending(scenario_ref: str, entity: str = "") -> EpisodeRef:
         f"This promoted scenario AFFECTS_SCENARIO {scenario_ref}."
     )
 
-    await g.add_episode(
+    # Promoted episodes record the crossing event — no entity extraction needed,
+    # the crossing entity is already in the graph from the original ingest path.
+    await _add_episode(g,
         name=f"promoted_{scenario_ref}",
         episode_body=episode_body,
         source=EpisodeType.text,
         source_description="SAGE sandbox promotion",
         reference_time=now,
-        entity_types=ENTITY_TYPES,
-        edge_types=EDGE_TYPES,
-        edge_type_map=EDGE_TYPE_MAP,
+        entity_types={},
+        edge_types={},
+        edge_type_map={},
     )
 
     episode_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"promoted_{scenario_ref}"))

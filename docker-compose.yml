@@ -91,6 +91,11 @@ services:
       REDIS_URL: redis://redis:6379/0
       WIKI_DIR: /app/wiki
       SAGE_BUNDLE_PATH: data/india-energy-2026.context   # bind-mounted to ./knowledge/wiki (single source on host)
+      # Ingest promptly (feed stays live) instead of deferring everything to the
+      # 23:50 UTC EOD flush. Nova Pro cost is capped separately by the per-entity
+      # synthesis cooldown (SAGE_SYNTH_COOLDOWN_S) in knowledge/api/write.py, so a
+      # low threshold here drives cheap Nova Micro extracts, not runaway synthesis.
+      SAGE_IMMEDIATE_INGEST_THRESHOLD: "0.15"
     volumes:
       - ./knowledge:/app/knowledge   # hot-reload: source changes take effect on container restart
       - ./knowledge/wiki:/app/wiki

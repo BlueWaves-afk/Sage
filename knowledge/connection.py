@@ -46,12 +46,17 @@ def build_graphiti() -> Graphiti:
     log.info("Building Graphiti with LLM_PROVIDER=%s", provider)
 
     if provider == "bedrock":
-        from knowledge.bedrock import nova_pro, titan_embedder
+        from knowledge.bedrock import nova_lite, titan_embedder
         from knowledge.stub_llm import StubCrossEncoder
         region = os.environ.get("AWS_REGION", "us-east-1")
+        # Graphiti's internal client runs entity/edge extraction, dedup, and node
+        # summarization on EVERY add_episode — machine-internal, schema-constrained
+        # work whose output no user ever reads. Use Nova Lite here (~13x cheaper than
+        # Pro). User-facing wiki prose synthesis uses its own dedicated Nova Pro
+        # client (knowledge/synthesis.py), so feed quality is unaffected.
         return Graphiti(
             graph_driver=driver,
-            llm_client=nova_pro(region),
+            llm_client=nova_lite(region),
             embedder=titan_embedder(region),
             cross_encoder=StubCrossEncoder(),
         )
