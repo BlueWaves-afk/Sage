@@ -35,7 +35,7 @@ so the panel populates live during a replay and is cleaned up by snapshot/restor
 **Still open (minor):** an H3-cell "jump to location" from an evidence item, and
 per-cell drill-down on the AIS heat layer.
 
-### 2. Tornado / sensitivity chart in the Simulation Lab — ⬜ Planned
+### 2. Tornado / sensitivity chart in the Simulation Lab — ✅ Done
 **What:** For a scenario, vary each assumption ±1σ and rank the swing in the outcome
 (gap_mbpd / price_impact). Shows *which assumption matters most*.
 **Why:** SAGE's strongest evaluation phrase is "assumptions must be explicit and
@@ -46,7 +46,7 @@ assumption fixed (ARIO is ~0.04 ms/run, so 15 vars × 2 = 30 runs = trivial); re
 as a horizontal tornado bar in `ImpactTab`.
 **Effort:** ~1 day. **Rubric:** Technical Excellence +1, scenario-fidelity showpiece.
 
-### 3. Re-run-with-mitigation — ⬜ Planned
+### 3. Re-run-with-mitigation — ✅ Done
 **What:** After a scenario, one click applies SAGE's own top procurement + SPR draw
 and re-simulates the *residual* gap — demonstrating the value loop end to end
 ("here's the disruption; here's SAGE's fix; here's the gap after the fix").
@@ -54,7 +54,7 @@ and re-simulates the *residual* gap — demonstrating the value loop end to end
 reallocation + SPR schedule as inputs; diff the two ARIO node-impact vectors.
 **Effort:** ~1 day. **Rubric:** Business Impact +1 (value made tangible).
 
-### 4. Confusion-matrix / calibration-curve panel — ⬜ Planned
+### 4. Confusion-matrix / calibration-curve panel — ✅ Done
 **What:** Make the 0.8409 LOCO AUC *visual*: a reliability curve (predicted vs
 observed crossing rate) and a per-crisis LOCO bar chart, fed by `GET /api/accuracy`
 and `docs/CALIBRATION_REPORT.md`.
@@ -62,7 +62,7 @@ and `docs/CALIBRATION_REPORT.md`.
 XAI card in the Command Center. No backend work.
 **Effort:** ~half day. **Rubric:** Technical Excellence +1; makes "accuracy" concrete.
 
-### 5. Alert → recommendation timeline ribbon — ⬜ Planned
+### 5. Alert → recommendation timeline ribbon — ✅ Done
 **What:** A horizontal ribbon: signal → risk → scenario → procurement → SPR with the
 measured per-stage deltas already computed in `/api/response-time`. Reinforces the
 "demonstrated response time" story visually beyond the single number.
