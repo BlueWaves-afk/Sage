@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { IconUser } from "../icons";
+import { IconUser, IconLogo } from "../icons";
 import "./layout.css";
 
 interface Props {
@@ -27,7 +27,9 @@ export default function TopBar({ title, live = true }: Props) {
   return (
     <header className="topbar">
       <div className="topbar-left">
-        <span className="brand">SAGE</span>
+        <span className="brand" style={{ display: "flex", alignItems: "center", paddingRight: "4px" }}>
+          <IconLogo width={18} height={23} />
+        </span>
         <span className={`online-pill${live ? "" : " offline"}`}>
           <span className="online-dot" />
           {live ? "ONLINE" : "OFFLINE"}
