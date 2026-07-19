@@ -3,7 +3,7 @@
 **Status:** Review + remediation design — ready for implementation
 **Author:** SAGE team (session audit, 2026-07-10/11)
 **Grounding:** Every finding below was verified against the actual codebase and the
-live EC2 deployment (`http://34.232.109.110/`) during this session — not inferred
+live EC2 deployment (`http://44.213.136.64/`) during this session — not inferred
 from docs. File:line citations included where they matter.
 
 ---

@@ -5,9 +5,9 @@
 > is reproducible against the running deployment — commands included. No claim
 > appears without a way to check it.
 
-**Live deployment:** `http://34.232.109.110/`
-**Verify accuracy:** `curl http://34.232.109.110/api/accuracy`
-**Verify response time:** `curl http://34.232.109.110/api/response-time`
+**Live deployment:** `http://44.213.136.64/`
+**Verify accuracy:** `curl http://44.213.136.64/api/accuracy`
+**Verify response time:** `curl http://44.213.136.64/api/response-time`
 **Run the held-out crisis live:** Command Center → Demo Mode (replays the 2026
 Hormuz closure — the LOCO held-out crisis — through the real pipeline).
 
@@ -76,22 +76,22 @@ from here to the 92–95 ceiling (§Part IV).
 
 ```bash
 # 1. Accuracy — out-of-sample validated
-curl http://34.232.109.110/api/accuracy
+curl http://44.213.136.64/api/accuracy
 
 # 2. Live risk scores by corridor/supplier
-curl http://34.232.109.110/api/risk-scores
+curl http://44.213.136.64/api/risk-scores
 
 # 3. Trigger the held-out crisis in the UI (Command Center → Demo Mode),
 #    then watch it fire autonomously and read the measured latency:
-curl http://34.232.109.110/api/response-time
+curl http://44.213.136.64/api/response-time
 
 # 4. The autonomous outputs it produced
-curl http://34.232.109.110/api/scenario
-curl http://34.232.109.110/api/procurement
-curl http://34.232.109.110/api/spr
+curl http://44.213.136.64/api/scenario
+curl http://44.213.136.64/api/procurement
+curl http://44.213.136.64/api/spr
 
 # 5. The full geospatial twin (wellhead → demand hub)
-curl http://34.232.109.110/api/graph
+curl http://44.213.136.64/api/graph
 ```
 
 Every one of these is served from live system state, not a fixture.

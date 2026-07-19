@@ -14,7 +14,7 @@
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
 [![Read the Series](https://img.shields.io/badge/Read_the_Series-Engineering_SAGE-2563eb?style=for-the-badge&logo=hashnode&logoColor=white)](https://ridingbluewaves.hashnode.dev/engineering-sage-an-anticipatory-intelligence-system-for-indias-crude-oil-supply-chain)
-[![Live Demo](https://img.shields.io/badge/Live_Demo-34.232.109.110-22c55e?style=for-the-badge&logo=amazonaws&logoColor=white)](http://34.232.109.110/)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-44.213.136.64-22c55e?style=for-the-badge&logo=amazonaws&logoColor=white)](http://44.213.136.64/)
 
 </div>
 
