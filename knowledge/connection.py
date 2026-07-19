@@ -4,7 +4,14 @@ C0 — Graphiti connection, bootstrap, and module-level singleton.
 LLM_PROVIDER controls which LLM + embedder backend is used:
   stub    → no external calls; synthesis returns placeholder prose (local dev / CI)
   openai  → OpenAI GPT-4o-mini + text-embedding-3-small (OPENAI_API_KEY required)
-  bedrock → AWS Bedrock Nova Pro + Titan Embeddings v2 (AWS_* credentials required)
+  bedrock → AWS Bedrock Nova (Lite) + Titan Embeddings v2 (AWS_* credentials required)
+  gemini  → Google Gemini Flash + text-embedding-004, free tier (GOOGLE_API_KEY required)
+
+NOTE: switching the embedder (e.g. bedrock→gemini) changes the embedding dimension
+(Titan v2 = 1024-d, text-embedding-004 = 768-d). Existing node embeddings and the
+FalkorDB vector index are dimension-specific, so a provider switch requires wiping
+and re-seeding the graph (reload the context bundle) — mixed dimensions break
+semantic search.
 
 Call `init()` once at container startup. After that, `_get_graphiti()` is safe
 from any async context.
@@ -72,6 +79,38 @@ def build_graphiti() -> Graphiti:
             embedder=OpenAIEmbedder(config=OpenAIEmbedderConfig(
                 model="text-embedding-3-small",
             )),
+        )
+
+    if provider == "gemini":
+        # Free-tier Google Gemini backend (no AWS dependency). Gemini Flash handles
+        # both Graphiti's internal extraction AND the user-facing wiki synthesis
+        # (synthesis.py falls back to this shared client for non-bedrock providers).
+        # Embeddings via text-embedding-004. Requires GOOGLE_API_KEY (or GEMINI_API_KEY)
+        # and the google-genai SDK (graphiti-core[google-genai]).
+        from graphiti_core.llm_client.gemini_client import GeminiClient
+        from graphiti_core.llm_client.config import LLMConfig
+        from graphiti_core.embedder.gemini import GeminiEmbedder, GeminiEmbedderConfig
+        from knowledge.stub_llm import StubCrossEncoder
+        api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
+        if not api_key:
+            raise RuntimeError(
+                "LLM_PROVIDER=gemini requires GOOGLE_API_KEY (or GEMINI_API_KEY). "
+                "Get a free key at https://aistudio.google.com/apikey and set it in .env.local."
+            )
+        # Flash is the free-tier workhorse; flash-lite ("small") for lightweight
+        # extraction sub-calls. Both are on the free tier.
+        model       = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
+        small_model = os.environ.get("GEMINI_SMALL_MODEL", "gemini-2.0-flash-lite")
+        embed_model = os.environ.get("GEMINI_EMBED_MODEL", "text-embedding-004")
+        return Graphiti(
+            graph_driver=driver,
+            llm_client=GeminiClient(config=LLMConfig(
+                api_key=api_key, model=model, small_model=small_model, temperature=0.0,
+            )),
+            embedder=GeminiEmbedder(config=GeminiEmbedderConfig(
+                api_key=api_key, embedding_model=embed_model,
+            )),
+            cross_encoder=StubCrossEncoder(),
         )
 
     # stub — no LLM calls; synthesis falls back to placeholder prose

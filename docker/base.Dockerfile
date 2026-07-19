@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy project descriptor and install dependencies first (layer cache)
 COPY pyproject.toml .
 RUN pip install --no-cache-dir -e ".[dev]" || pip install --no-cache-dir \
-    "graphiti-core[falkordb]" pydantic boto3 redis fastapi uvicorn langgraph \
+    "graphiti-core[falkordb,google-genai]" pydantic boto3 redis fastapi uvicorn langgraph \
     langchain-core numpy scipy scikit-learn ortools yfinance h3 websockets \
     apscheduler shap
 

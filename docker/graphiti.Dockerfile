@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends gcc g++ libffi-
     && rm -rf /var/lib/apt/lists/*
 
 COPY pyproject.toml .
-RUN pip install --no-cache-dir "graphiti-core[falkordb]" pydantic boto3
+RUN pip install --no-cache-dir "graphiti-core[falkordb,google-genai]" pydantic boto3
 
 COPY contracts/  contracts/
 COPY knowledge/  knowledge/

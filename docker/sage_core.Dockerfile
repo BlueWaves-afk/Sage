@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends gcc g++ libffi-
 
 COPY pyproject.toml .
 RUN pip install --no-cache-dir \
-    "graphiti-core[falkordb]" pydantic boto3 redis \
+    "graphiti-core[falkordb,google-genai]" pydantic boto3 redis \
     langgraph langchain-core numpy scikit-learn shap
 
 COPY contracts/     contracts/
