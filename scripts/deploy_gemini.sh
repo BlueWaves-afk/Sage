@@ -36,17 +36,35 @@ fi
 echo "==> git pull"
 git pull --ff-only
 
-# ── 2. flip provider to gemini (in .env.local so .env stays a template) ──────
+# ── 3. rebuild the two images that import knowledge/ (need google-genai) ─────
+echo "==> rebuild sage-core + api-gateway (installs google-genai)"
+docker compose build sage-core api-gateway
+
+# ── 3b. PRE-FLIGHT: validate the Gemini key BEFORE any destructive step ──────
+# If the key is bad or google-genai is broken, abort here — the old graph and the
+# working Bedrock setup are left untouched, so the live demo never breaks.
+echo "==> validating Gemini key + embeddings (no changes yet)"
+GKEY="$(grep '^GOOGLE_API_KEY=' .env.local | head -1 | cut -d= -f2- | tr -d '"'\'' ')"
+docker compose run --rm --no-deps -T \
+  -e GOOGLE_API_KEY="$GKEY" sage-core python -c "
+import asyncio
+from google import genai
+async def main():
+    c = genai.Client(api_key='$GKEY')
+    r = c.models.embed_content(model='text-embedding-004', contents='sage preflight')
+    v = r.embeddings[0].values
+    assert len(v) == 768, f'unexpected dim {len(v)}'
+    print('GEMINI_PREFLIGHT_OK dim=%d' % len(v))
+asyncio.run(main())
+" || { echo 'GEMINI_PREFLIGHT_FAILED — aborting, graph + Bedrock left intact'; exit 2; }
+
+# ── 3c. pre-flight passed → NOW flip provider (point of no easy return) ──────
 echo "==> set LLM_PROVIDER=gemini in .env.local"
 if grep -q '^LLM_PROVIDER=' .env.local; then
   sed -i 's/^LLM_PROVIDER=.*/LLM_PROVIDER=gemini/' .env.local
 else
   echo 'LLM_PROVIDER=gemini' >> .env.local
 fi
-
-# ── 3. rebuild the two images that import knowledge/ (need google-genai) ─────
-echo "==> rebuild sage-core + api-gateway (installs google-genai)"
-docker compose build sage-core api-gateway
 
 # ── 4. wipe the old Titan-dimension graph ────────────────────────────────────
 echo "==> start infra + FLUSHALL FalkorDB (drop old 1024-d embeddings)"
