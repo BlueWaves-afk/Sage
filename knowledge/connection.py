@@ -101,7 +101,10 @@ def build_graphiti() -> Graphiti:
         # extraction sub-calls. Both are on the free tier.
         model       = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
         small_model = os.environ.get("GEMINI_SMALL_MODEL", "gemini-2.0-flash-lite")
-        embed_model = os.environ.get("GEMINI_EMBED_MODEL", "text-embedding-004")
+        # gemini-embedding-001 is the current embedding model (text-embedding-004 is
+        # not served for newer API keys). NOTE: it is exposed on the v1 endpoint, not
+        # v1beta — if GeminiEmbedder 404s, set the SDK api_version to v1.
+        embed_model = os.environ.get("GEMINI_EMBED_MODEL", "gemini-embedding-001")
         return Graphiti(
             graph_driver=driver,
             llm_client=GeminiClient(config=LLMConfig(

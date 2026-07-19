@@ -57,8 +57,14 @@ if emb is None:
 first = emb[0] if isinstance(emb, (list, tuple)) else emb
 vals = getattr(first, 'values', first)
 assert vals and len(vals) > 100, 'empty embedding'
-print('GEMINI_PREFLIGHT_OK dim=%d' % len(vals))
-" || { echo 'GEMINI_PREFLIGHT_FAILED — aborting, graph + Bedrock left intact'; exit 2; }
+print('embed OK dim=%d' % len(vals))
+# text generation is REQUIRED (Graphiti extraction + wiki synthesis). A key with
+# only embedding quota (429 on generateContent) would seed a graph that then dies
+# on every live signal — so verify generation before any destructive step.
+g = c.models.generate_content(model=os.environ.get('GEMINI_MODEL','gemini-2.0-flash'), contents='reply OK')
+assert getattr(g, 'text', None), 'no generation output'
+print('GEMINI_PREFLIGHT_OK (embed+generate)')
+" || { echo 'GEMINI_PREFLIGHT_FAILED (embeddings or text-gen quota) — aborting, graph + Bedrock left intact'; exit 2; }
 
 # ── 3c. pre-flight passed → NOW flip provider (point of no easy return) ──────
 echo "==> set LLM_PROVIDER=gemini in .env.local"
