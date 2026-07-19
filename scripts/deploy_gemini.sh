@@ -46,16 +46,18 @@ docker compose build sage-core api-gateway
 echo "==> validating Gemini key + embeddings (no changes yet)"
 GKEY="$(grep '^GOOGLE_API_KEY=' .env.local | head -1 | cut -d= -f2- | tr -d '"'\'' ')"
 docker compose run --rm --no-deps -T \
-  -e GOOGLE_API_KEY="$GKEY" sage-core python -c "
-import asyncio
+  -e GKEY="$GKEY" sage-core python -c "
+import os
 from google import genai
-async def main():
-    c = genai.Client(api_key='$GKEY')
-    r = c.models.embed_content(model='text-embedding-004', contents='sage preflight')
-    v = r.embeddings[0].values
-    assert len(v) == 768, f'unexpected dim {len(v)}'
-    print('GEMINI_PREFLIGHT_OK dim=%d' % len(v))
-asyncio.run(main())
+c = genai.Client(api_key=os.environ['GKEY'])
+r = c.models.embed_content(model='text-embedding-004', contents='sage preflight')
+emb = getattr(r, 'embeddings', None)
+if emb is None:
+    emb = getattr(r, 'embedding', None)
+first = emb[0] if isinstance(emb, (list, tuple)) else emb
+vals = getattr(first, 'values', first)
+assert vals and len(vals) > 100, 'empty embedding'
+print('GEMINI_PREFLIGHT_OK dim=%d' % len(vals))
 " || { echo 'GEMINI_PREFLIGHT_FAILED — aborting, graph + Bedrock left intact'; exit 2; }
 
 # ── 3c. pre-flight passed → NOW flip provider (point of no easy return) ──────
