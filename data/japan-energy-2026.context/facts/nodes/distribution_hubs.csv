@@ -1,0 +1,2 @@
+entity_id,canonical_name,region,demand_mbpd,primary_product_mix,location_lat,location_lon,tier,source,as_of,notes
+hub_kanto,Kanto (Greater Tokyo),Kanto,1.00,"gasoline;diesel;kerosene;jet",35.68,139.69,derived,EIA-Japan,2024,"Greater Tokyo product demand; derived from Japan ~2.5 mbpd consumption weighted to Kanto share"

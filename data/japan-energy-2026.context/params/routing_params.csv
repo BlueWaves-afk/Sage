@@ -1,0 +1,30 @@
+param,country,value,unit,tier,source,update_freq,notes
+vlcc_cost_usd_bbl,Saudi Arabia,1.80,usd_bbl,estimated,Baltic-BDTI,weekly,AG-India TD3C VLCC rate 2024 midpoint; Clarkson VLCC norms
+vlcc_cost_usd_bbl,Iraq,1.80,usd_bbl,estimated,Baltic-BDTI,weekly,Basrah Gulf → India; similar distance to Saudi
+vlcc_cost_usd_bbl,United Arab Emirates,1.85,usd_bbl,estimated,Baltic-BDTI,weekly,AG-India with slight Ruwais terminal premium
+vlcc_cost_usd_bbl,Kuwait,1.80,usd_bbl,estimated,Baltic-BDTI,weekly,Kuwait-India similar to Saudi Arabia route
+vlcc_cost_usd_bbl,Qatar,1.85,usd_bbl,estimated,Baltic-BDTI,weekly,Ras Laffan-India
+vlcc_cost_usd_bbl,Iran,1.85,usd_bbl,estimated,Baltic-BDTI,weekly,Kharg Island-India; sanctioned default
+vlcc_cost_usd_bbl,Russia,3.20,usd_bbl,estimated,Baltic-BDTI,weekly,Ust-Luga/Primorsk → India via Cape/Suez; shadow fleet premium included
+vlcc_cost_usd_bbl,Nigeria,3.80,usd_bbl,estimated,Baltic-BDTI,weekly,West Africa Suezmax/VLCC → India via Suez Canal
+vlcc_cost_usd_bbl,United States,5.20,usd_bbl,estimated,Baltic-BDTI,weekly,US Gulf Coast VLCC → India via Cape of Good Hope
+vlcc_cost_usd_bbl,Brazil,4.60,usd_bbl,estimated,Baltic-BDTI,weekly,Santos → India; pre-salt loading terminal distance
+vlcc_cost_usd_bbl,Venezuela,5.50,usd_bbl,estimated,Baltic-BDTI,weekly,Maracaibo → India via Cape; sanctions discount offset by distance
+vlcc_cost_usd_bbl,Kazakhstan,3.50,usd_bbl,estimated,Baltic-BDTI,weekly,CPC Blend via Black Sea → Suez → India; Suez Canal toll included
+vlcc_cost_usd_bbl,Angola,4.00,usd_bbl,estimated,Baltic-BDTI,weekly,Cabinda → India; similar to Nigeria route
+
+lead_time_days,Saudi Arabia,20.0,days,derived,Clarkson-voyage,semi-annual,~2300nm Ras Tanura-Jamnagar at 14kn + port time; Clarkson voyage duration
+lead_time_days,Iraq,22.0,days,derived,Clarkson-voyage,semi-annual,Basrah→India slightly longer than Saudi
+lead_time_days,United Arab Emirates,22.0,days,derived,Clarkson-voyage,semi-annual,Ruwais/Fujairah → India
+lead_time_days,Kuwait,21.0,days,derived,Clarkson-voyage,semi-annual,Mina Ahmadi → India
+lead_time_days,Qatar,22.0,days,derived,Clarkson-voyage,semi-annual,Ras Laffan → India
+lead_time_days,Iran,22.0,days,derived,Clarkson-voyage,semi-annual,Kharg Island → India
+lead_time_days,Russia,28.0,days,derived,Clarkson-voyage,semi-annual,Baltic/Black Sea → India; Cape routing adds ~10d vs Suez
+lead_time_days,Nigeria,26.0,days,derived,Clarkson-voyage,semi-annual,Bonny Terminal → India via Suez Canal
+lead_time_days,United States,35.0,days,derived,Clarkson-voyage,semi-annual,US Gulf → India via Cape of Good Hope
+lead_time_days,Brazil,32.0,days,derived,Clarkson-voyage,semi-annual,Santos pre-salt FPSO → India
+lead_time_days,Venezuela,38.0,days,derived,Clarkson-voyage,semi-annual,Maracaibo → India; VLCC tranship + Cape
+lead_time_days,Kazakhstan,26.0,days,derived,Clarkson-voyage,semi-annual,Novorossiysk → Suez → India
+lead_time_days,Angola,28.0,days,derived,Clarkson-voyage,semi-annual,Cabinda → India via Cape/Suez
+
+war_risk_premium_per_half_unit,ALL,0.80,usd_bbl,estimated,Lloyds-JWC,event-driven,USD/bbl per 0.5 risk unit above 0.3; from Lloyd's JWC advisory 2024 Arabian Gulf rates (~0.2-0.5% hull+cargo at peak); update when JWC named-area designations change

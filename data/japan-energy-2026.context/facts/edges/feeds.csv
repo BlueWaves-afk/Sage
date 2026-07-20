@@ -1,0 +1,5 @@
+src_entity_id,dst_entity_id,throughput_share_pct,tier,source,as_of,notes
+corridor_malacca,refinery_mizushima,40,derived,EIA-chokepoints,2024,"ME crude to Japan transits Malacca after Hormuz; share mirrors supplier mix (derived)"
+corridor_malacca,refinery_negishi,38,derived,EIA-chokepoints,2024,"derived from Japan supplier mix"
+corridor_malacca,refinery_chiba_idemitsu,8,derived,EIA-chokepoints,2024,"derived from Japan supplier mix"
+corridor_malacca,refinery_yokkaichi,7,derived,EIA-chokepoints,2024,"derived from Japan supplier mix"

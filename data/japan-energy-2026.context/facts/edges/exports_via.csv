@@ -1,0 +1,5 @@
+src_entity_id,dst_entity_id,volume_mbpd,tier,source,as_of,notes
+supplier_aramco,corridor_hormuz,1.00,derived,METI-imports,2024,"~40% of Japan's ~2.5 mbpd crude imports via Hormuz (derived from METI share x EIA-Japan imports)"
+supplier_adnoc,corridor_hormuz,0.95,derived,METI-imports,2024,"~38% of Japan imports via Hormuz (derived)"
+supplier_kpc,corridor_hormuz,0.20,derived,METI-imports,2024,"~8% of Japan imports via Hormuz (derived)"
+supplier_qatarenergy,corridor_hormuz,0.18,derived,METI-imports,2024,"~7% of Japan imports via Hormuz (derived)"

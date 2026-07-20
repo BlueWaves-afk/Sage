@@ -1,0 +1,3 @@
+entity_id,canonical_name,jurisdiction,tier,source,as_of,notes
+authority_meti,METI,Japan,real,METI-imports,2024,"Ministry of Economy, Trade and Industry — Japan energy policy & import oversight (ANRE)"
+authority_jogmec,JOGMEC,Japan,real,JOGMEC-stockpile,2024,"Japan Organization for Metals and Energy Security — manages the national oil stockpile"

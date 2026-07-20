@@ -1,0 +1,69 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# SAGE — Japan tenant overlay (multi-tenancy demo)
+#
+# Boots a SECOND SAGE instance (Japan) from the japan-energy-2026 context bundle,
+# reusing the SAME FalkorDB + Redis as the India stack but in an ISOLATED graph
+# ("sage_jp") and Redis DB (1). Proves the portability claim: a new import-dependent
+# economy is a config swap, not a rebuild — no code changes, one engine, two tenants.
+#
+# Run (alongside the India stack):
+#   docker compose -f docker-compose.yml -f docker-compose.japan.yml up -d sage-core-jp api-gateway-jp
+# Seed the Japan graph once:
+#   docker compose -f docker-compose.yml -f docker-compose.japan.yml exec -T sage-core-jp \
+#     python scripts/sage_instantiate.py data/japan-energy-2026.context --facts-only
+# Then: curl http://<host>:8001/api/dashboard   → Japan KPIs (METI/JOGMEC/ENEOS), distinct from :80 India
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  sage-core-jp:
+    build:
+      context: .
+      dockerfile: docker/sage_core.Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+      - path: .env.local
+        required: false
+    environment:
+      FALKORDB_HOST: falkordb
+      SAGE_GRAPH_NAME: sage_jp                          # isolated graph in the shared FalkorDB
+      REDIS_URL: redis://redis:6379/1                   # isolated Redis DB
+      WIKI_DIR: /app/wiki_jp
+      SAGE_BUNDLE_PATH: data/japan-energy-2026.context  # <-- the only real change: the bundle
+    volumes:
+      - ./knowledge:/app/knowledge
+      - ./knowledge/wiki_jp:/app/wiki_jp
+      - ./data:/app/data:ro
+      - ./demo_cache:/app/demo_cache
+    depends_on:
+      falkordb: { condition: service_healthy }
+      redis:    { condition: service_healthy }
+
+  api-gateway-jp:
+    build:
+      context: .
+      dockerfile: docker/api_gateway.Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+      - path: .env.local
+        required: false
+    environment:
+      FALKORDB_HOST: falkordb
+      SAGE_GRAPH_NAME: sage_jp
+      REDIS_URL: redis://redis:6379/1
+      WIKI_DIR: /app/wiki_jp
+      SAGE_BUNDLE_PATH: data/japan-energy-2026.context
+    volumes:
+      - ./knowledge:/app/knowledge
+      - ./visualizer_agent/api_gateway:/app/visualizer_agent/api_gateway
+      - ./knowledge/wiki_jp:/app/wiki_jp
+      - ./data:/app/data:ro
+      - ./demo_cache:/app/demo_cache
+    depends_on:
+      falkordb:     { condition: service_healthy }
+      redis:        { condition: service_healthy }
+      sage-core-jp: { condition: service_started }
+    ports:
+      - "8001:8000"    # Japan API alongside India on :8000

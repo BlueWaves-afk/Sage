@@ -1,0 +1,72 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# SAGE Context Bundle Manifest — JAPAN
+#
+# Demonstrates SAGE's portability: a second import-dependent economy instantiated
+# from the SAME engine by swapping this bundle. No code changes — SAGE.instantiate(bundle).
+# The model methodology params (ARIO coefficients, TOPSIS weights, grade tolerances,
+# routing method, IO structure) are shared with the India bundle; only the
+# region-specific FACTS and economic constants below are Japan's.
+# ─────────────────────────────────────────────────────────────────────────────
+
+bundle_id:      japan-energy-2026
+name:           Japan Energy Supply Chain — 2026
+schema_version: 1.0.0
+bundle_version: 1.0.0
+previous_version: null
+domain:         oil-supply-chain
+region:         Japan
+vintage:        2026
+created:        2026-07-19
+
+upgrade_policy:
+  replace:  [facts, params, io]
+  preserve: [risk_state_edges, geo_events, vessel_nodes, episodes, wiki_dynamic]
+  resynthesise_on_change: true
+
+description: >
+  Foundational static knowledge for Japan's crude oil supply chain. Japan imports
+  ~99% of its crude and ~94% of that from the Middle East via the Strait of Hormuz,
+  then the Strait of Malacca — a structural exposure comparable to India's. Holds
+  ~240 days of total stockpile (national + private) managed by JOGMEC. Region-
+  specific facts (suppliers' share to Japan, Japanese refineries, JOGMEC reserves,
+  Japan demand) are sourced below; model methodology params are shared with the
+  India bundle (documented in DATA_PROVENANCE.md).
+
+tiers: [real, derived, estimated]
+
+sources:
+  EIA-chokepoints:
+    label: EIA World Oil Transit Chokepoints
+    url:   https://www.eia.gov/international/analysis/special-topics/world_oil_transit_Chokepoints
+  METI-imports:
+    label: METI / ANRE — Japan crude oil import volumes and supplier shares (2023–24)
+    url:   https://www.enecho.meti.go.jp/en/
+  JOGMEC-stockpile:
+    label: JOGMEC / IEA — Japan national + private oil stockpile (days of net imports)
+    url:   https://www.jogmec.go.jp/english/
+  EIA-Japan:
+    label: EIA Country Analysis — Japan (refining capacity, consumption)
+    url:   https://www.eia.gov/international/analysis/country/JPN
+  IEA-Japan:
+    label: IEA Oil Stocks & Emergency Response — Japan
+    url:   https://www.iea.org/countries/japan
+
+estimation_methods:
+  EST-refcap:
+    label: Refinery nameplate capacity approximated from operator public disclosures
+    method: >
+      Individual Japanese refinery capacities approximated from ENEOS/Idemitsu/Cosmo
+      public plant disclosures; rounded to 0.01 mbpd. Marked estimated where no single
+      authoritative per-plant figure is cited.
+  EST-inventory:
+    label: Operating inventory days
+    method: Refinery operating crude inventory assumed ~22 days (regional norm); estimated.
+  EST-severity:
+    label: Chokepoint severity
+    method: choke_severity is an analyst-assigned 0–1 disruption-impact weight, not a measured quantity.
+
+facts_dir:   facts
+params_dir:  params
+io_dir:      io
+sources_dir: sources
+narratives_dir: narratives

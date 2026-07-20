@@ -1,0 +1,4 @@
+source_id,target_id,relation,flow_mbpd,product_type,tier,source,as_of,notes
+refinery_mizushima,hub_kanto,distributes_to,0.34,"gasoline;diesel;kerosene",derived,EIA-Japan,2024,"Refined product flow to Greater Tokyo demand centre (derived)"
+refinery_negishi,hub_kanto,distributes_to,0.23,"gasoline;diesel;kerosene",derived,EIA-Japan,2024,"Negishi sits in Kanto; derived product flow"
+refinery_chiba_idemitsu,hub_kanto,distributes_to,0.16,"gasoline;diesel;jet",derived,EIA-Japan,2024,"Chiba serves Tokyo Bay; derived product flow"

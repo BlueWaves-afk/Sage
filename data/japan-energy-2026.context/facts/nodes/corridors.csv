@@ -1,0 +1,3 @@
+entity_id,canonical_name,throughput_mbpd,choke_severity,location_lat,location_lon,tier,source,as_of,notes
+corridor_hormuz,Strait of Hormuz,20.0,0.9,26.57,56.25,real,EIA-chokepoints,2024,"~20 mbpd global transit (EIA); ~94% of Japan's crude originates from ME producers shipping via Hormuz; severity analyst-assigned (EST-severity)"
+corridor_malacca,Strait of Malacca,16.0,0.7,1.43,102.89,real,EIA-chokepoints,2024,"~16 mbpd global transit (EIA); primary sea lane for ME/African crude bound for Japan; severity analyst-assigned (EST-severity)"

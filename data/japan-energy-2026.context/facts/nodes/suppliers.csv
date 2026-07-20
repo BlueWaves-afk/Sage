@@ -1,0 +1,5 @@
+entity_id,canonical_name,country,daily_export_mbpd,sanctioned,tier,source,as_of,notes
+supplier_aramco,Saudi Aramco,Saudi Arabia,7.0,false,real,METI-imports,2024,"Top crude supplier to Japan (~40% share, METI 2023-24); daily_export_mbpd is Aramco global crude export capacity"
+supplier_adnoc,ADNOC,United Arab Emirates,3.0,false,real,METI-imports,2024,"2nd largest supplier to Japan (~38% share, METI 2023-24); UAE global crude export"
+supplier_kpc,Kuwait Petroleum Corporation,Kuwait,2.0,false,real,METI-imports,2024,"~8% of Japan crude imports (METI 2023-24)"
+supplier_qatarenergy,QatarEnergy,Qatar,0.6,false,real,METI-imports,2024,"~7% of Japan crude imports (METI 2023-24); Qatar is primarily an LNG supplier to Japan"

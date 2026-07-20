@@ -1,0 +1,15 @@
+param,value,unit,tier,source,update_freq,notes
+daily_consumption_mbpd,2.50,mbpd,real,EIA-Japan,annual,Japan refinery crude throughput ~2.5 mbpd (EIA-Japan Country Analysis 2024)
+import_dependence_pct,88.6,%,real,PPAC-imports,annual,India import dependence FY24-25 first-10-mo (PPAC); 89.4% provisional full-year
+hormuz_share_pct,42.5,%,real,PPAC-imports,quarterly,structural ~45% pre-crisis; dropped to ~30% mid-2026 (70% now routed outside Hormuz per MoPNG Jun-2025); live share is System 1 [VOLATILE]
+spr_max_draw_mbpd,2.5,mbpd,estimated,EST-spr-draw,annual,ISPRL emergency pumping limit
+bypass_capacity_mbpd,4.0,mbpd,real,IEA-hormuz,annual,Petroline+ADCOP available to India
+bypass_ramp_days,5.0,days,estimated,EST-bypass-ramp,annual,time for bypass to reach capacity
+refinery_inventory_days,22.0,days,estimated,EST-inventory,monthly,national avg crude inventory [VOLATILE — see volatile_defaults.csv]
+indirect_multiplier,10.6,x,real,Inoue-Todo,annual,GDP indirect/direct effect ratio
+price_per_mbpd_low,3.5,usd_per_bbl_per_mbpd,derived,DERIVED-price-elasticity,annual,low band of price response to net global shortfall
+price_per_mbpd_high,6.0,usd_per_bbl_per_mbpd,derived,DERIVED-price-elasticity,annual,high band (convex response)
+global_spare_mbpd,3.5,mbpd,real,EIA-spare,quarterly,OPEC effective spare capacity [VOLATILE — ~5 Mbpd Apr-2026 narrowing to ~3 year-end]
+global_bypass_mbpd,4.0,mbpd,real,IEA-hormuz,annual,global pipeline rerouting around Hormuz
+gdp_pct_per_usd_bbl,-0.04,pct_per_usd,derived,NIPFP-gdp,annual,India GDP-growth hit per $/bbl (NIPFP: $10/bbl -> -40bps)
+inflation_pct_per_usd_bbl,0.035,pct_per_usd,derived,NIPFP-gdp,annual,India CPI inflation rise per $/bbl (~$10 -> +0.35pp)

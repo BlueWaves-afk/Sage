@@ -1,0 +1,5 @@
+src_entity_id,dst_entity_id,throughput_share_pct,tier,source,as_of,notes
+supplier_aramco,refinery_mizushima,40,real,METI-imports,2024,"Saudi ~40% of Japan crude imports (METI 2023-24); mapped to largest ENEOS complex"
+supplier_adnoc,refinery_negishi,38,real,METI-imports,2024,"UAE ~38% of Japan crude imports (METI 2023-24)"
+supplier_kpc,refinery_chiba_idemitsu,8,real,METI-imports,2024,"Kuwait ~8% of Japan crude imports (METI 2023-24)"
+supplier_qatarenergy,refinery_yokkaichi,7,real,METI-imports,2024,"Qatar ~7% of Japan crude imports (METI 2023-24)"

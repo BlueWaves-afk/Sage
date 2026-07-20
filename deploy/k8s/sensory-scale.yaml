@@ -1,0 +1,58 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# SAGE — Kubernetes scale-out design for the stateless sensory tier
+#
+# DESIGN ARTIFACT (architecture deliverable), not a running cluster claim.
+# The demo runs on docker-compose; this manifest documents exactly how SAGE scales
+# horizontally on Kubernetes. It is valid and applies cleanly to any cluster
+# (EKS / GKE / k3s) with a metrics-server.
+#
+# WHY this tier scales: sensory agents are STATELESS — they pull nothing, they only
+# PUSH NormalizedSignal onto the Redis signal bus (the sole coupling to the KB).
+# Adding replicas linearly increases signal ingestion throughput; FalkorDB/Redis are
+# the stateful cores and scale vertically / via managed services.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sage-sensory-news
+  labels: { app: sage, tier: sensory, agent: news }
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: sage, agent: news }
+  template:
+    metadata:
+      labels: { app: sage, tier: sensory, agent: news }
+    spec:
+      containers:
+        - name: sensory-news
+          image: sage/sensory-news:latest
+          env:
+            - name: REDIS_URL
+              value: "redis://sage-redis:6379/0"   # shared signal bus; consumer is idempotent
+          resources:
+            requests: { cpu: "100m", memory: "128Mi" }
+            limits:   { cpu: "500m", memory: "256Mi" }
+---
+# Horizontal Pod Autoscaler — scales sensory-news 2→10 on CPU pressure.
+# During a geopolitical spike, signal volume surges; the HPA adds workers so
+# signal→ingest lead time stays flat instead of the queue backing up.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: sage-sensory-news-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: sage-sensory-news
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: 65 }
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30    # react fast to signal surges

@@ -1,0 +1,9 @@
+sector,va_share,final_demand_share,petroleum_input_coeff,tier,source,notes
+agriculture,0.18,0.16,0.04,real,MOSPI-IOTT,diesel for irrigation+tractors
+mining,0.03,0.02,0.05,derived,MOSPI-IOTT,incl crude extraction
+refining,0.04,0.03,0.02,real,IIOA-energy-io,petroleum refining own-use
+chemicals,0.03,0.04,0.08,real,IIOA-energy-io,naphtha feedstock (high petroleum intensity)
+manufacturing,0.17,0.22,0.03,derived,MOSPI-IOTT,broad manufacturing
+power,0.02,0.03,0.06,real,IIOA-energy-io,oil-fired generation share
+transport,0.07,0.08,0.15,real,IIOA-energy-io,fuel is major cost (highest intensity)
+services,0.46,0.42,0.02,derived,MOSPI-IOTT,trade/finance/IT (low direct petroleum)

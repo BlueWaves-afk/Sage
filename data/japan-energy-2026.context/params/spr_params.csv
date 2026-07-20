@@ -1,0 +1,9 @@
+param,value,unit,tier,source,update_freq,notes
+buffer_threshold_days,3.0,days,estimated,IEA-Japan,regulatory,Minimum operational crude inventory floor; regional refinery norm (methodology shared with India bundle)
+refill_cost_premium_pct,0.12,fraction,estimated,IEA-SPR-replenishment,dynamic,Average premium above release price to refill; IEA coordinated-release range 8-15% (methodology shared)
+spr_horizon_days,145,days,real,JOGMEC-stockpile,regulatory,Japan NATIONAL stockpile obligation ~145 days of net imports (JOGMEC/IEA); total incl. private ~240 days
+p_resolve_resolving,0.55,probability,estimated,ICB-dataset,dynamic,P(crisis resolves in 5 days) resolving profile (methodology shared with India bundle)
+p_resolve_constant,0.20,probability,estimated,ICB-dataset,dynamic,P(crisis resolves in 5 days) constant profile (methodology shared)
+p_resolve_escalating,0.05,probability,estimated,ICB-dataset,dynamic,P(crisis resolves in 5 days) escalating profile (methodology shared)
+sdp_discount_rate,0.97,fraction_per_day,derived,standard-finance,annual,Daily SDP discount (~10.5% annual); methodology shared
+sdp_max_draw_fraction,0.60,fraction,estimated,IEA-Japan,annual,Max daily national stockpile draw as fraction of daily consumption; JOGMEC emergency release estimate

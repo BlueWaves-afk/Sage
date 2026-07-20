@@ -1,0 +1,9 @@
+sector,petroleum_share_pct,gdp_weight_pct,criticality,tier,source,notes
+transport,51,7,0.90,real,PPAC-sectoral,road+rail+aviation; 70% of diesel + 99.6% of petrol
+agriculture,5,18,0.85,real,PPAC-sectoral,13% of diesel; irrigation+tractors; food-security critical
+industry,12,27,0.60,real,PPAC-sectoral,9% of diesel + fuel oil
+petrochemicals,12,3,0.50,real,PPAC-sectoral,naphtha feedstock
+residential,12,0,0.70,real,PPAC-sectoral,LPG cooking
+power,2,2,0.40,real,PPAC-sectoral,oil-fired generation
+aviation,3,1,0.55,real,PPAC-sectoral,ATF
+other,3,5,0.30,estimated,EST-sector-other,balance of products

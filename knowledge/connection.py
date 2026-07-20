@@ -31,7 +31,10 @@ from graphiti_core.nodes import EpisodeType
 log = logging.getLogger(__name__)
 
 SCHEMA_VERSION = "1.0.0"
-GRAPH_NAME     = "sage"   # FalkorDB multi-tenant graph. Must NEVER be None.
+# FalkorDB graph name — env-configurable so multiple regional tenants (e.g. India
+# on "sage", Japan on "sage_jp") can share ONE FalkorDB instance as isolated graphs.
+# Must NEVER be None.
+GRAPH_NAME     = os.environ.get("SAGE_GRAPH_NAME", "sage")
 
 _graphiti_instance: Optional[Graphiti] = None
 

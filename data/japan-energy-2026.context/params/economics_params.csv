@@ -1,0 +1,7 @@
+param,value,unit,tier,source,update_freq,notes
+baseline_brent_usd_per_bbl,95.0,usd_per_bbl,real,EIA-STEO,monthly,EIA STEO 2026 Brent annual-average ($95/bbl); overridden live by System 1 price sub-agent
+daily_consumption_mmt,0.27,mmt_per_day,derived,EIA-Japan,annual,Japan daily crude throughput ~2.5 mbpd × 0.109 t/bbl ≈ 0.27 MMT/day (EIA-Japan)
+supplier_risk_max_filter,0.4,fraction,estimated,IEA-supply-security,policy-driven,Max supplier risk_score for procurement inclusion (methodology shared)
+corridor_risk_max_filter,0.5,fraction,estimated,IEA-supply-security,policy-driven,Max corridor risk_score before bypass-only routing (methodology shared)
+option_resolution_window_days,5.0,days,estimated,IEA-supply-security,annual,Real-options observation window before committing to national stockpile draw (methodology shared)
+option_demand_destruction_during_wait,0.30,fraction,estimated,IEA-Japan,annual,Fraction of unmet demand absorbed by rationing during wait window (methodology shared)
