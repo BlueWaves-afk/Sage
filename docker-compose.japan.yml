@@ -33,6 +33,7 @@ services:
       SAGE_BUNDLE_PATH: data/japan-energy-2026.context  # <-- the only real change: the bundle
     volumes:
       - ./knowledge:/app/knowledge
+      - ./scripts:/app/scripts          # hot-reload the seed script (sage_instantiate.py)
       - ./knowledge/wiki_jp:/app/wiki_jp
       - ./data:/app/data:ro
       - ./demo_cache:/app/demo_cache
