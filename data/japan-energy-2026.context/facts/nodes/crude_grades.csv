@@ -1,0 +1,6 @@
+entity_id,canonical_name,api_gravity,sulfur_pct,origin,yield_naphtha_pct,yield_kerosene_pct,yield_diesel_pct,yield_vgo_pct,yield_residue_pct,tier,source,as_of,notes
+grade_arab_light,Arab Light,32.8,1.96,Saudi Arabia,22,13,20,22,23,real,Aramco-assay,2021,api/sulfur real; yield_* representative
+grade_arab_medium,Arab Medium,30.4,2.59,Saudi Arabia,19,12,19,22,28,real,Aramco-assay,2021,api/sulfur real; yield_* representative
+grade_murban,Murban,40.5,0.79,United Arab Emirates,28,15,22,20,15,real,BP-assay,2021,ADNOC flagship light-sour-to-sweet; api/sulfur real
+grade_kuwait,Kuwait Export,30.5,2.55,Kuwait,19,12,19,22,28,real,BP-assay,2021,KPC export blend; api/sulfur real; yields representative
+grade_qatar_marine,Qatar Marine,35.0,1.80,Qatar,24,14,21,21,20,real,BP-assay,2021,QatarEnergy medium-sour; api/sulfur real

@@ -1,0 +1,4 @@
+entity_id,canonical_name,country,output_mbpd,spare_mbpd,location_lat,location_lon,tier,source,as_of,notes
+field_ghawar,Ghawar Field,Saudi Arabia,3.80,0.40,25.1,49.8,real,EIA-DPR,2025,largest conventional field; output real (EIA DPR 2025 avg)
+field_upper_zakum,Upper Zakum Field,United Arab Emirates,1.00,0.10,24.9,54.0,real,OPEC-ASB,2025,ADNOC offshore mega-field; output real (OPEC ASB 2025)
+field_burgan,Burgan Field,Kuwait,1.50,0.10,29.0,47.9,real,OPEC-ASB,2025,Kuwait's largest field; output real (OPEC ASB 2025)

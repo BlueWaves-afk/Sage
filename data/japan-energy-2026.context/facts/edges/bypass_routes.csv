@@ -1,0 +1,2 @@
+src_entity_id,dst_entity_id,cost_premium,added_days,tier,source,as_of,notes
+supplier_adnoc,port_fujairah,1.20,2.0,real,IEA-hormuz,2026,ADCOP pipeline to Fujairah bypasses the Strait of Hormuz

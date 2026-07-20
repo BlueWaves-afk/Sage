@@ -1,0 +1,7 @@
+entity_id,canonical_name,actor,action,severity,event_time,tier,source,as_of,notes
+event_tanker_war,Tanker War,Iran and Iraq,attacks on oil tankers in the Persian Gulf,0.7,1984-01-01,real,Wikipedia-events,1988,severity analyst-assigned; period 1984-1988
+event_2019_hormuz_attacks,2019 Tanker Attacks,Iran (attributed),limpet-mine attacks on tankers near the Strait of Hormuz,0.5,2019-06-13,real,Wikipedia-events,2019,severity analyst-assigned; Jun-2019 Gulf of Oman incident
+event_2024_red_sea,2024 Red Sea Crisis,Houthi movement,missile and drone attacks on Red Sea shipping diverting trade to the Cape,0.8,2024-01-01,real,Wikipedia-events,2024,severity analyst-assigned; ongoing from Jan-2024
+event_ever_given,Ever Given Suez Blockage,Ever Given container ship,grounding that blocked the Suez Canal for six days,0.6,2021-03-23,real,Wikipedia-events,2021,severity analyst-assigned
+event_2025_iran_israel,2025 Iran-Israel Conflict,Iran and Israel,direct military strikes raising Strait of Hormuz closure risk,0.9,2025-06-01,real,Wikipedia-events,2025,severity analyst-assigned
+event_russia_ukraine_2022,2022 Russia-Ukraine War,Russia and Ukraine,invasion triggering Western sanctions and a steep Urals discount,0.85,2022-02-24,real,Wikipedia-events,2022,severity analyst-assigned

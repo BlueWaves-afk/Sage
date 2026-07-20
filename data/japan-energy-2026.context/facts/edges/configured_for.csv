@@ -1,0 +1,7 @@
+src_entity_id,dst_entity_id,compatibility,yield_pct,tier,source,as_of,notes
+refinery_mizushima,grade_arab_light,0.95,88,derived,DERIVED-compat,2025,ENEOS Mizushima primary diet
+refinery_mizushima,grade_murban,0.90,90,derived,DERIVED-compat,2025,light-sweet compatible
+refinery_negishi,grade_murban,0.92,90,derived,DERIVED-compat,2025,ENEOS Negishi light diet
+refinery_negishi,grade_arab_light,0.90,87,derived,DERIVED-compat,2025,medium-sour compatible
+refinery_chiba_idemitsu,grade_arab_medium,0.88,85,derived,DERIVED-compat,2025,Idemitsu Chiba
+refinery_yokkaichi,grade_qatar_marine,0.88,86,derived,DERIVED-compat,2025,Cosmo Yokkaichi

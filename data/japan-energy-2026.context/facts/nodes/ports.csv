@@ -1,3 +1,4 @@
 entity_id,canonical_name,draft_m,congestion,location_lat,location_lon,tier,source,as_of,notes
 port_kiire,Kiire Terminal,22.0,0.1,31.38,130.55,real,EIA-Japan,2024,"Major VLCC crude terminal (Kagoshima), co-located with JOGMEC stockpile; congestion analyst-assigned"
 port_chiba,Chiba,19.0,0.2,35.53,140.08,real,EIA-Japan,2024,"Tokyo Bay refining/import hub; congestion analyst-assigned"
+port_fujairah,Fujairah,16.0,0.1,25.12,56.33,real,IEA-hormuz,2026,UAE east-coast terminal; ADCOP outlet that bypasses Hormuz

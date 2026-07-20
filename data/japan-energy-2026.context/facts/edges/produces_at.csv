@@ -1,0 +1,4 @@
+source_id,target_id,relation,output_mbpd,crude_grade,tier,source,as_of,notes
+supplier_aramco,field_ghawar,PRODUCES_AT,3.80,Arab Light,real,ARAMCO-2025,2025,Ghawar is Aramco's primary producing field
+supplier_adnoc,field_upper_zakum,PRODUCES_AT,1.00,Murban,real,ADNOC-2025,2025,Upper Zakum operated by ADNOC
+supplier_kpc,field_burgan,PRODUCES_AT,1.50,Kuwait Export,real,OPEC-ASB,2025,Burgan is KPC's primary field
