@@ -1,45 +1,47 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# SAGE Context Bundle Manifest — JAPAN
+# SAGE Context Bundle Manifest
 #
-# Demonstrates SAGE's portability: a second import-dependent economy instantiated
-# from the SAME engine by swapping this bundle. No code changes — SAGE.instantiate(bundle).
-# The model methodology params (ARIO coefficients, TOPSIS weights, grade tolerances,
-# routing method, IO structure) are shared with the India bundle; only the
-# region-specific FACTS and economic constants below are Japan's.
+# A context bundle is SAGE's foundational knowledge snapshot — the geopolitical
+# relationships and graph values the system is instantiated with, BEFORE any live
+# signals arrive. Analogous to loading pretrained weights: SAGE.instantiate(bundle).
+#
+# Swap this bundle for a newer/region-specific one to re-base the system's worldview.
 # ─────────────────────────────────────────────────────────────────────────────
 
 bundle_id:      japan-energy-2026
 name:           Japan Energy Supply Chain — 2026
 schema_version: 1.0.0
 bundle_version: 1.0.0
-previous_version: null
+previous_version: null          # set to prior bundle_id on upgrade (e.g. india-energy-2025)
 domain:         oil-supply-chain
 region:         Japan
 vintage:        2026
 created:        2026-07-19
 
+# ── Upgrade policy ────────────────────────────────────────────────────────────
+# STRUCTURAL layers (facts/, params/, io/) are REPLACED on upgrade.
+# DYNAMIC layers (RISK_STATE edges, GeoEvent nodes, episodes, wiki narratives
+#   written by System 1) are PRESERVED — upgrade.py never deletes them.
+# Wiki pages for changed entities are re-synthesized with a "## Context Update" note.
+# Run: python3.11 -m knowledge.context.upgrade <new_bundle_path>
 upgrade_policy:
   replace:  [facts, params, io]
   preserve: [risk_state_edges, geo_events, vessel_nodes, episodes, wiki_dynamic]
   resynthesise_on_change: true
-
 description: >
-  Foundational static knowledge for Japan's crude oil supply chain. Japan imports
-  ~99% of its crude and ~94% of that from the Middle East via the Strait of Hormuz,
-  then the Strait of Malacca — a structural exposure comparable to India's. Holds
-  ~240 days of total stockpile (national + private) managed by JOGMEC. Region-
-  specific facts (suppliers' share to Japan, Japanese refineries, JOGMEC reserves,
-  Japan demand) are sourced below; model methodology params are shared with the
-  India bundle (documented in DATA_PROVENANCE.md).
+  Foundational static knowledge for Japan's crude oil supply chain (portability
+  demo). Japan imports ~99% of crude, ~94% from the Middle East via Hormuz then
+  Malacca; ~240 days total stockpile (JOGMEC). Region-specific FACTS and economic
+  constants are Japan's (METI/JOGMEC/EIA, tier-tagged); model methodology params
+  and their source citations are shared with the India bundle (see DATA_PROVENANCE.md).
 
 tiers: [real, derived, estimated]
 
+# ── Source registry ──────────────────────────────────────────────────────────
+# `source` column in every CSV references one of these keys.
 sources:
-  EIA-chokepoints:
-    label: EIA World Oil Transit Chokepoints
-    url:   https://www.eia.gov/international/analysis/special-topics/world_oil_transit_Chokepoints
   METI-imports:
-    label: METI / ANRE — Japan crude oil import volumes and supplier shares (2023–24)
+    label: METI / ANRE — Japan crude import volumes & supplier shares (2023-24)
     url:   https://www.enecho.meti.go.jp/en/
   JOGMEC-stockpile:
     label: JOGMEC / IEA — Japan national + private oil stockpile (days of net imports)
@@ -50,23 +52,230 @@ sources:
   IEA-Japan:
     label: IEA Oil Stocks & Emergency Response — Japan
     url:   https://www.iea.org/countries/japan
+  EIA-chokepoints:
+    label: EIA World Oil Transit Chokepoints
+    url:   https://www.eia.gov/international/analysis/special-topics/world_oil_transit_Chokepoints
+  PPAC-2025:
+    label: PPAC — India refinery utilization & state-level product demand (2025)
+    url:   https://ppac.gov.in
+  EIA-DPR:
+    label: EIA Drilling Productivity Report — field-level crude output (2025)
+    url:   https://www.eia.gov/petroleum/drilling/
+  OPEC-ASB:
+    label: OPEC Annual Statistical Bulletin — member-country field output (2025)
+    url:   https://www.opec.org/opec_web/en/publications/202.htm
+  ADNOC-2025:
+    label: ADNOC upstream field output disclosures (2025)
+    url:   https://www.adnoc.ae
+  KMG-2025:
+    label: KazMunayGas field output (Tengiz/Kashagan, 2025)
+    url:   https://www.kmg.kz/en/
+  ARAMCO-2025:
+    label: Saudi Aramco field output disclosures (Ghawar/Safaniya/Khurais, 2025)
+    url:   https://www.aramco.com
+  PPAC-imports:
+    label: PPAC — India crude imports by country (FY2024-25, 244.5 MT total)
+    url:   https://ppac.gov.in
+  PPAC-refinery:
+    label: PPAC — Installed Refinery Capacity
+    url:   https://ppac.gov.in/infrastructure/installed-refinery-capacity
+  ISPRL:
+    label: Indian Strategic Petroleum Reserves Ltd
+    url:   https://isprlindia.com
+  Aramco-assay:
+    label: Saudi Aramco crude oil assay (Arab grades)
+    url:   https://china.aramco.com/en/news-media/global-news/2021/aramco-crude-oil-assay
+  BP-assay:
+    label: BP crude assays — downloadable yield tables
+    url:   https://www.bp.com/en/global/bp-supply-trading-and-shipping/documents-and-downloads/technical-downloads/crudes-assays.html
+  SP-Global-Iraq:
+    label: S&P Global — Iraq export grade specs (Basrah)
+    url:   https://www.spglobal.com/commodityinsights/en/market-insights/latest-news/oil/111820-iraq-outlines-new-specs-of-crude-export-grades
+  Petrosolutions-urals:
+    label: Urals crude assay
+    url:   https://thepetrosolutions.com/specifications-of-russian-crude-oil-urals/
+  Deendayal-port:
+    label: Deendayal Port Authority — Vadinar Offshore Oil Terminal
+    url:   https://www.deendayalport.gov.in/en/about-us/off-shore-oil-terminal-oot-vadinar/
+  Shipnext-ports:
+    label: Shipnext port data (draft, VLCC capability)
+    url:   https://shipnext.com/
+  Petroline-wiki:
+    label: East–West Crude Oil Pipeline (Petroline)
+    url:   https://en.wikipedia.org/wiki/East%E2%80%93West_Crude_Oil_Pipeline
+  IEA-hormuz:
+    label: IEA — Strait of Hormuz oil security
+    url:   https://www.iea.org/about/oil-security-and-emergency-response/strait-of-hormuz
+  OFAC-sdn:
+    label: OFAC SDN list
+    url:   https://www.treasury.gov/ofac/downloads/sdn.xml
+  EU-sanctions:
+    label: EU consolidated financial sanctions list (CFSP)
+    url:   https://data.europa.eu/data/datasets/consolidated-list-of-persons-groups-and-entities-subject-to-eu-financial-sanctions
+  UN-sanctions:
+    label: UN Security Council consolidated sanctions list
+    url:   https://www.un.org/securitycouncil/content/un-sc-consolidated-list
+  Wikipedia-events:
+    label: Wikipedia event articles (historical geopolitical/shipping events)
+    url:   https://en.wikipedia.org/wiki/Strait_of_Hormuz
+  G7-pricecap:
+    label: G7 / EU Russian oil price cap coalition
+    url:   https://home.treasury.gov/policy-issues/financial-sanctions/sanctions-programs-and-country-information/russian-harmful-foreign-activities-sanctions
+  Inoue-Todo:
+    label: Inoue & Todo 2019, Nature Sustainability — supply-chain GDP indirect/direct ratio
+    url:   https://www.nature.com/articles/s41893-019-0351-x
+  EIA-spare:
+    label: EIA — OPEC effective spare capacity
+    url:   https://www.eia.gov/outlooks/steo/report/global_oil.php
+  EIA-STEO:
+    label: EIA Short-Term Energy Outlook — Brent crude price forecast (Jun 2026, $95/bbl 2026 avg)
+    url:   https://www.eia.gov/outlooks/steo/
+  PPAC-sectoral:
+    label: PPAC/Nielsen — All India Study on Sectoral Demand of Diesel & Petrol
+    url:   https://www.pib.gov.in/newsite/printrelease.aspx?relid=102799
+  NIPFP-gdp:
+    label: NIPFP — Oil price shock impact on India GDP/inflation ($10/bbl → −40bps GDP)
+    url:   https://www.nipfp.org.in/media/documents/wp_2012_99.pdf
+  MOSPI-IOTT:
+    label: MOSPI — India Input-Output Transactions Table / Supply-Use Table (full 140-sector)
+    url:   https://mospi.gov.in/publication/input-output-transactions-table-2006-07
+  IIOA-energy-io:
+    label: IIOA — Hybrid Energy Input-Output Table for India (sector petroleum intensities)
+    url:   https://www.iioa.org/conferences/28th/papers/files/4459_AHybridEnergyInput-OutputTableforIndiawithEIOT.pdf
+  CSEP-io:
+    label: CSEP — Input-Output Transactions Table India 2015-16 (aggregated)
+    url:   https://csep.org/discussion-note/input-output-transactions-table-india-2015-16/
+  Baltic-BDTI:
+    label: Baltic Exchange Dirty Tanker Index — VLCC voyage cost benchmarks (TD3C, TD1)
+    url:   https://www.balticexchange.com/en/data-services/market-information/tankers.html
+  Clarkson-voyage:
+    label: Clarkson Research Services — VLCC voyage duration estimates by route
+    url:   https://www.clarksons.net/
+  Lloyds-JWC:
+    label: Lloyd's Joint War Committee — Hull War, Strikes & Terrorism Listed Areas
+    url:   https://www.lmalloyds.com/LMA/Underwriting/Marine/Joint_War_Committee/LMA/Underwriting_Group/Marine_Underwriting/JWC.aspx
+  IEA-supply-security:
+    label: IEA Oil Supply Security 2014 — disruption cost methodology and supply-security scoring
+    url:   https://www.iea.org/reports/oil-supply-security
+  PNGRB-norms:
+    label: Petroleum & Natural Gas Regulatory Board — refinery operating norms (90-day cover obligation, 3-day buffer)
+    url:   https://www.pngrb.gov.in/
+  IEA-SPR-replenishment:
+    label: IEA — Coordinated SPR release episodes (2005/2011/2022); refill cost premium analysis
+    url:   https://www.iea.org/topics/oil-supply-security/strategic-petroleum-reserves
+  ICB-dataset:
+    label: International Crisis Behavior dataset — crisis resolution rate calibration
+    url:   https://sites.duke.edu/icbdata/
+  ISPRL-ops:
+    label: ISPRL — Indian Strategic Petroleum Reserves Ltd operational pumping rate estimates
+    url:   https://isprlindia.com
+  IEA-refinery-complexity:
+    label: IEA — Refinery Complexity and Crude Processing Window study
+    url:   https://www.iea.org/reports/the-future-of-petrochemicals
+  EIA-crude-economics:
+    label: EIA — Crude Oil Assay Economics and Refinery Yield Analysis
+    url:   https://www.eia.gov/todayinenergy/detail.php?id=9731
 
+# ── Estimation methods ───────────────────────────────────────────────────────
+# Rows with tier=derived or estimated reference one of these as their `source`.
+# This is what makes "no simulated data" auditable: every non-real value states
+# exactly how it was produced.
 estimation_methods:
   EST-refcap:
-    label: Refinery nameplate capacity approximated from operator public disclosures
-    method: >
-      Individual Japanese refinery capacities approximated from ENEOS/Idemitsu/Cosmo
-      public plant disclosures; rounded to 0.01 mbpd. Marked estimated where no single
-      authoritative per-plant figure is cited.
-  EST-inventory:
-    label: Operating inventory days
-    method: Refinery operating crude inventory assumed ~22 days (regional norm); estimated.
+    label: Per-plant Japanese refinery capacity approximated from operator disclosures
+    method: ENEOS/Idemitsu/Cosmo public plant figures, rounded to 0.01 mbpd; marked estimated.
   EST-severity:
-    label: Chokepoint severity
-    method: choke_severity is an analyst-assigned 0–1 disruption-impact weight, not a measured quantity.
+    label: Chokepoint severity is an analyst-assigned 0-1 disruption weight, not measured.
+    method: analyst-assigned
+  DERIVED-import-volume:
+    method: PPAC national import share × 244.5 MT total ÷ 7.33 bbl/tonne ÷ 365 days = mbpd
+    tier:   derived
+  DERIVED-share:
+    method: India ~42% Hormuz dependence (PPAC import-by-source × maritime geography)
+    tier:   derived
+  DERIVED-compat:
+    method: Refinery Nelson Complexity Index × crude assay API/sulfur match (Peng-Robinson proxy)
+    tier:   derived
+  EST-allocation:
+    method: Port→refinery share estimated from co-location; operator allocation not published
+    tier:   estimated
+  EST-inventory:
+    method: India national average crude inventory ~22 days (PPAC) applied uniformly; per-refinery not published
+    tier:   estimated
+  EST-spr:
+    method: National SPR fill ~40% (ISPRL Mar 2025) distributed proportionally; per-site not published
+    tier:   estimated
+  EST-congestion:
+    method: Static baseline 0.0; live value derived from AIS vessel density at runtime
+    tier:   estimated
+  DERIVED-price-elasticity:
+    method: >
+      $/bbl per mbpd of NET global shortfall, from historical elasticity (≈10% global
+      supply loss → Brent ~$120, i.e. ~$4.5/bbl/mbpd); convex band 3.5–6.0. Refs: Fed
+      IFDP 1173, IMF WP/17-15.
+    tier:   derived
+  EST-spr-draw:
+    method: ISPRL emergency SPR pumping-rate estimate (no published per-cavern rate)
+    tier:   estimated
+  EST-bypass-ramp:
+    method: Aramco operations estimate for time to ramp Petroline/ADCOP to capacity
+    tier:   estimated
+  EST-sector-other:
+    method: Residual petroleum products not in named sectors
+    tier:   estimated
+  standard-finance:
+    method: Annual discount rate 10.5% → daily factor 0.97 (r_daily = (1+r_annual)^(1/365) - 1 ≈ 0.97)
+    tier:   derived
 
-facts_dir:   facts
-params_dir:  params
-io_dir:      io
-sources_dir: sources
+# ── Bundle contents ──────────────────────────────────────────────────────────
+# Two layers:
+#   facts/      structured ground-truth values → written directly as graph attributes
+#               (deterministic; not reconciled by the LLM — you don't fuzz known numbers)
+#   narratives/ per-entity prose with [[wikilinks]] → routed through the synthesis path
+#               (render_wiki_page → wiki store + reconciled episode → graph + vector)
+#               Entities without a narrative file get a foundational stub generated from facts.
+nodes:
+  - {type: Corridor,   file: facts/nodes/corridors.csv}
+  - {type: Supplier,   file: facts/nodes/suppliers.csv}
+  - {type: Refinery,   file: facts/nodes/refineries.csv}
+  - {type: CrudeGrade, file: facts/nodes/crude_grades.csv}
+  - {type: Port,       file: facts/nodes/ports.csv}
+  - {type: SPRCavern,  file: facts/nodes/spr_caverns.csv}
+  - {type: Authority,        file: facts/nodes/authorities.csv}
+  - {type: GeoEvent,         file: facts/nodes/geo_events.csv}
+  - {type: ProductionField,  file: facts/nodes/production_fields.csv}
+  - {type: DistributionHub,  file: facts/nodes/distribution_hubs.csv}
+edges:
+  - {type: EXPORTS_VIA,    file: facts/edges/exports_via.csv}
+  - {type: FEEDS,          file: facts/edges/feeds.csv}
+  - {type: SUPPLIES,       file: facts/edges/supplies.csv}
+  - {type: CONFIGURED_FOR, file: facts/edges/configured_for.csv}
+  - {type: BYPASS_ROUTE,   file: facts/edges/bypass_routes.csv}
+  - {type: PRODUCES_AT,    file: facts/edges/produces_at.csv}
+  - {type: DISTRIBUTES_TO, file: facts/edges/distributes_to.csv}
+
+# Model parameters — sourced, provenance-tracked, swappable per-bundle.
+# All systems read from these files; nothing is hardcoded in agent code.
+params_file:          params/ario_params.csv       # System 2 ARIO economic coefficients
+sectors_file:         params/sectors.csv            # System 2 IO sectoral weights
+routing_params_file:  params/routing_params.csv     # System 3 VLCC costs/lead times/war-risk
+ranking_params_file:  params/ranking_params.csv     # System 3 TOPSIS criterion weights
+spr_params_file:      params/spr_params.csv         # System 4 SDP/CMDP constants + p_resolve
+grade_params_file:    params/grade_params.csv       # System 3 grade compatibility tolerances
+heuristic_params_file: params/heuristic_params.csv  # Orchestration heuristic thresholds
+economics_params_file: params/economics_params.csv  # Shared baseline economics (Brent, daily consumption, risk filters)
+
+# Refresh contract: the subset of values that drift SUB-ANNUALLY and are only safe as
+# static defaults because System 1 overrides them live. A yearly commit is enough for
+# everything EXCEPT the rows listed here. See DATA_PROVENANCE.md §Refresh contract.
+volatile_registry_file: params/volatile_defaults.csv
+
+# Narratives are auto-discovered from narratives/*.md (filename = entity_id).
+# Each carries frontmatter: entity_id, source_url, as_of, tier.
 narratives_dir: narratives
+
+# Source evidence for RAG-grounded synthesis. fetch_sources.py reads sources_index.csv
+# (entity_id, url, note), fetches each URL, and writes sources/<entity_id>.md. At
+# instantiate time the LLM summarises THIS cached text (+ facts) — it does not write
+# from parametric memory — which is what prevents hallucination.
+sources_dir: sources
