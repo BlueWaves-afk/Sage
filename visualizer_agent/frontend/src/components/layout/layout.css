@@ -270,3 +270,46 @@
     display: none;
   }
 }
+
+/* ── Region / context-bundle switcher (multi-tenant) ─────────────────────── */
+.region-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 10px;
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-pill);
+  background: var(--bg-3);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) ease, background var(--dur-fast) ease;
+}
+.region-switch:hover {
+  border-color: var(--cyan);
+  background: var(--cyan-soft);
+}
+.region-switch-label {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--text-2);
+}
+.region-switch-flag {
+  font-size: 14px;
+  line-height: 1;
+}
+.region-switch-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--text-0);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  outline: none;
+  padding-right: 2px;
+}
+.region-switch-select option {
+  background: var(--bg-2);
+  color: var(--text-0);
+}

@@ -26,7 +26,11 @@ import type {
   AgentTraceEvent,
 } from "./types";
 
-const BASE = import.meta.env.VITE_API_BASE ?? "";
+import { apiPrefix } from "./region";
+
+// Same-origin by default; VITE_API_BASE can override in dev. The region prefix
+// ("/jp" for the Japan tenant) routes to that tenant's api-gateway via nginx.
+const BASE = import.meta.env.VITE_API_BASE || apiPrefix();
 
 export interface Envelope<T> {
   data: T | null;

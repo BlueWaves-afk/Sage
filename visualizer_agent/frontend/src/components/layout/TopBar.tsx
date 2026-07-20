@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { IconUser, IconLogo } from "../icons";
+import { apiPrefix } from "../../api/region";
+import RegionSwitcher from "./RegionSwitcher";
 import "./layout.css";
 
 interface Props {
@@ -11,7 +13,7 @@ function useDemoStatus() {
   const [demo, setDemo] = useState<{ active: boolean; crisis?: string | null } | null>(null);
   useEffect(() => {
     const check = () =>
-      fetch("/api/demo/status")
+      fetch(`${apiPrefix()}/api/demo/status`)
         .then((r) => r.json())
         .then(setDemo)
         .catch(() => {});
@@ -43,6 +45,7 @@ export default function TopBar({ title, live = true }: Props) {
         )}
       </div>
       <div className="topbar-right">
+        <RegionSwitcher />
         <span className="trust-tag">
           Secure <b>•</b> Trusted <b>•</b> Sovereign
         </span>

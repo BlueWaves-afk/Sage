@@ -1,3 +1,4 @@
+import { apiPrefix } from "./region";
 // Small data-fetching + WebSocket hooks. No external state library — the app is
 // read-mostly and these keep it dependency-light.
 
@@ -55,7 +56,7 @@ export function usePipeline() {
 
     const base = import.meta.env.VITE_WS_BASE ?? `ws://${location.host}`;
     try {
-      ws = new WebSocket(`${base}/ws`);
+      ws = new WebSocket(`${base}${apiPrefix()}/ws`);
       ws.onopen = () => setConnected(true);
       ws.onmessage = (ev) => {
         try {
@@ -105,7 +106,7 @@ export function useAgentTrace() {
     let ws: WebSocket | null = null;
     const base = import.meta.env.VITE_WS_BASE ?? `ws://${location.host}`;
     try {
-      ws = new WebSocket(`${base}/ws`);
+      ws = new WebSocket(`${base}${apiPrefix()}/ws`);
       ws.onopen = () => setConnected(true);
       ws.onmessage = (ev) => {
         try {
