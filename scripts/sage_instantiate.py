@@ -102,14 +102,17 @@ async def main() -> int:
 
     t0 = time.monotonic()
     if args.facts_only:
+        from datetime import datetime, timezone
         eps = bundle.to_episodes()
         from graphiti_core.nodes import EpisodeType
         from knowledge.schema.entities import ENTITY_TYPES
         from knowledge.schema.edges import EDGE_TYPES, EDGE_TYPE_MAP
+        ref = datetime.now(timezone.utc)   # structural facts are as-of instantiation time
         for i, ep in enumerate(eps, 1):
             _render("facts", ep["name"], i, len(eps))
             await g.add_episode(name=ep["name"], episode_body=ep["body"],
                 source=EpisodeType.text, source_description=ep["source_desc"],
+                reference_time=ref,
                 entity_types=ENTITY_TYPES, edge_types=EDGE_TYPES, edge_type_map=EDGE_TYPE_MAP)
         counts = {"facts": len(eps), "narratives": 0}
     else:
