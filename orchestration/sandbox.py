@@ -367,7 +367,10 @@ async def _prestage_systems(
 
     async def _procure():
         from alt_procurement_agent.runner import run as run_procurement
-        await run_procurement(scenario_id=scenario_ref, trigger_refinery=entity,
+        from knowledge.api.read import get_most_exposed_refinery
+
+        refinery = await get_most_exposed_refinery(entity)
+        await run_procurement(scenario_id=scenario_ref, trigger_refinery=refinery,
                               status="speculative", gap_mbpd=gap_mbpd)
 
     async def _reserve():

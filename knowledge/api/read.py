@@ -1183,6 +1183,19 @@ async def get_most_exposed_refinery(entity: str) -> Optional[str]:
     except Exception:
         pass
 
+    bundle_refineries: list[dict[str, Any]] = []
+    try:
+        from knowledge.context.loader import load_bundle
+
+        bundle_path = os.environ.get(
+            "SAGE_BUNDLE_PATH", "data/india-energy-2026.context"
+        )
+        bundle_refineries = load_bundle(bundle_path).node_rows.get("Refinery", [])
+        if any(row.get("canonical_name") == entity for row in bundle_refineries):
+            return entity
+    except Exception as exc:
+        log.warning("get_most_exposed_refinery: bundle lookup failed: %s", exc)
+
     rows = await _cypher(
         """
         MATCH (c:Entity {name: $entity})-[r:RELATES_TO]->(ref:Entity)
@@ -1196,11 +1209,21 @@ async def get_most_exposed_refinery(entity: str) -> Optional[str]:
     if rows and rows[0].get("name"):
         return str(rows[0]["name"])
 
-    log.warning(
-        "get_most_exposed_refinery: no EXPOSES edge found for '%s' — "
-        "falling back to Jamnagar Refinery (India's largest refinery)", entity,
-    )
-    return "Jamnagar Refinery"
+    if bundle_refineries:
+        largest = max(
+            bundle_refineries,
+            key=lambda row: float(row.get("capacity_mbpd") or 0.0),
+        )
+        fallback = str(largest.get("canonical_name") or "")
+        if fallback:
+            log.warning(
+                "get_most_exposed_refinery: no EXPOSES edge found for '%s' — "
+                "falling back to active bundle refinery '%s'", entity, fallback,
+            )
+            return fallback
+
+    log.warning("get_most_exposed_refinery: no refinery found for '%s'", entity)
+    return None
 
 
 # ---------------------------------------------------------------------------
