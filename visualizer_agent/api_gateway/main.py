@@ -552,7 +552,11 @@ async def volatile_provenance() -> dict:
 async def copilot(body: dict) -> dict:
     """EA-GraphRAG routed copilot endpoint (Perplexity-style: markdown + numbered sources)."""
     q = body.get("query") or body.get("question") or ""
-    answer = await copilot_query(q)
+    try:
+        answer = await copilot_query(q)
+    except Exception as exc:
+        log.exception("Copilot query failed")
+        raise HTTPException(status_code=503, detail="Copilot is temporarily unavailable") from exc
     return answer.model_dump()
 
 

@@ -359,3 +359,33 @@ def test_read_api_signatures():
     import inspect
     assert inspect.iscoroutinefunction(get_risk_scores)
     assert inspect.iscoroutinefunction(copilot_query)
+
+
+@pytest.mark.asyncio
+async def test_copilot_uses_wiki_when_vector_retrieval_fails(monkeypatch):
+    import knowledge.api.read as read_api
+    import knowledge.connection as connection
+
+    class FailingGraph:
+        async def search(self, query: str, num_results: int) -> list:
+            raise RuntimeError("embedding service unavailable")
+
+        class LLM:
+            async def generate(self, messages: list[dict]) -> str:
+                return "Hormuz remains critical according to the supplied assessment. [1]"
+
+        llm_client = LLM()
+
+    monkeypatch.setattr(connection, "_get_graphiti", lambda: FailingGraph())
+    monkeypatch.setattr(read_api, "_entities_in_query", lambda query: ["Strait of Hormuz"])
+    monkeypatch.setattr(
+        read_api,
+        "_wiki_context",
+        lambda entities: (["[Strait of Hormuz]\nCritical crude corridor."], entities),
+    )
+
+    answer, citations, sources = await read_api._vector_bm25_query("Why is Hormuz critical?")
+
+    assert "Hormuz remains critical" in answer
+    assert citations == ["Strait of Hormuz"]
+    assert sources[0].entity == "Strait of Hormuz"

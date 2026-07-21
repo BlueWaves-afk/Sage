@@ -1349,7 +1349,11 @@ async def _vector_bm25_query(q: str) -> tuple[str, list[str], list[CopilotSource
     entities = _entities_in_query(q)
     wiki_blocks, wiki_cites = _wiki_context(entities)
 
-    edges = await g.search(query=q, num_results=10)
+    try:
+        edges = await g.search(query=q, num_results=10)
+    except Exception as exc:
+        log.warning("Copilot vector retrieval failed: %s — using wiki context", exc)
+        edges = []
     facts     = [getattr(e, "fact", str(e)) for e in edges]
     edge_cites = [str(getattr(e, "uuid", "")) for e in edges if getattr(e, "uuid", "")]
 
@@ -1409,7 +1413,11 @@ async def _graph_ppr_query(q: str) -> tuple[str, list[str], list[CopilotSource]]
     wiki_blocks, wiki_cites = _wiki_context(_entities_in_query(q))
 
     # Step 1: anchor entities via semantic search
-    seed_edges = await g.search(query=q, num_results=5)
+    try:
+        seed_edges = await g.search(query=q, num_results=5)
+    except Exception as exc:
+        log.warning("Copilot graph retrieval failed: %s — using wiki context", exc)
+        seed_edges = []
     anchor_uuids = list({
         getattr(e, "source_node_uuid", None) for e in seed_edges
         if getattr(e, "source_node_uuid", None)
@@ -1425,7 +1433,11 @@ async def _graph_ppr_query(q: str) -> tuple[str, list[str], list[CopilotSource]]
         RETURN r AS rels
         LIMIT 20
         """
-        rows = await _cypher(query_expand, {"uuid": anchor_uuid})
+        try:
+            rows = await _cypher(query_expand, {"uuid": anchor_uuid})
+        except Exception as exc:
+            log.warning("Copilot graph expansion failed for %s: %s", anchor_uuid, exc)
+            continue
         for row in rows:
             rels = row.get("rels") or []
             if not isinstance(rels, list):

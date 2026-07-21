@@ -24,8 +24,9 @@ function useDemoStatus() {
   return demo;
 }
 
-export default function TopBar({ title, live = true }: Props) {
+export default function TopBar({ title, live }: Props) {
   const demo = useDemoStatus();
+  const status = live == null ? "CONNECTING" : live ? "ONLINE" : "OFFLINE";
   return (
     <header className="topbar">
       <div className="topbar-left">
@@ -34,7 +35,7 @@ export default function TopBar({ title, live = true }: Props) {
         </span>
         <span className={`online-pill${live ? "" : " offline"}`}>
           <span className="online-dot" />
-          {live ? "ONLINE" : "OFFLINE"}
+          {status}
         </span>
         <span className="topbar-divider" />
         <span className="topbar-title">{title}</span>

@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { api, type Envelope } from "./client";
 import type { AgentTraceEvent } from "./types";
 
-/** Fetch once on mount; expose data, live-flag, and loading. */
+/** Fetch on mount and automatically recover after a transient cold-start failure. */
 export function useApi<T>(fetcher: () => Promise<Envelope<T>>, deps: unknown[] = []) {
   const [data, setData] = useState<T | null>(null);
   const [live, setLive] = useState(false);
@@ -14,15 +14,22 @@ export function useApi<T>(fetcher: () => Promise<Envelope<T>>, deps: unknown[] =
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    fetcher().then((env) => {
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const load = async (background = false) => {
+      if (!background) setLoading(true);
+      const env = await fetcher();
       if (cancelled) return;
       setData(env.data);
       setLive(env.live);
       setLoading(false);
-    });
+      if (!env.live) retryTimer = setTimeout(() => load(true), 5000);
+    };
+
+    load();
     return () => {
       cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);

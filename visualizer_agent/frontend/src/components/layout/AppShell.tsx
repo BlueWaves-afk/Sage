@@ -20,14 +20,27 @@ export default function AppShell() {
   const [live, setLive] = useState<boolean | undefined>(undefined);
 
   useEffect(() => {
-    api.health().then((env) => setLive(env.live && !!env.data?.kb_ready));
+    let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    const check = async () => {
+      const env = await api.health();
+      if (cancelled) return;
+      const ready = env.live && !!env.data?.kb_ready;
+      setLive(ready);
+      if (!ready) retryTimer = setTimeout(check, 5000);
+    };
+    check();
+    return () => {
+      cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
+    };
   }, []);
 
   return (
     <div className="shell">
       <IconSidebar />
       <div className="shell-main">
-        <TopBar title={TITLES[pathname] ?? "SAGE"} live={live !== false} />
+        <TopBar title={TITLES[pathname] ?? "SAGE"} live={live} />
         <div className="shell-content" key={pathname}>
           <Outlet />
         </div>

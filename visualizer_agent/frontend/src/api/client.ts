@@ -38,19 +38,28 @@ export interface Envelope<T> {
 }
 
 async function get<T>(path: string, opts?: RequestInit): Promise<Envelope<T>> {
-  try {
-    const res = await fetch(`${BASE}${path}`, {
-      headers: { Accept: "application/json" },
-      signal: AbortSignal.timeout(8000),
-      ...opts,
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = (await res.json()) as T;
-    return { data, live: true };
-  } catch {
-    // No fallback data — the KB is the single source of truth.
-    return { data: null, live: false };
+  const isIdempotent = !opts?.method || opts.method === "GET";
+  const attempts = isIdempotent ? 3 : 1;
+
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      const res = await fetch(`${BASE}${path}`, {
+        headers: { Accept: "application/json" },
+        signal: AbortSignal.timeout(15000),
+        ...opts,
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = (await res.json()) as T;
+      return { data, live: true };
+    } catch {
+      if (attempt < attempts - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 750 * (2 ** attempt)));
+      }
+    }
   }
+
+  // No fallback data — the KB is the single source of truth.
+  return { data: null, live: false };
 }
 
 async function post<T>(path: string, body: unknown, opts?: RequestInit): Promise<Envelope<T>> {
@@ -161,10 +170,5 @@ export const api = {
     post<import("./types").MitigatedResult>("/api/scenario/run-mitigated", { scenario_id }),
 
   copilot: (question: string) =>
-    get<CopilotAnswer>("/api/copilot", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query: question }),
-      signal: AbortSignal.timeout(25000),
-    }),
+    post<CopilotAnswer>("/api/copilot", { query: question }),
 };
