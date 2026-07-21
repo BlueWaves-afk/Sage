@@ -1,12 +1,12 @@
 .cc {
-  padding: 10px;
+  padding: 10px 14px 28px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  height: 100%;
-  min-height: 0;
+  min-height: 100%;
   box-sizing: border-box;
   position: relative;
+  overflow-y: visible;
 }
 .cc > *:not(.ambient) {
   position: relative;
@@ -76,17 +76,13 @@
   display: grid;
   grid-template-columns: 1fr 320px;
   gap: 10px;
-  align-items: stretch;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
+  align-items: start;
 }
 .cc-main {
   display: flex;
   flex-direction: column;
   gap: 10px;
   min-width: 0;
-  min-height: 0;
 }
 
 .cc-map-row {
@@ -273,17 +269,9 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  min-height: 0;
-  overflow: hidden;
 }
-/* Copilot panel at bottom of rail fills remaining vertical space */
 .cc-rail > .panel:last-child {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
-.cc-rail > .panel:last-child .panel-body {
-  overflow-y: auto;
+  flex: none;
 }
 .cc-live-dot {
   width: 6px;
