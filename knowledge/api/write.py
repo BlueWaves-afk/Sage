@@ -670,6 +670,11 @@ async def write_scenario(data: ScenarioOutputData) -> EpisodeRef:
     g   = _get_graphiti()
     now = datetime.now(timezone.utc)
 
+    # The structured ranking is the source consumed by the Response Planner.
+    # Persist it before slower graph/wiki enrichment so a valid numeric result is
+    # never hidden behind Bedrock latency or an optional narrative failure.
+    await _cache_output("procurement", data.scenario_id, data)
+
     timeline_summary = ", ".join(f"day{i+1}:{v:.1f}" for i, v in enumerate(data.feedstock_gap_timeline[:7]))
     assumptions_text = "; ".join(
         f"{k}={v.get('value', v)} ({v.get('unit','')}, src:{v.get('source','')})"
@@ -873,7 +878,6 @@ async def write_procurement(data: ProcurementRecData) -> EpisodeRef:
         except Exception as exc:
             log.warning("Procurement wiki reconciliation failed for %s: %s", data.scenario_id, exc)
 
-    await _cache_output("procurement", data.scenario_id, data)
     import asyncio; asyncio.create_task(_force_india_brief())
     return EpisodeRef(episode_uuid=episode_uuid, scenario_id=data.scenario_id)
 

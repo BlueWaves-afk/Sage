@@ -25,6 +25,12 @@ log = logging.getLogger(__name__)
 
 REDIS_URL      = os.environ.get("REDIS_URL", "redis://redis:6379/0")
 EVENTS_CHANNEL = "sage:events"
+PIPELINE_LOCK_TTL_S = int(os.environ.get("SAGE_PIPELINE_LOCK_TTL_S", "300"))
+
+
+async def _claim_pipeline(client: object, entity: str) -> bool:
+    key = f"sage:pipeline-lock:{entity}"
+    return bool(await client.set(key, "1", ex=PIPELINE_LOCK_TTL_S, nx=True))
 
 
 # ---------------------------------------------------------------------------
@@ -55,6 +61,9 @@ async def on_action(entity: str, score: float, scenario_ref: Optional[str]) -> N
     """Action band (0.70–0.90): promote pre-staged or run cold pipeline."""
     client = aioredis.from_url(REDIS_URL, decode_responses=True)
     try:
+        if not await _claim_pipeline(client, entity):
+            log.info("[trigger] duplicate action pipeline suppressed for '%s'", entity)
+            return
         if scenario_ref:
             await _fast_path(client, entity, score, scenario_ref)
         else:
@@ -69,6 +78,9 @@ async def on_critical(entity: str, score: float) -> None:
     """Critical band (≥0.90): human escalation alert + run action path."""
     client = aioredis.from_url(REDIS_URL, decode_responses=True)
     try:
+        if not await _claim_pipeline(client, entity):
+            log.info("[trigger] duplicate critical pipeline suppressed for '%s'", entity)
+            return
         await _publish_stage(client, "ESCALATION", entity, "critical")
         log.warning("[trigger] CRITICAL — '%s' score=%.2f — human escalation required", entity, score)
         scenario_ref = await client.get(f"sage:pending:{entity}")

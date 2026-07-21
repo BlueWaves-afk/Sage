@@ -4,9 +4,10 @@ Port 8000 — the only backend port exposed to the host.
 
 Startup sequence:
   1. knowledge.connection.init() — connect to FalkorDB, build indices, seed edge types
-  2. knowledge.ingest_queue.run_consumer_loop() — background Redis consumer
-  3. orchestration.monitor.run_monitor() — background LangGraph risk monitor
-  4. FastAPI begins serving requests
+  2. FastAPI begins serving requests
+
+The ingest consumer and threshold monitor run only in the sage-core service.
+Starting them here as well creates duplicate workers and duplicate response pipelines.
 """
 from __future__ import annotations
 
@@ -93,23 +94,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         log.error("Knowledge base init failed: %s", exc)
         # Don't crash the gateway — health endpoint should still return degraded status
 
-    # 2. Start Redis ingest consumer loop in background
-    try:
-        from knowledge.ingest_queue import run_consumer_loop
-        asyncio.create_task(run_consumer_loop(), name="ingest_consumer")
-        log.info("Ingest consumer loop started.")
-    except Exception as exc:
-        log.warning("Ingest consumer failed to start: %s", exc)
-
-    # 3. Start LangGraph risk monitor in background
-    try:
-        from orchestration.monitor import run_monitor
-        asyncio.create_task(run_monitor(), name="risk_monitor")
-        log.info("Risk monitor started.")
-    except Exception as exc:
-        log.warning("Risk monitor failed to start: %s", exc)
-
-    # 4. Synthesise India brief on startup (force=True — ensures india.md always exists)
+    # 2. Synthesise India brief on startup (force=True — ensures india.md always exists)
     try:
         from knowledge.context.india_brief import refresh_india_brief
         asyncio.create_task(refresh_india_brief(force=True), name="india_brief_init")
@@ -1160,6 +1145,16 @@ async def demo_ignite() -> dict:
       t=5s  Fusion agent fuses signals → risk escalates to ACTION (0.78) → trace done
       t=8s  Write ACTION risk state → monitor fires on_action() → Systems 2→3→4 activate
     """
+    try:
+        import redis.asyncio as aioredis
+        client = aioredis.from_url(os.environ.get("REDIS_URL", "redis://redis:6379/0"),
+                                   decode_responses=True)
+        try:
+            await client.delete("sage:pipeline-lock:Strait of Hormuz")
+        finally:
+            await client.aclose()
+    except Exception:
+        pass
     asyncio.create_task(_demo_sequence(), name="demo_ignite")
     return {"ok": True, "message": "Demo sequence started — watch the agent trace feed"}
 
