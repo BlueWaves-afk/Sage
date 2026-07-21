@@ -960,10 +960,12 @@ async def get_full_graph(placed_only: bool = True) -> GraphView:
 
         bundle_row = bundle_entry[1] if bundle_entry else {}
         bundle_coords = None
-        if bundle_row.get("lat") not in (None, "") and bundle_row.get("lon") not in (None, ""):
+        bundle_lat = bundle_row.get("lat", bundle_row.get("location_lat"))
+        bundle_lon = bundle_row.get("lon", bundle_row.get("location_lon"))
+        if bundle_lat not in (None, "") and bundle_lon not in (None, ""):
             bundle_coords = {
-                "lat": float(bundle_row["lat"]),
-                "lon": float(bundle_row["lon"]),
+                "lat": float(bundle_lat),
+                "lon": float(bundle_lon),
             }
 
         coords = resolve_coordinates(
@@ -1009,8 +1011,10 @@ async def get_full_graph(placed_only: bool = True) -> GraphView:
                 if not name or name in existing_names:
                     continue
                 coords = None
-                if row.get("lat") not in (None, "") and row.get("lon") not in (None, ""):
-                    coords = {"lat": float(row["lat"]), "lon": float(row["lon"])}
+                bundle_lat = row.get("lat", row.get("location_lat"))
+                bundle_lon = row.get("lon", row.get("location_lon"))
+                if bundle_lat not in (None, "") and bundle_lon not in (None, ""):
+                    coords = {"lat": float(bundle_lat), "lon": float(bundle_lon)}
                 else:
                     coords = resolve_coordinates(
                         name=name,
