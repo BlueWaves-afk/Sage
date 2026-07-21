@@ -2,7 +2,8 @@
 
 <img src="docs/banner.jpeg" alt="SAGE Banner" width="100%" />
 
-# SAGE — AI-Driven Energy Supply Chain Resilience
+# SAGE
+AI-Driven Energy Supply Chain Resilience
 
 ### Synthesis-first Agentic Graph-Enhanced knowledge architecture for India's crude oil import risk
 
@@ -20,13 +21,13 @@
 
 ---
 
-## What SAGE Does — In One Sentence
+## What SAGE Does
 
 SAGE continuously ingests geopolitical and logistics signals from four always-on sensory sub-agents (AIS, news, sanctions, prices), synthesizes them into a bitemporal knowledge graph and a human-readable wiki store via a triage-gated Nova Pro pipeline, and autonomously triggers disruption modelling, procurement rerouting, and SPR drawdown recommendations — turning a reactive crisis response into a managed, anticipatory process with a 28× speedup from threshold crossing to ranked output.
 
 ---
 
-## Engineering SAGE — The Deep-Dive Series
+## Engineering SAGE (The Deep-Dive Series)
 
 A written walkthrough of the design decisions behind SAGE, each an introspective "why we did this, why we didn't do that" piece. Start with the overview, then dive into whichever decision interests you.
 
@@ -70,7 +71,7 @@ A written walkthrough of the design decisions behind SAGE, each an introspective
 
 ---
 
-## The Learning Cascade — A Second Brain That Grows
+## The Learning Cascade (A Second Brain That Grows)
 
 SAGE's risk model is not a set of isolated per-node scores, and its dependency
 graph is not static config. It is a **self-improving knowledge structure**: risk
