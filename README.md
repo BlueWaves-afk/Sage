@@ -1,10 +1,10 @@
 <div align="center">
 
-<img src="docs/banner.png" alt="SAGE Banner" width="100%" />
+<img src="docs/banner.jpeg" alt="SAGE Banner" width="100%" />
 
 # SAGE — AI-Driven Energy Supply Chain Resilience
 
-### Synthesis-first Agentic Graph-Enhanced knowledge architecture for India's crude oil import risk.
+### Synthesis-first Agentic Graph-Enhanced knowledge architecture for India's crude oil import risk
 
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![Graphiti](https://img.shields.io/badge/Graphiti-Core-6B46C1?style=flat-square)](https://github.com/getzep/graphiti)
@@ -629,6 +629,7 @@ writes the narrative **only from that text + the structured facts** — it does 
 memory. Precedence per entity: hand-authored `narratives/*.md` → source-grounded → facts-only → stub.
 
 **Library API** (what the CLI calls under the hood):
+
 ```python
 from knowledge.context import load_bundle
 bundle = load_bundle("data/india-energy-2026.context")   # parses + validates provenance
