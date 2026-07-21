@@ -93,6 +93,53 @@ def _load_supplier_grades() -> dict[str, tuple[float, float]]:
         return _DEFAULT_SUPPLIER_GRADE
 
 
+def _bundle_supplier_facts() -> dict[str, dict]:
+    """Provenance-backed supplier facts keyed by canonical supplier name."""
+    from knowledge.context.loader import load_bundle
+
+    facts: dict[str, dict] = {}
+    for row in load_bundle(_bundle_path()).node_rows.get("Supplier", []):
+        if str(row.get("sanctioned", "false")).lower() == "true":
+            continue
+        name = str(row.get("canonical_name") or "").strip()
+        if name:
+            facts[name] = row
+    return facts
+
+
+def _verified_suppliers(suppliers: list) -> list:
+    """Drop extraction noise and restore missing attributes from the active bundle."""
+    facts = _bundle_supplier_facts()
+    verified = []
+    for supplier in suppliers:
+        fact = facts.get(supplier.display_name)
+        if fact is None:
+            continue
+        verified.append(
+            supplier.model_copy(
+                update={
+                    "country": str(fact.get("country") or "") or None,
+                    "daily_export_mbpd": float(fact["daily_export_mbpd"]),
+                }
+            )
+        )
+    return verified
+
+
+def _candidate_compatibility(
+    country: str,
+    api_gravity: float,
+    sulfur_pct: float,
+    grade_specs: list,
+) -> float:
+    candidate_grade = _grade_name(country)
+    exact = next((spec for spec in grade_specs if spec.grade == candidate_grade), None)
+    if exact is not None and exact.compatibility is not None:
+        return float(exact.compatibility)
+    assay_specs = [spec.model_copy(update={"compatibility": None}) for spec in grade_specs]
+    return best_compatibility(api_gravity, sulfur_pct, assay_specs)
+
+
 def _load_bypass_edges() -> list[dict]:
     """
     Bypass routes sourced from the bundle's bypass_routes.csv — resolves supplier/port
@@ -130,7 +177,9 @@ async def run(
     supplier_risk_max = ep["supplier_risk_max_filter"]
     corridor_risk_max = ep["corridor_risk_max_filter"]
 
-    suppliers  = await get_available_suppliers(risk_max=supplier_risk_max)
+    suppliers = _verified_suppliers(
+        await get_available_suppliers(risk_max=supplier_risk_max)
+    )
     grade_specs = await get_grade_specs(trigger_refinery)
     # Fetch ALL corridors here (not pre-filtered) — solve_routes() below applies
     # corridor_risk_max itself using each corridor's real risk_score. Pre-filtering
@@ -169,7 +218,7 @@ async def run(
 
         country = supplier.country or ""
         api, sulfur = supplier_grades.get(country, (32.0, 1.8))
-        compat = best_compatibility(api, sulfur, grade_specs)
+        compat = _candidate_compatibility(country, api, sulfur, grade_specs)
 
         options.append(ProcurementOption(
             supplier=supplier.display_name,

@@ -40,11 +40,18 @@ async def record_signal(signal: NormalizedSignal, origin: str = "live") -> None:
 
 
 async def read_recent_signals(limit: int) -> list[dict]:
-    client = aioredis.from_url(
-        os.environ.get("REDIS_URL", "redis://redis:6379/0"), decode_responses=True
-    )
-    try:
-        rows = await client.zrevrange(_RECENT_KEY, 0, max(limit * 3, limit) - 1)
-    finally:
-        await client.aclose()
-    return [json.loads(row) for row in rows]
+    tenant_url = os.environ.get("REDIS_URL", "redis://redis:6379/0")
+    global_url = os.environ.get("SAGE_GLOBAL_REDIS_URL", "redis://redis:6379/0")
+    urls = list(dict.fromkeys([tenant_url, global_url]))
+    rows: list[str] = []
+    for redis_url in urls:
+        client = aioredis.from_url(redis_url, decode_responses=True)
+        try:
+            rows.extend(
+                await client.zrevrange(_RECENT_KEY, 0, max(limit * 3, limit) - 1)
+            )
+        finally:
+            await client.aclose()
+    decoded = [json.loads(row) for row in set(rows)]
+    decoded.sort(key=lambda item: str(item.get("recorded_at") or ""), reverse=True)
+    return decoded[: max(limit * 3, limit)]
