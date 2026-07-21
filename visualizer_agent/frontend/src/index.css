@@ -72,34 +72,35 @@
    Applied via <html data-theme="light">. Only tokens change — every component
    reads these variables, so the whole app re-themes with no per-component work. */
 :root[data-theme="light"] {
-  --bg-0: #f4f5f7;
-  --bg-1: #f4f5f7;
-  --bg-2: #ffffff;
-  --bg-3: #ffffff;
-  --bg-4: #eef0f4;
-  --bg-glass: rgba(255, 255, 255, 0.94);
+  --bg-0: #dbe5ee;
+  --bg-1: #dbe5ee;
+  --bg-2: #c4d5e5;
+  --bg-3: #cad8eb;
+  --bg-4: #bbceea;
+  --bg-glass: rgba(202, 216, 235, 0.94);
 
-  --border-1: #dcdee3;
-  --border-2: #c7cad2;
-  --border-glow: #b7bac2;
+  --border-1: #9bb3d6;
+  --border-2: #8fa9d0;
+  --border-glow: #7e99ca;
 
-  --cyan: #0e7fa8;
-  --cyan-bright: #12a0cf;
-  --cyan-dim: #0b6f95;
-  --cyan-soft: rgba(14, 127, 168, 0.08);
+  --cyan: #1692a4;
+  --cyan-bright: #5ae0d2;
+  --cyan-dim: #106f7d;
+  --cyan-soft: rgba(90, 224, 210, 0.25);
+  --blue: #3b82f6;
 
-  --green: #0f8a57;
-  --green-soft: rgba(15, 138, 87, 0.1);
-  --amber: #b5730a;
-  --amber-soft: rgba(181, 115, 10, 0.1);
-  --coral: #b8452f;
-  --red: #b8302f;
-  --red-soft: rgba(184, 48, 47, 0.1);
+  --green: #077a48;
+  --green-soft: rgba(7, 122, 72, 0.15);
+  --amber: #c47700;
+  --amber-soft: rgba(196, 119, 0, 0.15);
+  --coral: #c04930;
+  --red: #c82828;
+  --red-soft: rgba(200, 40, 40, 0.15);
 
-  --text-0: #14161a;
-  --text-1: #3c3f46;
-  --text-2: #6b6e76;
-  --text-3: #94969e;
+  --text-0: #0f1f2e;
+  --text-1: #1e3248;
+  --text-2: #435b78;
+  --text-3: #5f7896;
 
   --shadow-card: none;
   --shadow-lift: none;

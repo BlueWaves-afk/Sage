@@ -23,7 +23,9 @@ export function useApi<T>(fetcher: () => Promise<Envelope<T>>, deps: unknown[] =
       setData(env.data);
       setLive(env.live);
       setLoading(false);
-      if (!env.live) retryTimer = setTimeout(() => load(true), 5000);
+      // Continuously poll every 4 seconds so that as the Knowledge Base updates,
+      // the interface live data automatically stays up to date.
+      retryTimer = setTimeout(() => load(true), 4000);
     };
 
     load();
