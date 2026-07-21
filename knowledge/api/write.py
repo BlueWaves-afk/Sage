@@ -289,7 +289,7 @@ async def _stamp_episode_url(g, episode_name: str, url: str) -> None:
 # C7.1 — Main ingest entry point
 # ---------------------------------------------------------------------------
 
-async def ingest_signal(signal: NormalizedSignal) -> IngestResult:
+async def ingest_signal(signal: NormalizedSignal, feed_origin: str = "live") -> IngestResult:
     """
     Main entry point for all raw signals from sensory_agent.
 
@@ -306,9 +306,14 @@ async def ingest_signal(signal: NormalizedSignal) -> IngestResult:
     after the fusion model aggregates all signals for an entity.
     """
     from graphiti_core.nodes import EpisodeType
+    from knowledge.intelligence_feed import record_signal
     from knowledge.connection import _get_graphiti
     from knowledge.synthesis import synthesize
 
+    try:
+        await record_signal(signal, origin=feed_origin)
+    except Exception as exc:
+        log.warning("Recent intelligence cache write failed for %s: %s", signal.signal_id, exc)
     g = _get_graphiti()
     decision, similarity = await triage(signal)
 
@@ -828,6 +833,11 @@ async def write_procurement(data: ProcurementRecData) -> EpisodeRef:
     g   = _get_graphiti()
     now = datetime.now(timezone.utc)
 
+    # The structured ranking is the source consumed by the Response Planner.
+    # Persist it before slower graph/wiki enrichment so a valid numeric result is
+    # never hidden behind Bedrock latency or an optional narrative failure.
+    await _cache_output("procurement", data.scenario_id, data)
+
     # Build ranked summary for episode body
     ranked_lines = []
     for i, opt in enumerate(data.ranked[:5], 1):
@@ -873,7 +883,6 @@ async def write_procurement(data: ProcurementRecData) -> EpisodeRef:
         except Exception as exc:
             log.warning("Procurement wiki reconciliation failed for %s: %s", data.scenario_id, exc)
 
-    await _cache_output("procurement", data.scenario_id, data)
     import asyncio; asyncio.create_task(_force_india_brief())
     return EpisodeRef(episode_uuid=episode_uuid, scenario_id=data.scenario_id)
 

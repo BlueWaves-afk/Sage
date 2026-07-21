@@ -189,22 +189,8 @@ async def run(
 
     ranked = topsis_rank(options)
 
-    # Nova Pro rationale for top-3 (best-effort — doesn't block the write)
-    for opt in ranked[:3]:
-        opt.rationale = await _nova_rationale(opt, trigger_refinery, gap_mbpd)
-
-    # Minimal rationale for the rest (includes congestion + tanker if notable)
-    for opt in ranked[3:]:
-        extra = ""
-        if opt.congestion_delay_days > 0.05:
-            extra += f" Port congestion +{opt.congestion_delay_days:.1f}d berth wait."
-        if opt.tanker_availability < 0.8:
-            extra += f" {opt.tanker_availability_note}."
-        opt.rationale = (
-            f"{opt.supplier} ({opt.grade}) via {opt.route_via}: "
-            f"TOPSIS {opt.topsis_score:.2f}, cost ${opt.landed_cost_usd_bbl:.2f}/bbl, "
-            f"{opt.lead_time_days:.0f}d lead, compatibility {opt.grade_compatibility:.2f}.{extra}"
-        )
+    for opt in ranked:
+        opt.rationale = _deterministic_rationale(opt)
 
     data = ProcurementRecData(
         scenario_id=scenario_id,
@@ -215,7 +201,42 @@ async def run(
     await write_procurement(data)
     log.info("[procurement] wrote %d ranked options for %s (scenario %s)",
              len(ranked), trigger_refinery, scenario_id)
+    if ranked:
+        asyncio.create_task(
+            _enrich_rationales(data, trigger_refinery, gap_mbpd),
+            name=f"procurement-rationale-{scenario_id}",
+        )
     return scenario_id
+
+
+def _deterministic_rationale(opt: ProcurementOption) -> str:
+    extra = ""
+    if opt.congestion_delay_days > 0.05:
+        extra += f" Port congestion adds {opt.congestion_delay_days:.1f}d berth wait."
+    if opt.tanker_availability < 0.8:
+        extra += f" {opt.tanker_availability_note}."
+    return (
+        f"{opt.supplier} ({opt.grade}) via {opt.route_via}: "
+        f"TOPSIS {opt.topsis_score:.2f}, cost ${opt.landed_cost_usd_bbl:.2f}/bbl, "
+        f"{opt.lead_time_days:.0f}d lead, compatibility {opt.grade_compatibility:.2f}.{extra}"
+    )
+
+
+async def _enrich_rationales(
+    data: ProcurementRecData,
+    refinery: str,
+    gap_mbpd: float,
+) -> None:
+    try:
+        enriched = await asyncio.gather(*(
+            asyncio.wait_for(_nova_rationale(opt, refinery, gap_mbpd), timeout=25)
+            for opt in data.ranked[:3]
+        ))
+        for opt, rationale in zip(data.ranked[:3], enriched):
+            opt.rationale = rationale
+        await write_procurement(data)
+    except Exception as exc:
+        log.warning("[procurement] rationale enrichment skipped: %s", exc)
 
 
 async def _nova_rationale(opt: ProcurementOption, refinery: str, gap_mbpd: float) -> str:

@@ -441,7 +441,9 @@ export default function CommandCenter() {
               {intel && intel.length > 0
                 ? intel.map((s) => (
                     <div key={s.id} className="cc-feed-item">
-                      <span className={`cc-feed-src cc-src-${s.source}`}>{s.source.toUpperCase()}</span>
+                      <span className={`cc-feed-src cc-src-${s.source}`}>
+                        {s.source.toUpperCase()}{s.origin === "replay" ? " · REPLAY" : ""}
+                      </span>
                       <div className="cc-feed-body">
                         {s.source_url ? (
                           <a className="cc-feed-text cc-feed-link" href={s.source_url} target="_blank" rel="noreferrer">

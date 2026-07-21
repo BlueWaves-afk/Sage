@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAgentTrace } from "../api/hooks";
 import type { AgentTraceEvent } from "../api/types";
 import "./agenttrace.css";
@@ -31,9 +31,31 @@ function timeAgo(iso: string): string {
   return `${Math.round(m / 60)}h ago`;
 }
 
-function TraceRow({ ev }: { ev: AgentTraceEvent }) {
+const ACTIVE_TTL_MS = 120_000;
+
+function activityKey(ev: AgentTraceEvent): string {
+  return `${ev.system}:${ev.agent}:${ev.entity ?? ""}:${ev.origin ?? ""}`;
+}
+
+export function activeTraceKeys(events: AgentTraceEvent[], now = Date.now()): Set<string> {
+  const latest = new Map<string, AgentTraceEvent>();
+  for (const event of events) {
+    const key = activityKey(event);
+    const current = latest.get(key);
+    if (!current || new Date(event.ts).getTime() > new Date(current.ts).getTime()) {
+      latest.set(key, event);
+    }
+  }
+  return new Set(
+    [...latest.entries()]
+      .filter(([, event]) => event.status === "started" && now - new Date(event.ts).getTime() < ACTIVE_TTL_MS)
+      .map(([key]) => key),
+  );
+}
+
+function TraceRow({ ev, active }: { ev: AgentTraceEvent; active: boolean }) {
   return (
-    <div className={`trace-row trace-${ev.status}`}>
+    <div className={`trace-row trace-${active ? "started" : ev.status}`}>
       <span className="trace-icon">{AGENT_ICON[ev.agent] ?? "⚙️"}</span>
       <div className="trace-body">
         <div className="trace-sys">
@@ -41,7 +63,7 @@ function TraceRow({ ev }: { ev: AgentTraceEvent }) {
           {ev.origin && <span className={`trace-origin trace-origin-${ev.origin}`}>{ev.origin}</span>}
         </div>
         <div className="trace-action">
-          {ev.status === "started" && <span className="trace-spinner" />}
+          {active && <span className="trace-spinner" />}
           {ev.action}
         </div>
       </div>
@@ -53,8 +75,15 @@ function TraceRow({ ev }: { ev: AgentTraceEvent }) {
 export default function AgentTraceFeed() {
   const { events, connected } = useAgentTrace();
   const [collapsed, setCollapsed] = useState(false);
+  const [now, setNow] = useState(Date.now());
 
-  const activeCount = events.filter((e) => e.status === "started").length;
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 5_000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const activeKeys = activeTraceKeys(events, now);
+  const activeCount = activeKeys.size;
 
   return (
     <div className={`agent-trace-panel${collapsed ? " collapsed" : ""}`}>
@@ -70,7 +99,7 @@ export default function AgentTraceFeed() {
             <div className="agent-trace-empty">No agent activity yet — waiting for System 1 signals or a scenario run.</div>
           )}
           {events.map((ev, i) => (
-            <TraceRow key={`${ev.ts}-${i}`} ev={ev} />
+            <TraceRow key={`${ev.ts}-${i}`} ev={ev} active={activeKeys.has(activityKey(ev))} />
           ))}
         </div>
       )}
