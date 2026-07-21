@@ -6,6 +6,7 @@ import { IconBrain, IconCheck } from "../components/icons";
 import { api, useApi } from "../api/hooks";
 import type { GraphNode, RiskHistoryPoint, IntelSignal } from "../api/types";
 import { useVoice, voiceStore } from "../voice/useVoiceStore";
+import { currentRegion } from "../api/region";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import "./intelligence.css";
 
@@ -175,6 +176,9 @@ export default function GlobalIntelligence() {
             showRoutes={showRoutes}
             corridorRisk={corridorRisk}
             blastRadiusId={blastMode ? (blastNode?.id ?? null) : null}
+            initialView={currentRegion() === "japan"
+              ? { longitude: 137.5, latitude: 36.2, zoom: 4.1 }
+              : { longitude: 48, latitude: 24, zoom: 3.1 }}
           />
           {colorBy === "risk" && (
             <div className="gi-legend glass">

@@ -16,6 +16,7 @@ import { api } from "../api/hooks";
 import { useApi } from "../api/hooks";
 import { useVoice, voiceStore } from "../voice/useVoiceStore";
 import type { KpiKey } from "../voice/types";
+import { currentRegion } from "../api/region";
 import "./command.css";
 
 type Kpi = {
@@ -256,7 +257,9 @@ export default function CommandCenter() {
                 graph={graph ?? { nodes: [], edges: [] }}
                 selectedId={selected?.id ?? null}
                 onNodeClick={setSelected}
-                initialView={{ longitude: 52, latitude: 24, zoom: 3.3 }}
+                initialView={currentRegion() === "japan"
+                  ? { longitude: 137.5, latitude: 36.2, zoom: 4.1 }
+                  : { longitude: 52, latitude: 24, zoom: 3.3 }}
               />
               <div className="cc-map-badge glass mono">
                 <span className={`cc-map-badge-dot ${graphLive ? "on" : ""}`} />
