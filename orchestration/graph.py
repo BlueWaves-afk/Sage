@@ -195,10 +195,18 @@ async def procure_node(state: PipelineState) -> PipelineState:
     await publish_trace(system="3", agent="procurement",
                          action=f"Ranking alternative suppliers for {refinery or state['entity']}",
                          status="started", entity=refinery, origin=origin)
-    await run_procurement(
-        scenario_id=state["scenario_id"], trigger_refinery=refinery,
-        status="confirmed", gap_mbpd=gap_mbpd,
-    )
+    try:
+        await run_procurement(
+            scenario_id=state["scenario_id"], trigger_refinery=refinery,
+            status="confirmed", gap_mbpd=gap_mbpd,
+        )
+    except Exception as exc:
+        await publish_trace(
+            system="3", agent="procurement",
+            action=f"Procurement ranking failed: {type(exc).__name__}",
+            status="error", entity=refinery, origin=origin,
+        )
+        raise
     state["procurement_done"] = True
     _log_stage(state, "PROCURE")
     await publish_trace(system="3", agent="procurement",
@@ -215,13 +223,21 @@ async def reserve_node(state: PipelineState) -> PipelineState:
     await publish_trace(system="4", agent="reserve",
                          action=f"Optimising SPR drawdown schedule for {state['entity']}",
                          status="started", entity=state["entity"], origin=origin)
-    await run_spr(
-        scenario_id=state["scenario_id"],
-        gap_mbpd=float(scenario.get("disruption_fraction", 1.0)) * _hormuz_mbpd(),
-        gap_duration_days=int(scenario.get("disruption_days", 30)),
-        status="confirmed",
-        escalation_profile=scenario.get("escalation_profile", "constant"),
-    )
+    try:
+        await run_spr(
+            scenario_id=state["scenario_id"],
+            gap_mbpd=float(scenario.get("disruption_fraction", 1.0)) * _hormuz_mbpd(),
+            gap_duration_days=int(scenario.get("disruption_days", 30)),
+            status="confirmed",
+            escalation_profile=scenario.get("escalation_profile", "constant"),
+        )
+    except Exception as exc:
+        await publish_trace(
+            system="4", agent="reserve",
+            action=f"Reserve optimisation failed: {type(exc).__name__}",
+            status="error", entity=state["entity"], origin=origin,
+        )
+        raise
     state["reserve_done"] = True
     _log_stage(state, "RESERVE")
     await publish_trace(system="4", agent="reserve",

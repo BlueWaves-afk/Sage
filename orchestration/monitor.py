@@ -67,6 +67,7 @@ _ELIGIBLE_TYPES = {
 _eligible_names: set[str] = set()
 _eligible_ts: float = 0.0
 _ELIGIBLE_TTL_S = 120.0
+_warm_started = False
 
 
 async def _refresh_eligible() -> None:
@@ -124,11 +125,24 @@ async def run_monitor() -> None:
 
 
 async def _poll() -> None:
+    global _warm_started
     scores = await get_risk_scores()
     client = aioredis.from_url(REDIS_URL, decode_responses=True)
     await _refresh_eligible()
 
     try:
+        if not _warm_started:
+            for view in scores:
+                if view.score >= CRITICAL_THRESHOLD:
+                    _fired_bands[view.entity] = "critical"
+                elif view.score >= ACTION_THRESHOLD:
+                    _fired_bands[view.entity] = "action"
+                elif view.score >= SANDBOX_FORK_THRESHOLD:
+                    _fired_bands[view.entity] = "elevated"
+            _warm_started = True
+            log.info("[monitor] warm-started from %d existing risk states", len(scores))
+            return
+
         for view in scores:
             entity = view.entity
             score  = view.score

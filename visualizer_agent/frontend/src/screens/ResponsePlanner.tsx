@@ -143,10 +143,19 @@ export default function ResponsePlanner() {
         <Panel
           className="rp-proc"
           title="Alternative Procurement — TOPSIS Ranking"
-          right={<Badge tone={pLive ? "green" : "muted"}>{pLive ? "LIVE" : "AWAITING RUN"}</Badge>}
+          right={
+            <Badge tone={options.length > 0 ? "green" : "muted"}>
+              {options.length > 0 ? "LIVE" : pLive ? "NO EXECUTABLE OPTIONS" : "AWAITING RUN"}
+            </Badge>
+          }
         >
           {!pLive ? (
             <SkeletonBlock lines={4} note="TOPSIS ranking appears after System 3 runs against a scenario" />
+          ) : options.length === 0 ? (
+            <div className="sim-empty">
+              The latest stored run produced no executable procurement options. Run Demo Mode or a
+              scenario with downstream procurement enabled; failures now appear explicitly in Agent Activity.
+            </div>
           ) : (
           <div className="rp-proc-body">
             <div className="rp-radar-wrap">
