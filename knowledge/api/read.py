@@ -912,14 +912,15 @@ async def get_full_graph(placed_only: bool = True) -> GraphView:
         log.warning("get_full_graph: registry unavailable: %s", exc)
 
     bundle_by_name: dict[str, tuple[str, dict[str, Any]]] = {}
+    active_bundle = None
     try:
         from knowledge.context.loader import load_bundle
 
         bundle_path = os.environ.get(
             "SAGE_BUNDLE_PATH", "data/india-energy-2026.context"
         )
-        bundle = load_bundle(bundle_path)
-        for bundle_type, rows in bundle.node_rows.items():
+        active_bundle = load_bundle(bundle_path)
+        for bundle_type, rows in active_bundle.node_rows.items():
             for row in rows:
                 canonical_name = str(row.get("canonical_name") or "").strip()
                 if canonical_name:
@@ -998,6 +999,68 @@ async def get_full_graph(placed_only: bool = True) -> GraphView:
             best_by_name[name] = node
 
     nodes = list(best_by_name.values())
+
+    if active_bundle is not None:
+        existing_names = {node.name for node in nodes}
+        for bundle_type, rows in active_bundle.node_rows.items():
+            for row in rows:
+                name = str(row.get("canonical_name") or "").strip()
+                if not name or name in existing_names:
+                    continue
+                coords = None
+                if row.get("lat") not in (None, "") and row.get("lon") not in (None, ""):
+                    coords = {"lat": float(row["lat"]), "lon": float(row["lon"])}
+                else:
+                    coords = resolve_coordinates(
+                        name=name,
+                        entity_type=bundle_type,
+                        country=row.get("country"),
+                        origin=row.get("origin"),
+                    )
+                if placed_only and coords is None:
+                    continue
+                nodes.append(
+                    GraphNodeView(
+                        id=str(row.get("entity_id") or name),
+                        name=name,
+                        type=bundle_type,
+                        lat=coords["lat"] if coords else None,
+                        lon=coords["lon"] if coords else None,
+                        score=risk_by_name.get(name, 0.0),
+                        band=_band_from_score(risk_by_name.get(name, 0.0)),
+                        degree=0,
+                        prov_tier=row.get("tier"),
+                        prov_source_label=row.get("source"),
+                        prov_as_of=row.get("as_of"),
+                        prov_notes=row.get("notes"),
+                    )
+                )
+                existing_names.add(name)
+
+        bundle_name_by_id = {
+            str(row.get("entity_id")): str(row.get("canonical_name") or "")
+            for rows in active_bundle.node_rows.values()
+            for row in rows
+        }
+        node_id_by_name = {node.name: node.id for node in nodes}
+        for relation, rows in active_bundle.edge_rows.items():
+            for row in rows:
+                source_name = bundle_name_by_id.get(str(row.get("src_entity_id")), "")
+                target_name = bundle_name_by_id.get(str(row.get("dst_entity_id")), "")
+                source_id = node_id_by_name.get(source_name)
+                target_id = node_id_by_name.get(target_name)
+                if not source_id or not target_id:
+                    continue
+                structural_edges.append(
+                    GraphEdgeView(source=source_id, target=target_id, relation=relation)
+                )
+                degree[source_id] = degree.get(source_id, 0) + 1
+                degree[target_id] = degree.get(target_id, 0) + 1
+
+        nodes = [
+            node.model_copy(update={"degree": max(node.degree, degree.get(node.id, 0))})
+            for node in nodes
+        ]
 
     # Drop edges whose endpoints didn't survive the node filter/dedup, and remap
     # collapsed-duplicate uuids to the surviving node's uuid (by name).
