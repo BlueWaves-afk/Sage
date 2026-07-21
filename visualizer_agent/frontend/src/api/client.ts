@@ -150,10 +150,12 @@ export const api = {
 
   logScenarioOutcome: (
     scenarioId: string,
-    body: { gap_mbpd?: number; price_impact_high?: number; spr_depletion_days?: number; gdp_proxy_impact_pct?: number; note?: string }
-  ) => post<{ ok: boolean; error: Record<string, number>; calibration: unknown }>(
+    body: import("./types").ScenarioOutcomeInput
+  ) => post<{ ok: boolean; error: Record<string, number>; costs: unknown; calibration: unknown }>(
     `/api/scenario/${encodeURIComponent(scenarioId)}/outcome`, body
   ),
+
+  realizedSavings: () => get<import("./types").RealizedSavingsSummary>("/api/savings/realized"),
 
   scenarioCalibration: () => get<CalibrationFactors>("/api/scenario/calibration"),
 

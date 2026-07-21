@@ -5,11 +5,11 @@ import type { ScenarioAccuracy, CalibrationFactors } from "../../api/types";
 
 // Static LOCO-5 per-crisis AUC values from CALIBRATION_REPORT.md
 const LOCO_CRISES: { label: string; year: number; auc: number }[] = [
-  { label: "Abqaiq attack", year: 2019, auc: 0.7800 },
-  { label: "COVID-19 demand", year: 2020, auc: 0.8150 },
-  { label: "Suez blockage", year: 2021, auc: 0.8644 },
+  { label: "Gulf tanker attacks", year: 2019, auc: 0.7500 },
+  { label: "Suez blockage", year: 2021, auc: 0.6667 },
   { label: "Ukraine invasion", year: 2022, auc: 0.9545 },
-  { label: "Houthi attacks", year: 2023, auc: 0.8194 },
+  { label: "US–Iran standoff", year: 2025, auc: 1.0000 },
+  { label: "Hormuz held out", year: 2026, auc: 0.8333 },
 ];
 
 function LocoBarchart() {
@@ -266,10 +266,14 @@ export default function LearningTab() {
                 <div className="sim-kpi-label">Realized</div>
                 <div className="sim-kpi-value c-cyan">{scenario.realized}</div>
               </div>
+              <div className="sim-kpi">
+                <div className="sim-kpi-label">Outcome Coverage</div>
+                <div className="sim-kpi-value">{(scenario.coverage * 100).toFixed(1)}<span className="sim-kpi-unit">%</span></div>
+              </div>
               {Object.entries(scenario.mape).map(([axis, m]) => (
                 <div className="sim-kpi" key={axis}>
-                  <div className="sim-kpi-label">{axis.replace(/_/g, " ")} MAPE</div>
-                  <div className="sim-kpi-value c-amber">{(m.mape * 100).toFixed(1)}<span className="sim-kpi-unit">% (n={m.n})</span></div>
+                  <div className="sim-kpi-label">{axis.replace(/_/g, " ")} sMAPE</div>
+                  <div className="sim-kpi-value c-amber">{(m.smape * 100).toFixed(1)}<span className="sim-kpi-unit">% · MAE {m.mae} · n={m.n}</span></div>
                 </div>
               ))}
             </div>
@@ -297,6 +301,52 @@ export default function LearningTab() {
             No realized outcomes logged yet. Use "Log actual outcome" on a completed scenario's Impact tab
             to start building scenario-level accuracy.
           </p>
+        )}
+      </div>
+
+      <div className="sim-section">
+        <div className="label-sm">
+          Verified Transactional Savings
+          <span className="mono" style={{ marginLeft: 8, fontSize: 9, color: "var(--text-3)" }}>
+            actual baseline procurement cost − actual paid cost; excludes modelled avoided loss
+          </span>
+        </div>
+        <div className="sim-kpi-strip">
+          <div className="sim-kpi">
+            <div className="sim-kpi-label">Realized Savings</div>
+            <div className="sim-kpi-value c-cyan">${((scenario?.savings.realized_savings_usd ?? 0) / 1_000_000).toFixed(2)}<span className="sim-kpi-unit">M</span></div>
+          </div>
+          <div className="sim-kpi">
+            <div className="sim-kpi-label">Verified Scenarios</div>
+            <div className="sim-kpi-value">{scenario?.savings.verified_scenarios ?? 0}</div>
+          </div>
+          <div className="sim-kpi">
+            <div className="sim-kpi-label">Baseline Spend</div>
+            <div className="sim-kpi-value">${((scenario?.savings.baseline_procurement_cost_usd ?? 0) / 1_000_000).toFixed(2)}<span className="sim-kpi-unit">M</span></div>
+          </div>
+          <div className="sim-kpi">
+            <div className="sim-kpi-label">Actual Spend</div>
+            <div className="sim-kpi-value">${((scenario?.savings.actual_procurement_cost_usd ?? 0) / 1_000_000).toFixed(2)}<span className="sim-kpi-unit">M</span></div>
+          </div>
+        </div>
+        {(scenario?.savings.records.length ?? 0) > 0 && (
+          <div className="sim-table-wrap" style={{ marginTop: 10 }}>
+            <table className="sim-table">
+              <thead><tr><th>Scenario</th><th>Entity</th><th>Baseline</th><th>Actual</th><th>Realized</th><th>Evidence</th></tr></thead>
+              <tbody>
+                {scenario?.savings.records.map((record) => (
+                  <tr key={record.scenario_id}>
+                    <td className="mono">{record.scenario_id.slice(0, 12)}</td>
+                    <td>{record.entity}</td>
+                    <td className="mono">${(record.baseline_procurement_cost_usd / 1_000_000).toFixed(2)}M</td>
+                    <td className="mono">${(record.actual_procurement_cost_usd / 1_000_000).toFixed(2)}M</td>
+                    <td className="mono c-cyan">${(record.realized_savings_usd / 1_000_000).toFixed(2)}M</td>
+                    <td><a href={record.evidence_url} target="_blank" rel="noreferrer">source ↗</a></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 

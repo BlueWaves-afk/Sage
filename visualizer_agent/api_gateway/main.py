@@ -15,12 +15,51 @@ import logging
 import os
 
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Literal
 
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 
 from fastapi import HTTPException
+from pydantic import BaseModel, Field, HttpUrl, model_validator
+
+
+class ScenarioOutcomeEvidence(BaseModel):
+    observed_from: str
+    observed_to: str
+    evidence_url: HttpUrl
+    notes: str = ""
+
+
+class ScenarioOutcomeCosts(BaseModel):
+    baseline_procurement_cost_usd: float = Field(ge=0)
+    actual_procurement_cost_usd: float = Field(ge=0)
+    baseline_basis: str = Field(min_length=3)
+    evidence_url: HttpUrl
+
+
+class ScenarioOutcomeRequest(BaseModel):
+    gap_mbpd: float | None = Field(default=None, ge=0)
+    price_impact_high: float | None = Field(default=None)
+    spr_depletion_days: float | None = Field(default=None, ge=0)
+    gdp_proxy_impact_pct: float | None = None
+    source: Literal["analyst", "eia", "ais", "government", "operator"]
+    evidence: ScenarioOutcomeEvidence
+    costs: ScenarioOutcomeCosts | None = None
+
+    @model_validator(mode="after")
+    def require_realized_axis(self) -> "ScenarioOutcomeRequest":
+        if all(
+            value is None
+            for value in (
+                self.gap_mbpd,
+                self.price_impact_high,
+                self.spr_depletion_days,
+                self.gdp_proxy_impact_pct,
+            )
+        ):
+            raise ValueError("at least one realized field is required")
+        return self
 
 from knowledge.api.read import (
     copilot_query,
@@ -1296,7 +1335,7 @@ async def scenario_accuracy() -> dict:
 
 
 @app.post("/api/scenario/{scenario_id}/outcome")
-async def scenario_log_outcome(scenario_id: str, body: dict) -> dict:
+async def scenario_log_outcome(scenario_id: str, body: ScenarioOutcomeRequest) -> dict:
     """
     Analyst-entered realized outcome for a scenario ("what actually happened").
     Always tagged source="analyst" so provenance is unambiguous in the UI.
@@ -1310,20 +1349,36 @@ async def scenario_log_outcome(scenario_id: str, body: dict) -> dict:
     if out is None:
         raise HTTPException(status_code=404, detail="scenario_id not found or expired")
 
+    body_data = body.model_dump(mode="json")
     realized = {
-        k: body.get(k) for k in
+        k: body_data.get(k) for k in
         ("gap_mbpd", "price_impact_high", "spr_depletion_days", "gdp_proxy_impact_pct")
-        if body.get(k) is not None
+        if body_data.get(k) is not None
     }
-    if not realized:
-        raise HTTPException(status_code=422, detail="at least one realized field is required")
-
-    updated = record_scenario_realized(scenario_id, realized, source="analyst")
+    updated = record_scenario_realized(
+        scenario_id,
+        realized,
+        source=body.source,
+        evidence=body_data["evidence"],
+        costs=body_data.get("costs"),
+    )
     if updated is None:
         raise HTTPException(status_code=404, detail="no matching prediction record for this scenario_id")
 
     calib = await maybe_calibrate_corridor(out.get("trigger_entity", ""))
-    return {"ok": True, "error": updated.get("error"), "calibration": calib}
+    return {
+        "ok": True,
+        "error": updated.get("error"),
+        "costs": updated.get("costs"),
+        "calibration": calib,
+    }
+
+
+@app.get("/api/savings/realized")
+async def realized_savings() -> dict:
+    """Verified transactional savings; excludes modelled avoided-loss estimates."""
+    from knowledge.feedback import get_realized_savings_summary
+    return get_realized_savings_summary()
 
 
 @app.get("/api/scenario/calibration")

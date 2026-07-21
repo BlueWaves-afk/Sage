@@ -38,10 +38,14 @@ get cited, episode-backed answers.
 from __future__ import annotations
 
 import json
+import logging
 import os
+import math
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
+
+log = logging.getLogger(__name__)
 
 FEEDBACK_LOG = Path(os.environ.get("FEEDBACK_LOG_PATH", "demo_cache/feedback_log.jsonl"))
 RETRAIN_THRESHOLD = 50   # re-trigger calibration after this many feedback records
@@ -258,12 +262,17 @@ def record_scenario_prediction(
     _append_scenario_record(record)
 
 
-def record_scenario_realized(scenario_id: str, realized: dict, source: str) -> Optional[dict]:
+def record_scenario_realized(
+    scenario_id: str,
+    realized: dict,
+    source: str,
+    evidence: Optional[dict] = None,
+    costs: Optional[dict] = None,
+) -> Optional[dict]:
     """
-    Fill in the realized half of a prediction record and compute per-axis error.
-    `source` in {"eia", "ais", "analyst"} — always shown in the UI so provenance
-    of "what actually happened" is never ambiguous. Returns the updated record,
-    or None if the scenario_id has no matching prediction.
+    Upsert the realized half of a prediction record and compute per-axis error.
+    Evidence and cost fields keep the result auditable. Transactional savings are
+    only marked realized when both baseline and actual costs are supplied.
     """
     if not SCENARIO_OUTCOMES_LOG.exists():
         return None
@@ -275,7 +284,7 @@ def record_scenario_realized(scenario_id: str, realized: dict, source: str) -> O
         if not line.strip():
             continue
         rec = json.loads(line)
-        if rec["scenario_id"] == scenario_id and rec.get("realized") is None:
+        if rec["scenario_id"] == scenario_id:
             pred = rec["predicted"]
             error = {}
             for k, v in realized.items():
@@ -285,11 +294,31 @@ def record_scenario_realized(scenario_id: str, realized: dict, source: str) -> O
             rec["source"] = source
             rec["realized_at"] = datetime.now(timezone.utc).isoformat()
             rec["error"] = error
+            rec["evidence"] = evidence or {}
+            rec["costs"] = _normalise_costs(costs)
             updated = rec
         out_lines.append(json.dumps(rec))
     if updated is not None:
         SCENARIO_OUTCOMES_LOG.write_text("\n".join(out_lines) + "\n")
     return updated
+
+
+def _normalise_costs(costs: Optional[dict]) -> Optional[dict]:
+    if not costs:
+        return None
+    baseline = costs.get("baseline_procurement_cost_usd")
+    actual = costs.get("actual_procurement_cost_usd")
+    if baseline is None or actual is None:
+        return None
+    baseline_value = float(baseline)
+    actual_value = float(actual)
+    return {
+        "baseline_procurement_cost_usd": baseline_value,
+        "actual_procurement_cost_usd": actual_value,
+        "realized_savings_usd": baseline_value - actual_value,
+        "baseline_basis": costs.get("baseline_basis", ""),
+        "evidence_url": costs.get("evidence_url", ""),
+    }
 
 
 def _append_scenario_record(record: dict) -> None:
@@ -309,14 +338,47 @@ def get_scenario_accuracy() -> Optional[dict]:
     records = [json.loads(l) for l in SCENARIO_OUTCOMES_LOG.read_text().splitlines() if l.strip()]
     realized = [r for r in records if r.get("realized") is not None]
     if not realized:
-        return {"total_predictions": len(records), "realized": 0, "mape": {}, "per_corridor": {}}
+        return {
+            "total_predictions": len(records),
+            "realized": 0,
+            "coverage": 0.0,
+            "mape": {},
+            "per_corridor": {},
+            "records": [],
+            "savings": get_realized_savings_summary(records),
+        }
 
     axes = ["gap_mbpd", "price_impact_high", "spr_depletion_days", "gdp_proxy_impact_pct"]
     mape: dict[str, dict] = {}
     for axis in axes:
-        errs = [abs(r["error"][axis]) for r in realized if r.get("error", {}).get(axis) is not None]
-        if errs:
-            mape[axis] = {"mape": round(sum(errs) / len(errs), 4), "n": len(errs)}
+        pairs = [
+            (float(r["predicted"][axis]), float(r["realized"][axis]))
+            for r in realized
+            if r.get("predicted", {}).get(axis) is not None
+            and r.get("realized", {}).get(axis) is not None
+        ]
+        if pairs:
+            absolute_errors = [abs(actual - predicted) for predicted, actual in pairs]
+            signed_errors = [actual - predicted for predicted, actual in pairs]
+            percentage_errors = [
+                abs(actual - predicted) / abs(predicted)
+                for predicted, actual in pairs
+                if predicted != 0
+            ]
+            smape = [
+                2 * abs(actual - predicted) / (abs(actual) + abs(predicted))
+                for predicted, actual in pairs
+                if actual != 0 or predicted != 0
+            ]
+            mape[axis] = {
+                "mape": round(sum(percentage_errors) / len(percentage_errors), 4)
+                if percentage_errors else None,
+                "smape": round(sum(smape) / len(smape), 4) if smape else 0.0,
+                "mae": round(sum(absolute_errors) / len(absolute_errors), 4),
+                "rmse": round(math.sqrt(sum(error**2 for error in signed_errors) / len(pairs)), 4),
+                "bias": round(sum(signed_errors) / len(signed_errors), 4),
+                "n": len(pairs),
+            }
 
     per_corridor: dict[str, dict] = {}
     by_entity: dict[str, list] = {}
@@ -334,8 +396,46 @@ def get_scenario_accuracy() -> Optional[dict]:
     return {
         "total_predictions": len(records),
         "realized": len(realized),
+        "coverage": round(len(realized) / len(records), 4) if records else 0.0,
         "mape": mape,
         "per_corridor": per_corridor,
+        "records": list(reversed(realized[-50:])),
+        "savings": get_realized_savings_summary(records),
+    }
+
+
+def get_realized_savings_summary(records: Optional[list[dict]] = None) -> dict:
+    if records is None:
+        if not SCENARIO_OUTCOMES_LOG.exists():
+            records = []
+        else:
+            records = [
+                json.loads(line)
+                for line in SCENARIO_OUTCOMES_LOG.read_text().splitlines()
+                if line.strip()
+            ]
+    verified = [record for record in records if record.get("costs")]
+    total = sum(record["costs"]["realized_savings_usd"] for record in verified)
+    baseline = sum(record["costs"]["baseline_procurement_cost_usd"] for record in verified)
+    actual = sum(record["costs"]["actual_procurement_cost_usd"] for record in verified)
+    return {
+        "realized_savings_usd": round(total, 2),
+        "baseline_procurement_cost_usd": round(baseline, 2),
+        "actual_procurement_cost_usd": round(actual, 2),
+        "verified_scenarios": len(verified),
+        "positive_savings_scenarios": sum(
+            1 for record in verified if record["costs"]["realized_savings_usd"] > 0
+        ),
+        "records": [
+            {
+                "scenario_id": record["scenario_id"],
+                "entity": record["entity"],
+                "realized_at": record.get("realized_at"),
+                "source": record.get("source"),
+                **record["costs"],
+            }
+            for record in reversed(verified[-50:])
+        ],
     }
 
 

@@ -53,6 +53,17 @@ export default function ImpactTab({ scenario, onWikilink }: Props) {
   const [outcomeOpen, setOutcomeOpen] = useState(false);
   const [realGap, setRealGap] = useState("");
   const [realPrice, setRealPrice] = useState("");
+  const [realSpr, setRealSpr] = useState("");
+  const [realGdp, setRealGdp] = useState("");
+  const [outcomeSource, setOutcomeSource] = useState<"analyst" | "eia" | "ais" | "government" | "operator">("analyst");
+  const [observedFrom, setObservedFrom] = useState("");
+  const [observedTo, setObservedTo] = useState("");
+  const [evidenceUrl, setEvidenceUrl] = useState("");
+  const [outcomeNotes, setOutcomeNotes] = useState("");
+  const [baselineCost, setBaselineCost] = useState("");
+  const [actualCost, setActualCost] = useState("");
+  const [baselineBasis, setBaselineBasis] = useState("");
+  const [costEvidenceUrl, setCostEvidenceUrl] = useState("");
   const [outcomeMsg, setOutcomeMsg] = useState<string | null>(null);
   const [mitigated, setMitigated] = useState<MitigatedResult | null>(null);
   const [mitigating, setMitigating] = useState(false);
@@ -66,15 +77,41 @@ export default function ImpactTab({ scenario, onWikilink }: Props) {
   }
 
   async function submitOutcome() {
-    const body: Record<string, number> = {};
+    const body: import("../../api/types").ScenarioOutcomeInput = {
+      source: outcomeSource,
+      evidence: {
+        observed_from: observedFrom,
+        observed_to: observedTo,
+        evidence_url: evidenceUrl,
+        notes: outcomeNotes,
+      },
+    };
     if (realGap.trim()) body.gap_mbpd = parseFloat(realGap);
     if (realPrice.trim()) body.price_impact_high = parseFloat(realPrice);
-    if (Object.keys(body).length === 0) return;
+    if (realSpr.trim()) body.spr_depletion_days = parseFloat(realSpr);
+    if (realGdp.trim()) body.gdp_proxy_impact_pct = parseFloat(realGdp);
+    if (baselineCost.trim() && actualCost.trim() && baselineBasis.trim() && costEvidenceUrl.trim()) {
+      body.costs = {
+        baseline_procurement_cost_usd: parseFloat(baselineCost),
+        actual_procurement_cost_usd: parseFloat(actualCost),
+        baseline_basis: baselineBasis,
+        evidence_url: costEvidenceUrl,
+      };
+    }
+    const hasOutcome = [realGap, realPrice, realSpr, realGdp].some((value) => value.trim());
+    if (!hasOutcome || !observedFrom || !observedTo || !evidenceUrl) {
+      setOutcomeMsg("Add at least one outcome, observation dates, and an evidence URL.");
+      return;
+    }
     const env = await api.logScenarioOutcome(scenario.scenario_id, body);
     if (env.data?.ok) {
-      setOutcomeMsg("Logged — thank you. Accuracy panel (Learning tab) updated.");
+      setOutcomeMsg(env.data.costs
+        ? "Verified outcome and realized savings logged. Learning tab updated."
+        : "Verified outcome logged. Learning tab updated.");
       setOutcomeOpen(false);
-      setRealGap(""); setRealPrice("");
+      setRealGap(""); setRealPrice(""); setRealSpr(""); setRealGdp("");
+      setObservedFrom(""); setObservedTo(""); setEvidenceUrl(""); setOutcomeNotes("");
+      setBaselineCost(""); setActualCost(""); setBaselineBasis(""); setCostEvidenceUrl("");
     } else {
       setOutcomeMsg("Failed to log outcome.");
     }
@@ -98,12 +135,40 @@ export default function ImpactTab({ scenario, onWikilink }: Props) {
         </button>
       </div>
       {outcomeOpen && (
-        <div className="sim-callout" style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <div className="label-sm">What actually happened? (analyst-logged, feeds the Learning tab)</div>
-          <div style={{ display: "flex", gap: 8 }}>
+        <div className="sim-callout" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div className="label-sm">Verified outcome evidence</div>
+          <div style={{ fontSize: 10, color: "var(--text-3)" }}>
+            Realized metrics require dated source evidence. Savings require an actual baseline and paid cost;
+            modelled avoided losses are intentionally excluded.
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 8 }}>
             <input className="sim-input" placeholder="Realized gap (mbpd)" value={realGap} onChange={(e) => setRealGap(e.target.value)} style={{ flex: 1 }} />
             <input className="sim-input" placeholder="Realized price high ($/bbl)" value={realPrice} onChange={(e) => setRealPrice(e.target.value)} style={{ flex: 1 }} />
-            <button className="sim-toggle on" onClick={submitOutcome}>Submit</button>
+            <input className="sim-input" placeholder="Actual SPR depletion (days)" value={realSpr} onChange={(e) => setRealSpr(e.target.value)} />
+            <input className="sim-input" placeholder="Actual GDP impact (%)" value={realGdp} onChange={(e) => setRealGdp(e.target.value)} />
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 2fr", gap: 8 }}>
+            <select className="sim-input" value={outcomeSource} onChange={(e) => setOutcomeSource(e.target.value as typeof outcomeSource)}>
+              <option value="analyst">Analyst verified</option>
+              <option value="eia">EIA</option>
+              <option value="ais">AIS</option>
+              <option value="government">Government</option>
+              <option value="operator">Operator</option>
+            </select>
+            <input className="sim-input" type="date" aria-label="Observed from" value={observedFrom} onChange={(e) => setObservedFrom(e.target.value)} />
+            <input className="sim-input" type="date" aria-label="Observed to" value={observedTo} onChange={(e) => setObservedTo(e.target.value)} />
+            <input className="sim-input" type="url" placeholder="Outcome evidence URL" value={evidenceUrl} onChange={(e) => setEvidenceUrl(e.target.value)} />
+          </div>
+          <textarea className="sim-input" placeholder="Verification notes and measurement method" value={outcomeNotes} onChange={(e) => setOutcomeNotes(e.target.value)} rows={2} />
+          <div className="label-sm" style={{ marginTop: 4 }}>Optional realized procurement savings</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 2fr 2fr", gap: 8 }}>
+            <input className="sim-input" type="number" min="0" placeholder="Baseline cost (USD)" value={baselineCost} onChange={(e) => setBaselineCost(e.target.value)} />
+            <input className="sim-input" type="number" min="0" placeholder="Actual paid cost (USD)" value={actualCost} onChange={(e) => setActualCost(e.target.value)} />
+            <input className="sim-input" placeholder="Baseline basis (budget, prior contract...)" value={baselineBasis} onChange={(e) => setBaselineBasis(e.target.value)} />
+            <input className="sim-input" type="url" placeholder="Invoice / award evidence URL" value={costEvidenceUrl} onChange={(e) => setCostEvidenceUrl(e.target.value)} />
+          </div>
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <button className="sim-toggle on" onClick={submitOutcome}>Verify and record</button>
           </div>
         </div>
       )}

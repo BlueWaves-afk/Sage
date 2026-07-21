@@ -313,9 +313,80 @@ export interface ScenarioAccuracy {
   scenario: {
     total_predictions: number;
     realized: number;
-    mape: Record<string, { mape: number; n: number }>;
+    coverage: number;
+    mape: Record<string, {
+      mape: number | null;
+      smape: number;
+      mae: number;
+      rmse: number;
+      bias: number;
+      n: number;
+    }>;
     per_corridor: Record<string, { n: number; mape_gap: number | null; mape_price: number | null }>;
+    records: ScenarioOutcomeRecord[];
+    savings: RealizedSavingsSummary;
   } | null;
+}
+
+export interface ScenarioOutcomeRecord {
+  scenario_id: string;
+  entity: string;
+  predicted: Record<string, number | null>;
+  realized: Record<string, number | null>;
+  source: string;
+  realized_at: string;
+  evidence?: {
+    observed_from?: string;
+    observed_to?: string;
+    evidence_url?: string;
+    notes?: string;
+  };
+  costs?: {
+    baseline_procurement_cost_usd: number;
+    actual_procurement_cost_usd: number;
+    realized_savings_usd: number;
+    baseline_basis: string;
+    evidence_url: string;
+  } | null;
+}
+
+export interface ScenarioOutcomeInput {
+  gap_mbpd?: number;
+  price_impact_high?: number;
+  spr_depletion_days?: number;
+  gdp_proxy_impact_pct?: number;
+  source: "analyst" | "eia" | "ais" | "government" | "operator";
+  evidence: {
+    observed_from: string;
+    observed_to: string;
+    evidence_url: string;
+    notes?: string;
+  };
+  costs?: {
+    baseline_procurement_cost_usd: number;
+    actual_procurement_cost_usd: number;
+    baseline_basis: string;
+    evidence_url: string;
+  };
+}
+
+export interface RealizedSavingsSummary {
+  realized_savings_usd: number;
+  baseline_procurement_cost_usd: number;
+  actual_procurement_cost_usd: number;
+  verified_scenarios: number;
+  positive_savings_scenarios: number;
+  records: Array<{
+    scenario_id: string;
+    entity: string;
+    realized_at: string;
+    source: string;
+    baseline_procurement_cost_usd: number;
+    actual_procurement_cost_usd: number;
+    realized_savings_usd: number;
+    baseline_basis: string;
+    evidence_url: string;
+  }>;
 }
 
 export interface CalibrationFactors {
