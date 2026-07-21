@@ -224,6 +224,7 @@ export interface IntelSignal {
   source_url: string;
   entities: string[];
   recorded_at: string;
+  origin: "live" | "replay";
 }
 
 export interface RiskHistoryPoint {

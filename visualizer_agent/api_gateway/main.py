@@ -1296,7 +1296,7 @@ async def _demo_inject_signals(entity: str) -> None:
 
     for sig in signals:
         try:
-            await ingest_signal(sig)
+            await ingest_signal(sig, feed_origin="replay")
         except Exception as exc:
             log.warning("[demo] ingest_signal failed for %s (non-fatal): %s", sig.source, exc)
 

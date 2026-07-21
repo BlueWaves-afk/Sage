@@ -636,6 +636,7 @@ class IntelSignal(BaseModel):
     source_url: str = ""   # clickable link to the original source
     entities: list[str] = []
     recorded_at: str = ""
+    origin: str = "live"
 
 
 _SOURCE_FALLBACK: dict[str, str] = {
@@ -707,8 +708,33 @@ async def get_recent_intelligence(limit: int = 15) -> list[IntelSignal]:
         f"       e.source, e.created_at, e.source_url "
         f"ORDER BY e.created_at DESC LIMIT {scan}"
     )
+    from knowledge.intelligence_feed import read_recent_signals
+
     out: list[IntelSignal] = []
     seen: set[str] = set()
+    try:
+        recent = await read_recent_signals(limit)
+    except Exception as exc:
+        log.warning("Recent intelligence cache unavailable: %s", exc)
+        recent = []
+    for item in recent:
+        source = str(item.get("source") or "unknown")
+        head = str(item.get("headline") or "signal")
+        key = head.lower().strip()[:80]
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(
+            IntelSignal(
+                id=str(item.get("id") or ""),
+                source=source,
+                headline=head,
+                detail=str(item.get("detail") or head)[:280],
+                source_url=str(item.get("source_url") or _SOURCE_FALLBACK.get(source.lower(), "")),
+                recorded_at=str(item.get("recorded_at") or ""),
+                origin=str(item.get("origin") or "live"),
+            )
+        )
     for r in rows or []:
         sd = r.get("e.source_description") or r.get("sd", "") or ""
         src = r.get("e.source") or r.get("src", "") or ""
@@ -733,10 +759,11 @@ async def get_recent_intelligence(limit: int = 15) -> list[IntelSignal]:
             detail=content[:280],
             source_url=raw_url,
             recorded_at=str(r.get("e.created_at") or r.get("created_at") or ""),
+            origin="live",
         ))
         if len(out) >= limit:
             break
-    return out
+    return out[:limit]
 
 
 async def get_evidence_for(entity: str, limit: int = 12) -> list[IntelSignal]:
