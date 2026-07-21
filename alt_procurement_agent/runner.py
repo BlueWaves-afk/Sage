@@ -34,7 +34,12 @@ def _load_economics_params() -> dict:
         return defaults
 
 from contracts.outputs import ProcurementOption, ProcurementRecData
-from knowledge.api.read import get_available_suppliers, get_grade_specs, get_routes
+from knowledge.api.read import (
+    GradeSpecView,
+    get_available_suppliers,
+    get_grade_specs,
+    get_routes,
+)
 from knowledge.api.write import write_procurement
 
 from alt_procurement_agent.grade import best_compatibility
@@ -140,6 +145,39 @@ def _candidate_compatibility(
     return best_compatibility(api_gravity, sulfur_pct, assay_specs)
 
 
+def _bundle_grade_specs(refinery: str) -> list[GradeSpecView]:
+    """Deterministic fallback when CONFIGURED_FOR graph edges are unavailable."""
+    from knowledge.context.loader import load_bundle
+
+    bundle = load_bundle(_bundle_path())
+    node_by_id = {
+        str(row["entity_id"]): row
+        for rows in bundle.node_rows.values()
+        for row in rows
+    }
+    refinery_ids = {
+        entity_id
+        for entity_id, row in node_by_id.items()
+        if row.get("canonical_name") == refinery
+    }
+    specs: list[GradeSpecView] = []
+    for edge in bundle.edge_rows.get("CONFIGURED_FOR", []):
+        if edge.get("src_entity_id") not in refinery_ids:
+            continue
+        grade = node_by_id.get(str(edge.get("dst_entity_id")), {})
+        specs.append(
+            GradeSpecView(
+                refinery=refinery,
+                grade=str(grade.get("canonical_name") or ""),
+                api_gravity=float(grade["api_gravity"]),
+                sulfur_pct=float(grade["sulfur_pct"]),
+                yield_pct=float(edge["yield_pct"]),
+                compatibility=float(edge["compatibility"]),
+            )
+        )
+    return specs
+
+
 def _load_bypass_edges() -> list[dict]:
     """
     Bypass routes sourced from the bundle's bypass_routes.csv — resolves supplier/port
@@ -181,6 +219,8 @@ async def run(
         await get_available_suppliers(risk_max=supplier_risk_max)
     )
     grade_specs = await get_grade_specs(trigger_refinery)
+    if not grade_specs:
+        grade_specs = _bundle_grade_specs(trigger_refinery)
     # Fetch ALL corridors here (not pre-filtered) — solve_routes() below applies
     # corridor_risk_max itself using each corridor's real risk_score. Pre-filtering
     # here was a real bug: a corridor excluded for being too risky (e.g. Hormuz at

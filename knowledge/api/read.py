@@ -911,6 +911,22 @@ async def get_full_graph(placed_only: bool = True) -> GraphView:
     except Exception as exc:
         log.warning("get_full_graph: registry unavailable: %s", exc)
 
+    bundle_by_name: dict[str, tuple[str, dict[str, Any]]] = {}
+    try:
+        from knowledge.context.loader import load_bundle
+
+        bundle_path = os.environ.get(
+            "SAGE_BUNDLE_PATH", "data/india-energy-2026.context"
+        )
+        bundle = load_bundle(bundle_path)
+        for bundle_type, rows in bundle.node_rows.items():
+            for row in rows:
+                canonical_name = str(row.get("canonical_name") or "").strip()
+                if canonical_name:
+                    bundle_by_name[canonical_name] = (bundle_type, row)
+    except Exception as exc:
+        log.warning("get_full_graph: active bundle coordinates unavailable: %s", exc)
+
     # Degree count for node sizing.
     degree: dict[str, int] = {}
     structural_edges: list[GraphEdgeView] = []
@@ -934,15 +950,27 @@ async def get_full_graph(placed_only: bool = True) -> GraphView:
         labels = n.get("labels") or []
         etype = next((l for l in labels if l != "Entity"), None) or "Entity"
         reg = reg_by_name.get(name)
+        bundle_entry = bundle_by_name.get(name)
         if reg:
             etype = reg.entity_type
+        elif bundle_entry:
+            etype = bundle_entry[0]
+
+        bundle_row = bundle_entry[1] if bundle_entry else {}
+        bundle_coords = None
+        if bundle_row.get("lat") not in (None, "") and bundle_row.get("lon") not in (None, ""):
+            bundle_coords = {
+                "lat": float(bundle_row["lat"]),
+                "lon": float(bundle_row["lon"]),
+            }
 
         coords = resolve_coordinates(
             name=name,
             entity_type=etype,
-            country=n.get("country"),
-            origin=n.get("origin"),
+            country=n.get("country") or bundle_row.get("country"),
+            origin=n.get("origin") or bundle_row.get("origin"),
             registry_coords=(reg.coordinates if reg else None)
+            or bundle_coords
             or ({"lat": n.get("lat"), "lon": n.get("lon")} if n.get("lat") is not None else None),
         )
         if placed_only and coords is None:
