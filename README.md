@@ -27,6 +27,12 @@ SAGE continuously ingests geopolitical and logistics signals from four always-on
 
 ---
 
+## System Architecture
+
+![SAGE system architecture](docs/system-architecture.png)
+
+---
+
 ## Engineering SAGE (The Deep-Dive Series)
 
 A written walkthrough of the design decisions behind SAGE, each an introspective "why we did this, why we didn't do that" piece. Start with the overview, then dive into whichever decision interests you.
@@ -43,17 +49,18 @@ A written walkthrough of the design decisions behind SAGE, each an introspective
 
 ## Table of Contents
 
-1. [Why SAGE Stands Out](#why-sage-stands-out)
-2. [Role in the SAGE System](#role-in-the-sage-system)
-3. [Data Model](#data-model)
-4. [Contracts](#contracts)
-5. [System 1 — Sensory Agent Wiring Guide](#system-1--sensory-agent-wiring-guide)
-6. [Tech Stack](#tech-stack)
-7. [Getting Started](#getting-started)
-8. [Instantiating Foundational Knowledge (Context Bundle)](#instantiating-foundational-knowledge-context-bundle)
-9. [Upgrading the Knowledge Base to a New Bundle](#upgrading-the-knowledge-base-to-a-new-bundle)
-10. [Team Ownership](#team-ownership)
-11. [License](#license)
+1. [System Architecture](#system-architecture)
+2. [Why SAGE Stands Out](#why-sage-stands-out)
+3. [Role in the SAGE System](#role-in-the-sage-system)
+4. [Data Model](#data-model)
+5. [Contracts](#contracts)
+6. [System 1 — Sensory Agent Wiring Guide](#system-1--sensory-agent-wiring-guide)
+7. [Tech Stack](#tech-stack)
+8. [Getting Started](#getting-started)
+9. [Instantiating Foundational Knowledge (Context Bundle)](#instantiating-foundational-knowledge-context-bundle)
+10. [Upgrading the Knowledge Base to a New Bundle](#upgrading-the-knowledge-base-to-a-new-bundle)
+11. [Team Ownership](#team-ownership)
+12. [License](#license)
 
 ---
 
