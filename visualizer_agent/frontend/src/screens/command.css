@@ -482,3 +482,68 @@
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
 }
+
+/* ── Light Theme Overrides ────────────────────────────────────────────────── */
+:root[data-theme="light"] .cc-kpi {
+  background: #cad8eb;
+  border-color: #9bb3d6;
+  color: #0f1f2e;
+}
+:root[data-theme="light"] .cc-kpi > .label-sm {
+  color: #435b78;
+}
+:root[data-theme="light"] .cc-kpi-value {
+  color: #0f1f2e;
+}
+:root[data-theme="light"] .cc-map {
+  background: #cad8eb;
+  border-color: #9bb3d6;
+}
+:root[data-theme="light"] .cc-brief {
+  background: #cad8eb;
+  border-color: #9bb3d6;
+  color: #0f1f2e;
+}
+:root[data-theme="light"] .cc-rec {
+  background: #cad8eb;
+  border-color: #9bb3d6;
+  color: #0f1f2e;
+}
+:root[data-theme="light"] .cc-intel {
+  background: #cad8eb;
+  border-color: #9bb3d6;
+  color: #0f1f2e;
+}
+:root[data-theme="light"] .cc-copilot {
+  background: #6086bb;
+  border-color: #4d73a8;
+  color: #ffffff;
+}
+:root[data-theme="light"] .cc-copilot-prompt {
+  color: #ffffff;
+}
+:root[data-theme="light"] .cc-copilot-chips .chip {
+  background: #4f72a4;
+  border-color: #6286be;
+  color: #ffffff;
+}
+:root[data-theme="light"] .cc-copilot-input {
+  background: #9ec2ed;
+  border-color: #84abd9;
+  color: #0f1f2e;
+}
+:root[data-theme="light"] .cc-bottlenecks {
+  background: rgba(202, 216, 235, 0.95);
+  border-color: #9bb3d6;
+  color: #0f1f2e;
+}
+:root[data-theme="light"] .cc-ev-btn {
+  background: #b5c7e0;
+  border-color: #9ab3d6;
+  color: #0f1f2e;
+}
+:root[data-theme="light"] .cc-ev-btn.on {
+  background: #5ae0d2;
+  border-color: #38cbbd;
+  color: #0f1f2e;
+}

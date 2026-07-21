@@ -256,3 +256,22 @@
   border-bottom: 1px solid var(--border-1);
   letter-spacing: 0.02em;
 }
+
+/* ── Light Theme Overrides ────────────────────────────────────────────────── */
+:root[data-theme="light"] .rp-option {
+  background: #233246;
+  border-color: #3b4e69;
+  color: #ffffff;
+}
+:root[data-theme="light"] .rp-option-name > span:first-child {
+  color: #64ded0;
+}
+:root[data-theme="light"] .rp-option.top {
+  background: #2c3e56;
+  border-left-color: #5ae0d2;
+}
+:root[data-theme="light"] .rp-memo {
+  background: #cad8eb;
+  border-color: #9bb3d6;
+  color: #0f1f2e;
+}

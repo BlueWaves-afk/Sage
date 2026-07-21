@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { IconUser, IconLogo } from "../icons";
+import { useTheme } from "../../theme";
+import { IconUser, IconLogo, IconSun, IconMoon } from "../icons";
 import { apiPrefix } from "../../api/region";
 import RegionSwitcher from "./RegionSwitcher";
 import "./layout.css";
@@ -26,6 +27,7 @@ function useDemoStatus() {
 
 export default function TopBar({ title, live }: Props) {
   const demo = useDemoStatus();
+  const { theme, toggle } = useTheme();
   const status = live == null ? "CONNECTING" : live ? "ONLINE" : "OFFLINE";
   return (
     <header className="topbar">
@@ -50,6 +52,24 @@ export default function TopBar({ title, live }: Props) {
         <span className="trust-tag">
           Secure <b>•</b> Trusted <b>•</b> Sovereign
         </span>
+        <button
+          className="theme-btn press"
+          onClick={toggle}
+          title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          style={{
+            background: "rgba(15, 31, 46, 0.1)",
+            border: "1px solid rgba(15, 31, 46, 0.2)",
+            color: "var(--text-0)",
+            width: "32px",
+            height: "32px",
+            borderRadius: "4px",
+            display: "grid",
+            placeItems: "center",
+            cursor: "pointer"
+          }}
+        >
+          {theme === "dark" ? <IconSun width={16} height={16} /> : <IconMoon width={16} height={16} />}
+        </button>
         <div className="operator">
           <div className="operator-avatar">
             <IconUser width={16} height={16} />

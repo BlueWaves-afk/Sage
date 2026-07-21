@@ -314,3 +314,63 @@
   background: var(--bg-2);
   color: var(--text-0);
 }
+
+/* ── Light Theme Overrides ────────────────────────────────────────────────── */
+:root[data-theme="light"] .topbar {
+  background: #64ded0;
+  border-bottom: 1px solid #4bc2b5;
+  color: #0f1f2e;
+}
+:root[data-theme="light"] .topbar-title {
+  color: #0f1f2e;
+}
+:root[data-theme="light"] .topbar-divider {
+  background: rgba(15, 31, 46, 0.2);
+}
+:root[data-theme="light"] .brand {
+  color: #0f1f2e;
+}
+:root[data-theme="light"] .online-pill {
+  background: rgba(7, 122, 72, 0.15);
+  border-color: rgba(7, 122, 72, 0.3);
+  color: #077a48;
+}
+:root[data-theme="light"] .sidebar {
+  background: #c4d5e5;
+  border-right: 1px solid #9bb3d6;
+}
+:root[data-theme="light"] .side-btn {
+  color: #1e3b5c;
+}
+:root[data-theme="light"] .side-btn:hover {
+  background: #cad8eb;
+  color: #0f1f2e;
+}
+:root[data-theme="light"] .side-btn.active {
+  color: #0f1f2e;
+  background: #98bce8;
+  border-color: #7b9ed1;
+}
+:root[data-theme="light"] .side-btn.active::before {
+  background: #0f1f2e;
+}
+:root[data-theme="light"] .statusbar {
+  background: #64ded0;
+  border-top: 1px solid #4bc2b5;
+  color: #0f1f2e;
+}
+:root[data-theme="light"] .statusbar-item,
+:root[data-theme="light"] .statusbar-right {
+  color: #1e3b5c;
+}
+:root[data-theme="light"] .statusbar-sep {
+  background: rgba(15, 31, 46, 0.2);
+}
+:root[data-theme="light"] .status-word {
+  color: #077a48;
+}
+:root[data-theme="light"] .operator-avatar {
+  background: rgba(15, 31, 46, 0.1);
+  border-color: rgba(15, 31, 46, 0.2);
+  color: #0f1f2e;
+}

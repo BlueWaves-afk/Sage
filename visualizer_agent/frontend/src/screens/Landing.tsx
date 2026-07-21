@@ -1,14 +1,18 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import Globe from "../components/Globe";
+import { useTheme } from "../theme";
 import {
   IconLogo,
   IconShield,
+  IconSun,
+  IconMoon,
 } from "../components/icons";
 import "./landing.css";
 
 export default function Landing() {
   const nav = useNavigate();
+  const { theme, toggle } = useTheme();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
 
@@ -27,6 +31,13 @@ export default function Landing() {
           <span className="trust-tag">
             Secure <b>•</b> Trusted <b>•</b> Intelligent
           </span>
+          <button
+            className="landing-theme-btn press"
+            onClick={toggle}
+            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {theme === "dark" ? <IconSun width={16} height={16} /> : <IconMoon width={16} height={16} />}
+          </button>
         </div>
       </header>
 
