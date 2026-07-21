@@ -271,7 +271,18 @@ async def get_output(kind: str, scenario_id: Optional[str] = None) -> Optional[d
             raw = await client.get(key)
         finally:
             await client.aclose()
-        return json.loads(raw) if raw else None
+        payload = json.loads(raw) if raw else None
+        if payload is None:
+            return None
+        required_fields = {
+            "scenario": "trigger_entity",
+            "procurement": "ranked",
+            "spr": "daily_plan",
+        }
+        if required_fields[kind] not in payload:
+            log.error("get_output(%s, %s) rejected cross-type cache payload", kind, scenario_id)
+            return None
+        return payload
     except Exception as exc:
         log.warning("get_output(%s, %s) failed: %s", kind, scenario_id, exc)
         return None
