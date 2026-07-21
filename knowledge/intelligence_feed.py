@@ -21,8 +21,8 @@ async def record_signal(signal: NormalizedSignal, origin: str = "live") -> None:
         {
             "id": signal.signal_id,
             "source": signal.source,
-            "headline": signal.headline,
-            "detail": signal.detail,
+            "headline": signal.summary,
+            "detail": signal.summary,
             "source_url": signal.source_url or "",
             "recorded_at": signal.observed_at.isoformat(),
             "origin": origin,

@@ -1233,64 +1233,61 @@ async def _demo_sequence() -> None:
 async def _demo_inject_signals(entity: str) -> None:
     """Write pre-crisis intel signals to the KB so the trace feed has context."""
     from datetime import datetime, timezone as _tz
-    from contracts.signal import NormalizedSignal, AisPayload, EventPayload, PricePayload
+    from contracts.signal import NormalizedSignal
     from knowledge.api.write import ingest_signal, write_risk_state
 
     now = datetime.now(_tz.utc)
 
     signals = [
         NormalizedSignal(
-            source="ais", entity=entity, priority="HIGH",
-            headline="3 IRGCN vessels dark for 4h in Hormuz TSS northbound lane",
-            detail=(
+            signal_id=f"demo-ais-{int(now.timestamp())}", source="ais",
+            priority_hint="HIGH", force_synthesis=True,
+            entity_refs=[entity, "Hormuz TSS", "Iran"], observed_at=now, ingested_at=now,
+            summary=(
                 "MMSI 422000001, 422000002, 422000003 — Iranian Revolutionary Guard Corps Navy "
                 "Gashti-class patrol boats. Last AIS ping 04:17Z. Anomaly score 0.89. "
                 "Tanker MT PACIFIC GUARDIAN (MMSI 538004821) issued security alert at 06:22Z "
                 "after proximity approach."
             ),
-            severity=0.82, entities=[entity, "Hormuz TSS", "Iran"],
-            payload=AisPayload(mmsi="422000001", vessel_name="IRGCN Patrol 1",
-                               gap_hours=4.1, dark_vessel=True, anomaly_score=0.89),
-            observed_at=now,
+            payload={"mmsi": "422000001", "vessel_name": "IRGCN Patrol 1",
+                     "gap_hours": 4.1, "dark_vessel": True, "anomaly_score": 0.89},
         ),
         NormalizedSignal(
-            source="news", entity=entity, priority="HIGH",
-            headline="Iranian patrol boats intercept tanker near Strait of Hormuz",
-            detail=(
+            signal_id=f"demo-news-{int(now.timestamp())}", source="news",
+            priority_hint="HIGH", force_synthesis=True,
+            entity_refs=[entity, "Iran", "IRGCN"], observed_at=now, ingested_at=now,
+            summary=(
                 "NEWSDATA (Reuters feed): Iranian patrol boats from the IRGCN intercepted "
                 "the VLCC MT PACIFIC GUARDIAN in the Strait of Hormuz northbound lane at "
                 "approximately 06:00 UTC. The vessel was ordered to reduce speed and submit "
                 "to inspection. The Hormuz TSS northbound lane is currently contested."
             ),
-            severity=0.78, entities=[entity, "Iran", "IRGCN"],
-            observed_at=now,
         ),
         NormalizedSignal(
-            source="price", entity=entity, priority="HIGH",
-            headline="Brent ICE +$6.40 to $84.20 — war-risk regime triggered",
-            detail=(
+            signal_id=f"demo-price-{int(now.timestamp())}", source="price",
+            priority_hint="HIGH", force_synthesis=True,
+            entity_refs=[entity, "Brent", "ICE"], observed_at=now, ingested_at=now,
+            summary=(
                 "ICE Brent front-month contract spiked $6.40 (8.2%) to $84.20/bbl in early "
                 "Asian trading following reports of IRGCN vessel movements near Hormuz. "
                 "War-risk insurance premiums for Hormuz transits rose 0.3% of vessel value. "
                 "Changepoint detected; regime shift from calm → stressed."
             ),
-            severity=0.74, entities=[entity, "Brent", "ICE"],
-            payload=PricePayload(instrument="BZ=F", price=84.20, changepoint=True,
-                                 regime="stressed", war_risk_premium=0.074),
-            observed_at=now,
+            payload={"instrument": "BZ=F", "price": 84.20, "changepoint": True,
+                     "regime": "stressed", "war_risk_premium": 0.074},
         ),
         NormalizedSignal(
-            source="gdelt", entity=entity, priority="MED",
-            headline="GDELT: Iran–US conflict tone 0.71 — elevated maritime tension",
-            detail=(
+            signal_id=f"demo-gdelt-{int(now.timestamp())}", source="gdelt",
+            priority_hint="MED", entity_refs=[entity, "Iran", "United States"],
+            observed_at=now, ingested_at=now,
+            summary=(
                 "GDELT EventDB conflict cluster around Hormuz/Iran actor: GoldsteinScale −7.2, "
                 "AvgTone −5.8. Iran MIL actor involved in 14 events in last 6h. "
                 "Historical comparison: score at this level preceded 2019 tanker attacks by 18h."
             ),
-            severity=0.71, entities=[entity, "Iran", "United States"],
-            payload=EventPayload(actor="Iran", action="naval interdiction", target="commercial shipping",
-                                 tone=-5.8, severity=0.71, goldstein=-7.2),
-            observed_at=now,
+            payload={"actor": "Iran", "action": "naval interdiction",
+                     "target": "commercial shipping", "tone": -5.8,
+                     "severity": 0.71, "goldstein": -7.2},
         ),
     ]
 
@@ -1305,7 +1302,10 @@ async def _demo_inject_signals(entity: str) -> None:
         await write_risk_state(
             entity=entity, score=0.65,
             factor_ais=0.82, factor_gdelt=0.71, factor_price=0.62, factor_sanctions=0.0,
-            rationale="Demo replay t=0: initial ELEVATED assessment. AIS dark-vessel + Brent spike.",
+            rationale=(
+                "Demo replay t=0: initial ELEVATED assessment. "
+                "AIS dark-vessel + Brent spike."
+            ),
             model_version="demo-replay-v1",
         )
     except Exception as exc:
