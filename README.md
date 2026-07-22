@@ -732,10 +732,10 @@ Every value in the shipped `india-energy-2026` bundle is catalogued in [`data/in
 | Module | Owner |
 |---|---|
 | `contracts/`, `knowledge/`, `orchestration/sandbox.py`, `orchestration/monitor.py` | Tom |
-| `sensory_agent/`, `knowledge/triage.py`, `knowledge/ingest_queue.py` | Teammate B |
-| `alt_procurement_agent/`, `reserve_optim_agent/` | Teammate C |
-| `visualizer_agent/`, `orchestration/graph.py` | Teammate D |
-| `scenario_agent/` | Tom + Teammate B |
+| `sensory_agent/`, `knowledge/triage.py`, `knowledge/ingest_queue.py` | Rishi |
+| `alt_procurement_agent/`, `reserve_optim_agent/` | Tom |
+| `visualizer_agent/`, `orchestration/graph.py` | Nivedita |
+| `scenario_agent/` | Tom + Rishi |
 
 ---
 
